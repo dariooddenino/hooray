@@ -21,12 +21,14 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    const zmath_pkg = @import("zmath").package(b, target, optimize, .{});
+
     const app = try mach_core.App.init(b, mach_core_dep.builder, .{
         .name = "hooray",
         .src = "src/main.zig",
         .target = target,
         .optimize = optimize,
-        .deps = &[_]std.Build.Module.Import{},
+        .deps = &[_]std.Build.Module.Import{.{ .name = "zmath", .module = zmath_pkg.zmath }},
     });
     if (b.args) |args| app.run.addArgs(args);
 
