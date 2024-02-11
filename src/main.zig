@@ -18,7 +18,7 @@ pub fn init(app: *App) !void {
         .power_preference = .high_performance,
     });
 
-    const renderer = Renderer.init();
+    const renderer = try Renderer.init(gpa.allocator());
 
     app.title_timer = try core.Timer.start();
     app.timer = try core.Timer.start();
