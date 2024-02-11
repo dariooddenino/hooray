@@ -13,7 +13,10 @@ timer: core.Timer,
 renderer: Renderer,
 
 pub fn init(app: *App) !void {
-    try core.init(.{});
+    try core.init(.{
+        .title = "Hooray",
+        .power_preference = .high_performance,
+    });
 
     const renderer = Renderer.init();
 
@@ -46,7 +49,7 @@ pub fn update(app: *App) !bool {
     // update the window title every second
     if (app.title_timer.read() >= 1.0) {
         app.title_timer.reset();
-        try core.printTitle("Rotating Cube [ {d}fps ] [ Input {d}hz ]", .{
+        try core.printTitle("Hooray [ {d}fps ] [ Input {d}hz ]", .{
             core.frameRate(),
             core.inputRate(),
         });
