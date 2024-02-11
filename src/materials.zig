@@ -3,7 +3,7 @@ const utils = @import("utils.zig");
 const vec = @import("vec.zig");
 
 const Color = vec.Color;
-
+// TODO I think this will live in shaders?
 pub const Material = struct {
     albedo: Color,
     specular: Color,
