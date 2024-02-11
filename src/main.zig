@@ -37,7 +37,7 @@ pub fn init(app: *App) !void {
         .mapped_at_creation = .false,
     });
 
-    // core.queue.writeBuffer(output, 0, &[_]f32{5} ** buffer_size);
+    core.queue.writeBuffer(output, 0, &[_]f32{5} ** buffer_size);
 
     const staging = core.device.createBuffer(&.{
         .label = "staging buffer",
