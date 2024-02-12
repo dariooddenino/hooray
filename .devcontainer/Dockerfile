@@ -15,6 +15,5 @@ WORKDIR "/home/vscode"
 RUN wget https://github.com/marler8997/zigup/releases/download/v2023_07_27/zigup.ubuntu-latest-x86_64.zip && \
     unzip zigup.ubuntu-latest-x86_64.zip && mv zigup ~/.local/bin/ && chmod +x ~/.local/bin/zigup && \
     rm zigup.ubuntu-latest-x86_64.zip && zigup 0.12.0-dev.2063+804cee3b9 && \
-    git clone https://github.com/zigtools/zls && \
-    cd zls && zig build -Doptimize=ReleaseSafe && cp zig-out/bin/zls ~/.local/bin/ && chmod +x ~/.local/bin/zls && \
-    cd .. && rm -r zls
+    wget https://zigtools-releases.nyc3.digitaloceanspaces.com/zls/0.12.0-dev.344+3471da5/x86_64-linux/zls && \
+    chmod +x zls && mv zls ~/.local/bin/
