@@ -25,5 +25,5 @@ RUN git clone https://github.com/marler8997/zigup.git && \
     cd .. && rm -r zigup && zigup 0.12.0-dev.2063+804cee3b9 && \
     git clone https://github.com/zigtools/zls && \
     cd zls && zig build -Doptimize=ReleaseSafe && cp zig-out/bin/zls ~/.local/bin/ && chmod +x ~/.local/bin/zls && \
-    && cd .. && rm -r zls
+    cd .. && rm -r zls
     
