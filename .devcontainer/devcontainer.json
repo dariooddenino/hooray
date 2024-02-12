@@ -5,6 +5,8 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"build": { "dockerfile": "Dockerfile" },
 
+	"postCreateCommand": "bash scripts/install-dev-tools.sh",
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
