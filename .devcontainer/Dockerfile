@@ -22,8 +22,8 @@ RUN wget https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3.t
 # Install zigup and zls
 RUN git clone https://github.com/marler8997/zigup.git && \
     cd zigup && zig build && cp zig-out/bin/zigup ~/.local/bin/ && chmod +x ~/.local/bin/zigup && \
-    cd .. && rm -r zigup && zigup 0.12.0-dev.2063+804cee3b9 && \
+    cd .. && rm -rf zigup && zigup 0.12.0-dev.2063+804cee3b9 && \
     git clone https://github.com/zigtools/zls && \
     cd zls && zig build -Doptimize=ReleaseSafe && cp zig-out/bin/zls ~/.local/bin/ && chmod +x ~/.local/bin/zls && \
-    cd .. && rm -r zls
+    cd .. && rm -rf zls
     
