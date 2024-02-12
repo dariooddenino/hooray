@@ -6,8 +6,8 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 RUN wget https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3.tar.xz && \
     tar -xf zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3.tar.xz && \
     cd zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3 && \
-    cp -r local ~/.local/bin/ && cp zig ~/.local/bin && chmod +x ~/.local/bin/zig && \
-    rm zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3.tar.xz && \
+    cp -r lib ~/.local/bin/ && cp zig ~/.local/bin && chmod +x ~/.local/bin/zig && \
+    cd .. && rm zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3.tar.xz && \
     rm -r zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3
 
 # Install zigup and zls
