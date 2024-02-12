@@ -11,7 +11,7 @@ ENV PATH "/home/vscode/.local/bin/:$PATH"
 
 WORKDIR "/home/vscode"
 
-# Install zig to bootstrap zigup
+# Install zig 0.11 to bootstrap zigup
 RUN wget https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz && \
     tar -xf zig-linux-x86_64-0.11.0.tar.xz && \
     cd zig-linux-x86_64-0.11.0 && \
