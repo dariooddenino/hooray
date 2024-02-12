@@ -1,6 +1,6 @@
-FROM mcr.microsoft.com/devcontainers/base:alpine-3.19
+FROM mcr.microsoft.com/devcontainers/base:bullseye
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install git wget tar
+    && apt-get -y install git wget tar fzf
 
 # Install zig to bootstrap zigup
 RUN wget https://ziglang.org/builds/zig-linux-x86_64-0.12.0-dev.2710+c3eb592a3.tar.xz && \
