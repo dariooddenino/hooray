@@ -16,6 +16,7 @@ pub fn init(app: *App) !void {
     try core.init(.{
         .title = "Hooray",
         .power_preference = .high_performance,
+        .size = .{ .width = 600, .height = 600 },
     });
 
     const renderer = try Renderer.init(gpa.allocator());
