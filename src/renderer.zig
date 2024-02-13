@@ -3,6 +3,9 @@ const core = @import("mach-core");
 const gpu = core.gpu;
 const zm = @import("zmath");
 const utils = @import("utils.zig");
+const gpu_resources = @import("gpu_resources.zig");
+
+const GPUResources = gpu_resources.GPUResources;
 
 const workgroup_size = 8;
 
@@ -37,33 +40,37 @@ const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
 
+    resources: GPUResources,
+
     // Buffers
-    vertex_buffer: *gpu.Buffer,
-    index_buffer: *gpu.Buffer,
-    uniform_buffer: *gpu.Buffer,
-    state_buffer_a: *gpu.Buffer,
-    state_buffer_b: *gpu.Buffer,
+    // vertex_buffer: *gpu.Buffer,
+    // index_buffer: *gpu.Buffer,
+    // uniform_buffer: *gpu.Buffer,
+    // state_buffer_a: *gpu.Buffer,
+    // state_buffer_b: *gpu.Buffer,
 
     // Buffer layouts
     // vertex_buffer_layout: gpu.VertexBufferLayout = undefined,
 
     // Bind groups
-    bind_groups: [2]*gpu.BindGroup,
+    // bind_groups: [2]*gpu.BindGroup,
 
     // Bind group layouts
 
     // Pipelines
     // compute_pipeline: *gpu.ComputePipeline,
-    render_pipeline: *gpu.RenderPipeline,
-    compute_pipeline: *gpu.ComputePipeline,
+    // render_pipeline: *gpu.RenderPipeline,
+    // compute_pipeline: *gpu.ComputePipeline,
 
     // Pipeline layouts
 
     // Render pass descriptor
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
+        var resources = GPUResources.init(allocator);
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
+        // const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
         const shader_files = .{"shader"};
         const ext = ".wgsl";
         const folder = "./shaders/";
@@ -74,10 +81,10 @@ pub const Renderer = struct {
             const shader_file_content = @embedFile(file_folder);
             try shader_file.appendSlice(shader_file_content);
         }
-        const shader_module = core.device.createShaderModuleWGSL("hooray", try shader_file.toOwnedSliceSentinel(0));
+        const file = try shader_file.toOwnedSliceSentinel(0);
+        defer allocator.free(file);
+        const shader_module = core.device.createShaderModuleWGSL("hooray", file);
         defer shader_module.release();
-        // const shader_module = core.device.createShaderModuleWGSL("shader.wgsl", @embedFile("shaders/shader.wgsl"));
-        // defer shader_module.release();
 
         // Buffers layouts
         const vertex_attributes = [_]gpu.VertexAttribute{ .{ .format = .float32x4, .offset = @offsetOf(Vertex, "pos"), .shader_location = 0 }, .{ .format = .float32x4, .offset = @offsetOf(Vertex, "col"), .shader_location = 1 } };
@@ -121,7 +128,8 @@ pub const Renderer = struct {
         }), .primitive = .{
             .cull_mode = .back,
         } };
-        const render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor);
+        var render_pipelines: [1]GPUResources.RenderPipelineAdd = .{.{ .name = "render", .render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor) }};
+        try resources.addRenderPipelines(&render_pipelines);
 
         const vertex_buffer = core.device.createBuffer(&.{
             .label = "Vertex buffer",
@@ -196,7 +204,14 @@ pub const Renderer = struct {
             }),
         );
 
-        const bind_groups = .{ bind_group_a, bind_group_b };
+        var bind_groups: [2]GPUResources.BindGroupAdd = .{
+            .{ .name = "state_a", .bind_group = bind_group_a },
+            .{ .name = "state_b", .bind_group = bind_group_b },
+        };
+
+        try resources.addBindGroups(&bind_groups);
+
+        // const bind_groups = .{ bind_group_a, bind_group_b };
 
         const compute_pipeline = core.device.createComputePipeline(
             &gpu.ComputePipeline.Descriptor{ .compute = gpu.ProgrammableStageDescriptor{
@@ -205,74 +220,26 @@ pub const Renderer = struct {
             }, .layout = pipeline_layout },
         );
 
-        return Renderer{ .allocator = allocator, .vertex_buffer = vertex_buffer, .index_buffer = index_buffer, .render_pipeline = render_pipeline, .bind_groups = bind_groups, .uniform_buffer = uniform_buffer, .state_buffer_a = state_buffer_a, .state_buffer_b = state_buffer_b, .compute_pipeline = compute_pipeline };
+        var compute_pipelines: [1]GPUResources.ComputePipelineAdd = .{.{ .name = "compute", .compute_pipeline = compute_pipeline }};
+
+        try resources.addComputePipelines(&compute_pipelines);
+
+        var buffers: [6]GPUResources.BufferAdd = .{ GPUResources.BufferAdd{ .name = "vertex", .buffer = vertex_buffer }, GPUResources.BufferAdd{ .name = "index", .buffer = index_buffer }, GPUResources.BufferAdd{ .name = "index", .buffer = index_buffer }, GPUResources.BufferAdd{ .name = "uniform", .buffer = uniform_buffer }, GPUResources.BufferAdd{ .name = "state_a", .buffer = state_buffer_a }, GPUResources.BufferAdd{ .name = "state_b", .buffer = state_buffer_b } };
+
+        try resources.addBuffers(&buffers);
+
+        return Renderer{ .allocator = allocator, .resources = resources };
     }
 
-    // pub fn inito(allocator: std.mem.Allocator) !Renderer {
-    //     var shader_file = std.ArrayList(u8).init(allocator);
-    //     defer shader_file.deinit();
-    //     const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
-    //     const ext = ".wgsl";
-    //     const folder = "./shaders/";
-    //     inline for (shader_files) |file| {
-    //         const file_name = file ++ ext;
-    //         const file_folder = folder ++ file_name;
-
-    //         const shader_file_content = @embedFile(file_folder);
-    //         try shader_file.appendSlice(shader_file_content);
-    //     }
-    //     const shader_module = core.device.createShaderModuleWGSL("hooray", try shader_file.toOwnedSliceSentinel(0));
-    //     defer shader_module.release();
-
-    //     // Fragment state
-    //     const blend = gpu.BlendState{};
-    //     const color_target = gpu.ColorTargetState{
-    //         .format = core.descriptor.format,
-    //         .blend = &blend,
-    //         .write_mask = gpu.ColorWriteMaskFlags.all,
-    //     };
-
-    //     const fragment = gpu.FragmentState.init(.{ .module = shader_module, .entry_point = "frag_main", .targets = &.{color_target} });
-    //     const pipeline_descriptor = gpu.RenderPipeline.Descriptor{ .fragment = &fragment, .vertex = gpu.VertexState{ .module = shader_module, .entry_point = "vertex_main" } };
-    //     const pipeline = core.device.createRenderPipeline(&pipeline_descriptor);
-
-    //     return Renderer{ .allocator = allocator };
-    // }
-
-    // pub fn initBuffers(self: *Renderer) void {
-    //     const vertex_buffer = core.device.createBuffer(&.{
-    //         .label = "Vertex buffer",
-    //         .usage = .{ .vertex = true, .copy_dst = true },
-    //         .size = @sizeOf(f32) * vertices.len,
-    //         .mapped_at_creation = .true,
-    //     });
-    //     const vertex_mapped = vertex_buffer.getMappedRange(f32, 0, vertices.len);
-    //     @memcpy(vertex_mapped.?, vertices[0..]);
-    //     vertex_buffer.unmap();
-
-    //     const vertex_attributes = [_]gpu.VertexAttribute{.{ .format = .float32x2, .offset = 0, .shader_location = 0 }};
-
-    //     const vertex_buffer_layout = gpu.VertexBufferLayout.init(.{
-    //         .array_stride = @sizeOf(f32),
-    //         .step_mode = .vertex,
-    //         .attributes = &vertex_attributes,
-    //     });
-
-    //     self.vertex_buffer = vertex_buffer;
-    //     self.vertex_buffer_layout = vertex_buffer_layout;
-    // }
-
-    pub fn deinit(_: *Renderer) void {
-        // self.pipeline.release();
+    pub fn deinit(self: *Renderer) !void {
+        try self.resources.deinit();
     }
-
-    // pub fn loadShaders(self: *Renderer) !void {
-    //   _ = self;
-    // }
 
     pub fn render(self: *Renderer, app: *App) !void {
         _ = app;
         step += 1;
+        const index_buffer = self.resources.getBuffer("index");
+        const vertex_buffer = self.resources.getBuffer("vertex");
         const queue = core.queue;
         const back_buffer_view = core.swap_chain.getCurrentTextureView().?;
         const encoder = core.device.createCommandEncoder(null);
@@ -287,18 +254,19 @@ pub const Renderer = struct {
         });
 
         const pass = encoder.beginRenderPass(&render_pass_info);
-        pass.setPipeline(self.render_pipeline);
-        pass.setBindGroup(0, self.bind_groups[step % 2], &.{0});
-        pass.setVertexBuffer(0, self.vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
-        pass.setIndexBuffer(self.index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
+        pass.setPipeline(self.resources.getRenderPipeline("render"));
+        const bind_groups = [2]*gpu.BindGroup{ self.resources.getBindGroup("state_a"), self.resources.getBindGroup("state_b") };
+        pass.setBindGroup(0, bind_groups[step % 2], &.{0});
+        pass.setVertexBuffer(0, vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
+        pass.setIndexBuffer(index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
         // pass.setBindGroup(0, self.bind_group, &.{0});
         pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
         pass.end();
         pass.release();
 
         const compute_pass = encoder.beginComputePass(null);
-        compute_pass.setPipeline(self.compute_pipeline);
-        compute_pass.setBindGroup(0, self.bind_groups[step % 2], &.{0});
+        compute_pass.setPipeline(self.resources.getComputePipeline("compute"));
+        compute_pass.setBindGroup(0, bind_groups[step % 2], &.{0});
         const workgroup_count = @ceil(grid_size / workgroup_size);
         compute_pass.dispatchWorkgroups(workgroup_count, workgroup_count, 1);
         compute_pass.end();
