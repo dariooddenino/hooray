@@ -32,17 +32,69 @@ const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
 // TODO: Once I get it working, I can try the file load stuff, and then moving things out to appropriate
 // functions.
 
+const ResourceMap = std.StringHashMap;
+
+pub const GPUResources = struct {
+    const BindGroups = ResourceMap(*gpu.BindGroup);
+    const Buffers = ResourceMap(*gpu.Buffer);
+    bind_groups: BindGroups,
+    buffers: Buffers,
+
+    pub fn init(allocator: std.mem.Allocator) GPUResources {
+        const bind_groups = BindGroups.init(allocator);
+        const buffers = Buffers.init(allocator);
+
+        return GPUResources{
+            .bind_groups = bind_groups,
+            .buffers = buffers,
+        };
+    }
+
+    pub fn deinit(self: *GPUResources) !void {
+        try deinitResources(BindGroups, self.bind_groups);
+        self.bind_groups.deinit();
+        try deinitResources(Buffers, self.buffers);
+        self.buffers.deinit();
+    }
+
+    fn deinitResources(comptime T: type, resources: T) !void {
+        var it = resources.valueIterator();
+        while (it.next()) |entry| {
+            // TODO why do I have to do this here?
+            switch (@TypeOf(entry)) {
+                *gpu.BindGroup => entry.release(),
+                *gpu.Buffer => entry.release(),
+                else => {},
+            }
+        }
+    }
+
+    pub const BufferAdd = struct { name: []const u8, buffer: *gpu.Buffer };
+    pub fn addBuffers(self: *GPUResources, buffers: []BufferAdd) !void {
+        for (buffers) |b| {
+            try self.buffers.put(b.name, b.buffer);
+        }
+    }
+
+    pub fn getBuffer(self: GPUResources, name: []const u8) *gpu.Buffer {
+        // TODO should handle.
+        return self.buffers.get(name).?;
+    }
+};
+
 // TODO mix: https://github.com/hexops/mach-core/blob/main/examples/deferred-rendering/main.zig
 // TODO with: https://github.com/Shridhar2602/WebGPU-Path-Tracer/blob/main/renderer.js
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
 
+    resources: GPUResources,
+
     // Buffers
-    vertex_buffer: *gpu.Buffer,
-    index_buffer: *gpu.Buffer,
-    uniform_buffer: *gpu.Buffer,
-    state_buffer_a: *gpu.Buffer,
-    state_buffer_b: *gpu.Buffer,
+    // vertex_buffer: *gpu.Buffer,
+    // index_buffer: *gpu.Buffer,
+    // uniform_buffer: *gpu.Buffer,
+    // state_buffer_a: *gpu.Buffer,
+    // state_buffer_b: *gpu.Buffer,
 
     // Buffer layouts
     // vertex_buffer_layout: gpu.VertexBufferLayout = undefined,
@@ -62,6 +114,7 @@ pub const Renderer = struct {
     // Render pass descriptor
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
+        var resources = GPUResources.init(allocator);
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
         const shader_files = .{"shader"};
@@ -205,7 +258,11 @@ pub const Renderer = struct {
             }, .layout = pipeline_layout },
         );
 
-        return Renderer{ .allocator = allocator, .vertex_buffer = vertex_buffer, .index_buffer = index_buffer, .render_pipeline = render_pipeline, .bind_groups = bind_groups, .uniform_buffer = uniform_buffer, .state_buffer_a = state_buffer_a, .state_buffer_b = state_buffer_b, .compute_pipeline = compute_pipeline };
+        var buffers: [6]GPUResources.BufferAdd = .{ GPUResources.BufferAdd{ .name = "vertex", .buffer = vertex_buffer }, GPUResources.BufferAdd{ .name = "index", .buffer = index_buffer }, GPUResources.BufferAdd{ .name = "index", .buffer = index_buffer }, GPUResources.BufferAdd{ .name = "uniform", .buffer = uniform_buffer }, GPUResources.BufferAdd{ .name = "state_a", .buffer = state_buffer_a }, GPUResources.BufferAdd{ .name = "state_b", .buffer = state_buffer_b } };
+
+        try resources.addBuffers(&buffers);
+
+        return Renderer{ .allocator = allocator, .resources = resources, .render_pipeline = render_pipeline, .bind_groups = bind_groups, .compute_pipeline = compute_pipeline };
     }
 
     // pub fn inito(allocator: std.mem.Allocator) !Renderer {
@@ -262,7 +319,8 @@ pub const Renderer = struct {
     //     self.vertex_buffer_layout = vertex_buffer_layout;
     // }
 
-    pub fn deinit(_: *Renderer) void {
+    pub fn deinit(self: *Renderer) !void {
+        try self.resources.deinit();
         // self.pipeline.release();
     }
 
@@ -273,6 +331,8 @@ pub const Renderer = struct {
     pub fn render(self: *Renderer, app: *App) !void {
         _ = app;
         step += 1;
+        const index_buffer = self.resources.getBuffer("index");
+        const vertex_buffer = self.resources.getBuffer("vertex");
         const queue = core.queue;
         const back_buffer_view = core.swap_chain.getCurrentTextureView().?;
         const encoder = core.device.createCommandEncoder(null);
@@ -289,8 +349,8 @@ pub const Renderer = struct {
         const pass = encoder.beginRenderPass(&render_pass_info);
         pass.setPipeline(self.render_pipeline);
         pass.setBindGroup(0, self.bind_groups[step % 2], &.{0});
-        pass.setVertexBuffer(0, self.vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
-        pass.setIndexBuffer(self.index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
+        pass.setVertexBuffer(0, vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
+        pass.setIndexBuffer(index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
         // pass.setBindGroup(0, self.bind_group, &.{0});
         pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
         pass.end();

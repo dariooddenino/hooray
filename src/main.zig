@@ -31,7 +31,10 @@ pub fn deinit(app: *App) void {
     defer _ = gpa.deinit();
     defer core.deinit();
 
-    app.renderer.deinit();
+    // TODO how to do this?
+    app.renderer.deinit() catch {
+        std.debug.print("Failed to deinit renderer\n");
+    };
 }
 
 pub fn update(app: *App) !bool {
