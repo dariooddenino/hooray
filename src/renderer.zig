@@ -47,8 +47,22 @@ pub const Renderer = struct {
     // Render pass descriptor
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
-        const shader_module = core.device.createShaderModuleWGSL("shader.wgsl", @embedFile("shaders/shader.wgsl"));
+        var shader_file = std.ArrayList(u8).init(allocator);
+        defer shader_file.deinit();
+        const shader_files = .{"shader"};
+        const ext = ".wgsl";
+        const folder = "./shaders/";
+        inline for (shader_files) |file| {
+            const file_name = file ++ ext;
+            const file_folder = folder ++ file_name;
+
+            const shader_file_content = @embedFile(file_folder);
+            try shader_file.appendSlice(shader_file_content);
+        }
+        const shader_module = core.device.createShaderModuleWGSL("hooray", try shader_file.toOwnedSliceSentinel(0));
         defer shader_module.release();
+        // const shader_module = core.device.createShaderModuleWGSL("shader.wgsl", @embedFile("shaders/shader.wgsl"));
+        // defer shader_module.release();
 
         // Buffers layouts
         const vertex_attributes = [_]gpu.VertexAttribute{ .{ .format = .float32x4, .offset = @offsetOf(Vertex, "pos"), .shader_location = 0 }, .{ .format = .float32x4, .offset = @offsetOf(Vertex, "col"), .shader_location = 1 } };
