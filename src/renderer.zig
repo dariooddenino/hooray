@@ -9,19 +9,20 @@ const App = @import("main.zig").App;
 
 const Vertex = extern struct { pos: @Vector(2, f32), col: @Vector(3, f32) };
 
-const grid_size: f32 = 4;
+const grid_size: f32 = 32;
 
 const UniformBufferObject = struct { vals: @Vector(2, f32) };
+const StateObject = struct { vals: @Vector(grid_size * grid_size, u32) };
 
 const uniform_array: @Vector(2, f32) = .{ grid_size, grid_size };
 
 // const vertices = [6]Vertex{ .{ .pos = .{ -0.8, -0.8, 0, 0 }, .col = .{ 1, 0, 0, 1 } }, .{ .pos = .{ 0.8, -0.8, 0, 0 }, .col = .{ 0, 1, 0, 1 } }, .{ .pos = .{ 0.8, 0.8, 0, 0 }, .col = .{ 0, 0, 1, 1 } }, .{ .pos = .{ -0.8, -0.8, 0, 0 }, .col = .{ 1, 1, 0, 1 } }, .{ .pos = .{ 0.8, 0.8, 0, 0 }, .col = .{ 1, 0, 1, 1 } }, .{ .pos = .{ -0.8, 0.8, 0, 0 }, .col = .{ 0, 1, 1, 1 } } };
 
 const vertices = [_]Vertex{
-    .{ .pos = .{ -0.5, -0.5 }, .col = .{ 1, 0, 0 } },
-    .{ .pos = .{ 0.5, -0.5 }, .col = .{ 0, 1, 0 } },
-    .{ .pos = .{ 0.5, 0.5 }, .col = .{ 0, 0, 1 } },
-    .{ .pos = .{ -0.5, 0.5 }, .col = .{ 1, 1, 1 } },
+    .{ .pos = .{ -0.8, -0.8 }, .col = .{ 1, 0, 0 } },
+    .{ .pos = .{ 0.8, -0.8 }, .col = .{ 0, 1, 0 } },
+    .{ .pos = .{ 0.8, 0.8 }, .col = .{ 0, 0, 1 } },
+    .{ .pos = .{ -0.8, 0.8 }, .col = .{ 1, 1, 1 } },
 };
 const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
 
@@ -37,6 +38,7 @@ pub const Renderer = struct {
     vertex_buffer: *gpu.Buffer,
     index_buffer: *gpu.Buffer,
     uniform_buffer: *gpu.Buffer,
+    state_buffer: *gpu.Buffer,
 
     // Buffer layouts
     // vertex_buffer_layout: gpu.VertexBufferLayout = undefined,
@@ -81,23 +83,22 @@ pub const Renderer = struct {
             .attributes = &vertex_attributes,
         });
 
-        // Fragment state
+        // Setting up the bind group layout for the uniform buffer
+        const bglu = gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0);
+        const bgls = gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true }, .read_only_storage, false, 0);
+        const bgl = core.device.createBindGroupLayout(
+            &gpu.BindGroupLayout.Descriptor.init(.{
+                .entries = &.{ bglu, bgls },
+            }),
+        );
+
         const blend = gpu.BlendState{};
         const color_target = gpu.ColorTargetState{
             .format = core.descriptor.format,
             .blend = &blend,
             .write_mask = gpu.ColorWriteMaskFlags.all,
         };
-
         const fragment = gpu.FragmentState.init(.{ .module = shader_module, .entry_point = "fragmentMain", .targets = &.{color_target} });
-
-        // Setting up the bind group layout for the uniform buffer
-        const bgle = gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0);
-        const bgl = core.device.createBindGroupLayout(
-            &gpu.BindGroupLayout.Descriptor.init(.{
-                .entries = &.{bgle},
-            }),
-        );
 
         // Pipelines
 
@@ -143,6 +144,20 @@ pub const Renderer = struct {
         const ubo = UniformBufferObject{ .vals = uniform_array };
         core.queue.writeBuffer(uniform_buffer, 0, &[_]UniformBufferObject{ubo});
 
+        const state_buffer = core.device.createBuffer(&.{
+            .label = "Grid State",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = @sizeOf(StateObject),
+            .mapped_at_creation = .false,
+        });
+        var state_vals: [grid_size * grid_size]u32 = .{0} ** (grid_size * grid_size);
+        var i: usize = 0;
+        while (i < state_vals.len) : (i += 3) {
+            state_vals[i] = 1;
+        }
+        const state = StateObject{ .vals = @as(@Vector(grid_size * grid_size, u32), state_vals) };
+        core.queue.writeBuffer(state_buffer, 0, &[_]StateObject{state});
+
         const render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor);
 
         const bind_group = core.device.createBindGroup(
@@ -150,14 +165,12 @@ pub const Renderer = struct {
                 .layout = bgl,
                 .entries = &.{
                     gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(UniformBufferObject)),
+                    gpu.BindGroup.Entry.buffer(1, state_buffer, 0, @sizeOf(StateObject)),
                 },
             }),
         );
-        // const bind_group = core.device.createBindGroup(&gpu.BindGroup.Descriptor.init(.{ .layout = render_pipeline.getBindGroupLayout(0), .entries = &.{
-        //     gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(@Vector(2, f32))),
-        // } }));
 
-        return Renderer{ .allocator = allocator, .vertex_buffer = vertex_buffer, .index_buffer = index_buffer, .render_pipeline = render_pipeline, .bind_group = bind_group, .uniform_buffer = uniform_buffer };
+        return Renderer{ .allocator = allocator, .vertex_buffer = vertex_buffer, .index_buffer = index_buffer, .render_pipeline = render_pipeline, .bind_group = bind_group, .uniform_buffer = uniform_buffer, .state_buffer = state_buffer };
     }
 
     // pub fn inito(allocator: std.mem.Allocator) !Renderer {
@@ -242,7 +255,7 @@ pub const Renderer = struct {
         pass.setVertexBuffer(0, self.vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
         pass.setIndexBuffer(self.index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
         pass.setBindGroup(0, self.bind_group, &.{0});
-        pass.drawIndexed(index_data.len, 1, 0, 0, 0);
+        pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
         pass.end();
         pass.release();
 
