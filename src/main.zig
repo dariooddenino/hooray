@@ -18,7 +18,7 @@ pub fn init(app: *App) !void {
         .power_preference = .high_performance,
         .size = .{ .width = 600, .height = 600 },
     });
-    core.setFrameRateLimit(2);
+    core.setFrameRateLimit(5);
 
     const renderer = try Renderer.init(gpa.allocator());
 
