@@ -7,6 +7,8 @@ const zm = @import("zmath");
 
 const App = @import("main.zig").App;
 
+var step: usize = 0;
+
 const Vertex = extern struct { pos: @Vector(2, f32), col: @Vector(3, f32) };
 
 const grid_size: f32 = 32;
@@ -44,7 +46,7 @@ pub const Renderer = struct {
     // vertex_buffer_layout: gpu.VertexBufferLayout = undefined,
 
     // Bind groups
-    bind_group: *gpu.BindGroup,
+    bind_groups: [2]*gpu.BindGroup,
 
     // Bind group layouts
 
@@ -145,7 +147,7 @@ pub const Renderer = struct {
         core.queue.writeBuffer(uniform_buffer, 0, &[_]UniformBufferObject{ubo});
 
         const state_buffer = core.device.createBuffer(&.{
-            .label = "Grid State",
+            .label = "Grid State A",
             .usage = .{ .storage = true, .copy_dst = true },
             .size = @sizeOf(StateObject),
             .mapped_at_creation = .false,
@@ -158,19 +160,38 @@ pub const Renderer = struct {
         const state = StateObject{ .vals = @as(@Vector(grid_size * grid_size, u32), state_vals) };
         core.queue.writeBuffer(state_buffer, 0, &[_]StateObject{state});
 
+        const state_buffer_b = core.device.createBuffer(&.{
+            .label = "Grid State B",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = @sizeOf(StateObject),
+            .mapped_at_creation = .false,
+        });
+        var state_vals_b: [grid_size * grid_size]u32 = .{0} ** (grid_size * grid_size);
+        var j: u32 = 0;
+        while (j < state_vals_b.len) : (j += 2) {
+            state_vals_b[j] = 1;
+        }
+        const state_b = StateObject{ .vals = @as(@Vector(grid_size * grid_size, u32), state_vals_b) };
+        core.queue.writeBuffer(state_buffer_b, 0, &[_]StateObject{state_b});
+
         const render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor);
 
-        const bind_group = core.device.createBindGroup(
+        const bind_group_a = core.device.createBindGroup(
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = bgl,
-                .entries = &.{
-                    gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(UniformBufferObject)),
-                    gpu.BindGroup.Entry.buffer(1, state_buffer, 0, @sizeOf(StateObject)),
-                },
+                .entries = &.{ gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(UniformBufferObject)), gpu.BindGroup.Entry.buffer(1, state_buffer, 0, @sizeOf(StateObject)) },
+            }),
+        );
+        const bind_group_b = core.device.createBindGroup(
+            &gpu.BindGroup.Descriptor.init(.{
+                .layout = bgl,
+                .entries = &.{ gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(UniformBufferObject)), gpu.BindGroup.Entry.buffer(1, state_buffer_b, 0, @sizeOf(StateObject)) },
             }),
         );
 
-        return Renderer{ .allocator = allocator, .vertex_buffer = vertex_buffer, .index_buffer = index_buffer, .render_pipeline = render_pipeline, .bind_group = bind_group, .uniform_buffer = uniform_buffer, .state_buffer = state_buffer };
+        const bind_groups = .{ bind_group_a, bind_group_b };
+
+        return Renderer{ .allocator = allocator, .vertex_buffer = vertex_buffer, .index_buffer = index_buffer, .render_pipeline = render_pipeline, .bind_groups = bind_groups, .uniform_buffer = uniform_buffer, .state_buffer = state_buffer };
     }
 
     // pub fn inito(allocator: std.mem.Allocator) !Renderer {
@@ -237,6 +258,7 @@ pub const Renderer = struct {
 
     pub fn render(self: *Renderer, app: *App) !void {
         _ = app;
+        step += 1;
         const queue = core.queue;
         const back_buffer_view = core.swap_chain.getCurrentTextureView().?;
         const encoder = core.device.createCommandEncoder(null);
@@ -252,9 +274,10 @@ pub const Renderer = struct {
 
         const pass = encoder.beginRenderPass(&render_pass_info);
         pass.setPipeline(self.render_pipeline);
+        pass.setBindGroup(0, self.bind_groups[step % 2], &.{0});
         pass.setVertexBuffer(0, self.vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
         pass.setIndexBuffer(self.index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
-        pass.setBindGroup(0, self.bind_group, &.{0});
+        // pass.setBindGroup(0, self.bind_group, &.{0});
         pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
         pass.end();
         pass.release();
