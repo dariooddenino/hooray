@@ -233,6 +233,7 @@ pub fn update(app: *App) !bool {
     };
 
     const queue = core.queue;
+
     const encoder = core.device.createCommandEncoder(null);
 
     const render_pass_info = gpu.RenderPassDescriptor.init(.{
