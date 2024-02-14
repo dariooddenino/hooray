@@ -2,8 +2,4 @@
 
 A Zig port of the "Ray tracing in one weekend" series.
 
-Test
-
-
-
-
+Uses mach-core and zig-gamedev libraries.
