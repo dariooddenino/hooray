@@ -15,6 +15,22 @@ const Material = materials.Material;
 const Ray = rays.Ray;
 const Vec = zm.Vec;
 
+pub const Object = union(enum) {
+    sphere: *Sphere,
+
+    pub fn globalId(self: Object) u32 {
+        return switch (self) {
+            inline else => |o| o.global_id,
+        };
+    }
+
+    pub fn bBox(self: Object) Aabb {
+        return switch (self) {
+            inline else => |o| o.bbox,
+        };
+    }
+};
+
 pub const Sphere = struct {
     center: Vec,
     radius: f32,
@@ -29,6 +45,10 @@ pub const Sphere = struct {
         const bbox = Aabb.fromPoints(center - zm.splat(radius), center + zm.splat(radius));
         return Sphere{ center, radius, bbox, global_id, local_id };
     }
+
+    // pub fn globalId(self: Sphere) u32 {
+    //     return self.global_id;
+    // }
 
     // empty aabb function
 
