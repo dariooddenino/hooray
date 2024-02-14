@@ -74,6 +74,7 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    // TODO: for some reason this is not working
     zmath_pkg.link(exe_unit_tests);
 
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
