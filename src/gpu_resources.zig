@@ -1,6 +1,18 @@
 const std = @import("std");
 const core = @import("mach-core");
 const gpu = core.gpu;
+const zm = @import("zmath");
+
+pub const Uniforms = struct {
+    screen_dims: [2]f32,
+    frame_num: f32,
+    reset_buffer: f32,
+    view_matrix: zm.Mat,
+
+    pub fn serialize(self: Uniforms) [6]f32 {
+        return .{ self.screenDims[0], self.screenDims[1], self.frameNum, self.resetBuffer, 0.0, 0.0 };
+    }
+};
 
 pub const GPUResources = struct {
     const BindGroups = std.StringHashMap(*gpu.BindGroup);

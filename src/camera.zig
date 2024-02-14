@@ -5,22 +5,17 @@ const Vec = zm.Vec;
 const Mat = zm.Mat;
 
 pub const Camera = struct {
-    view_matrix: Mat = Mat{},
-    eye: Vec = Vec{},
-    center: Vec = Vec{},
-    up: Vec = Vec{},
-    direction: Vec = Vec{},
+    view_matrix: Mat = zm.splat(0),
+    eye: Vec = zm.splat(0),
+    center: Vec = zm.splat(0),
+    up: Vec = zm.splat(0),
+    direction: Vec = zm.splat(0),
     rotate_angle: f32 = 0,
     zoom_speed: f32 = 0.1,
     move_speed: f32 = 0.01,
     keypress_move_speed: f32 = 0.1,
     moving: bool = false, // TODO not sure about these ones
     key_press: bool = false,
-
-    pub fn init(eye: Vec, center: Vec, up: Vec) Camera {
-        var camera = Camera{};
-        return camera.setCamera(eye, center, up);
-    }
 
     fn setCamera(self: *Camera, eye: ?Vec, center: ?Vec, up: ?Vec) void {
         if (eye) |e| {
