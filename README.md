@@ -14,6 +14,11 @@ The shader is expecting to receive this data in a specific format, so I
 have to consider whether I want to keep my implementation or switch to
 the one 
 
+### Camera
+- The moveCamera function will have to be designed in a completely different way.
+
+### Random notes
+
 ## Done
 
 The basic structure is down.
