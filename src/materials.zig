@@ -1,39 +1,29 @@
 const std = @import("std");
 const utils = @import("utils.zig");
-const vec = @import("vec.zig");
+const zm = @import("zmath");
 
-const Color = vec.Color;
-// TODO I think this will live in shaders?
+const Color = zm.Vec;
+
 pub const Material = struct {
-    albedo: Color,
-    specular: Color,
-    emission: Color,
-    emission_strength: f32,
+    name: []const u8,
+    material_type: u32,
+    color: Color,
+    specular_color: Color,
+    emission_color: Color,
+    percent_specular: f32,
     roughness: f32,
-    specular_highlight: f32,
-    specular_exponent: f32,
+    eta: f32,
 
-    pub fn initAlbedo(albedo: Color) Material {
+    pub fn init(name: []const u8, material_type: u32, color: Color, specular_color: Color, emission_color: Color, percent_specular: f32, roughness: f32, eta: f32) Material {
         return Material{
-            .albedo = albedo,
-            .specular = Color{ 0, 0, 0 },
-            .emission = Color{ 0, 0, 0 },
-            .emission_strength = 1,
-            .roughness = 1,
-            .specular_highlight = 0.0,
-            .specular_exponent = 0.5,
-        };
-    }
-
-    pub fn init(albedo: Color, specular: Color, emission: Color, emission_strength: f32, roughness: f32, specular_highlight: f32, specular_exponent: f32) Material {
-        return Material{
-            .albedo = albedo,
-            .specular = specular,
-            .emission = emission,
-            .emission_strength = emission_strength,
+            .name = name,
+            .material_type = material_type,
+            .color = color,
+            .specular_color = specular_color,
+            .emission_color = emission_color,
+            .percent_specular = percent_specular,
             .roughness = roughness,
-            .specular_highlight = specular_highlight,
-            .specular_exponent = specular_exponent,
+            .eta = eta,
         };
     }
 };

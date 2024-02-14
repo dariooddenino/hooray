@@ -4,8 +4,10 @@ const gpu = core.gpu;
 const zm = @import("zmath");
 const utils = @import("utils.zig");
 const gpu_resources = @import("gpu_resources.zig");
+const scenes = @import("scenes.zig");
 
 const GPUResources = gpu_resources.GPUResources;
+const Scene = scenes.Scene;
 
 const workgroup_size = 8;
 
@@ -32,39 +34,10 @@ const vertices = [_]Vertex{
 };
 const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
 
-// TODO: Once I get it working, I can try the file load stuff, and then moving things out to appropriate
-// functions.
-
-// TODO mix: https://github.com/hexops/mach-core/blob/main/examples/deferred-rendering/main.zig
-// TODO with: https://github.com/Shridhar2602/WebGPU-Path-Tracer/blob/main/renderer.js
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
-
     resources: GPUResources,
-
-    // Buffers
-    // vertex_buffer: *gpu.Buffer,
-    // index_buffer: *gpu.Buffer,
-    // uniform_buffer: *gpu.Buffer,
-    // state_buffer_a: *gpu.Buffer,
-    // state_buffer_b: *gpu.Buffer,
-
-    // Buffer layouts
-    // vertex_buffer_layout: gpu.VertexBufferLayout = undefined,
-
-    // Bind groups
-    // bind_groups: [2]*gpu.BindGroup,
-
-    // Bind group layouts
-
-    // Pipelines
-    // compute_pipeline: *gpu.ComputePipeline,
-    // render_pipeline: *gpu.RenderPipeline,
-    // compute_pipeline: *gpu.ComputePipeline,
-
-    // Pipeline layouts
-
-    // Render pass descriptor
+    scene: Scene,
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         var resources = GPUResources.init(allocator);
@@ -228,11 +201,14 @@ pub const Renderer = struct {
 
         try resources.addBuffers(&buffers);
 
-        return Renderer{ .allocator = allocator, .resources = resources };
+        const scene = Scene.init(allocator);
+
+        return Renderer{ .allocator = allocator, .resources = resources, .scene = scene };
     }
 
     pub fn deinit(self: *Renderer) !void {
         try self.resources.deinit();
+        self.scene.deinit();
     }
 
     pub fn render(self: *Renderer, app: *App) !void {
