@@ -48,8 +48,8 @@ pub const Renderer = struct {
         // Create BindGroups
 
         // Create Pipelines
-        // TODO this hardcoded width and height should be removed, also wrong name
-        try self.initBuffers(allocator, scene, camera, shader_module, 800.0, 600.0);
+        // TODO this hardcoded width and height should be removed
+        try self.initPipelines(allocator, scene, camera, shader_module, 800.0, 600.0);
 
         return self;
     }
@@ -83,7 +83,7 @@ pub const Renderer = struct {
     }
 
     // Note this is actually more of a initRenderPipelines...
-    fn initBuffers(self: *Renderer, _: std.mem.Allocator, scene: Scene, camera: Camera, shader_module: *gpu.ShaderModule, width: f32, height: f32) !void {
+    fn initPipelines(self: *Renderer, _: std.mem.Allocator, scene: Scene, camera: Camera, shader_module: *gpu.ShaderModule, width: f32, height: f32) !void {
         _ = scene;
         _ = camera;
         _ = width;

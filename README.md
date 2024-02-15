@@ -8,6 +8,8 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ## TODO
 
+### Data passage test
+
 ### BVH
 The BVH is sent to a storage buffer after being serialized.
 The shader is expecting to receive this data in a specific format, so I 
