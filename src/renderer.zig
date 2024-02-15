@@ -12,6 +12,8 @@ const Scene = scenes.Scene;
 
 const App = @import("main.zig").App;
 
+var step: u32 = 0;
+
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
     resources: GPUResources,
@@ -24,11 +26,10 @@ pub const Renderer = struct {
         // Build scene
         var scene = Scene.init(allocator);
         scene.loadBasicScene();
-        scene.createBVH();
+        try scene.createBVH();
 
         // Create camera
         const camera = Camera{};
-        _ = camera;
 
         // Load shaders
         const shader_module = try loadShaders(allocator);
@@ -45,7 +46,7 @@ pub const Renderer = struct {
 
         // Create PipelineLayouts
 
-        return Renderer{ .allocator = allocator, .resources = resources, .scene = scene };
+        return Renderer{ .allocator = allocator, .resources = resources, .scene = scene, .camera = camera };
     }
 
     pub fn deinit(self: *Renderer) !void {
@@ -56,7 +57,8 @@ pub const Renderer = struct {
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
-        const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
+        // const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
+        const shader_files = .{"simple"};
         const ext = ".wgsl";
         const folder = "./shaders/";
         inline for (shader_files) |file| {
@@ -75,17 +77,17 @@ pub const Renderer = struct {
         return core.device.createShaderModuleWGSL("hooray", file);
     }
 
-    fn initBuffers(self: *Renderer, scene: Scene, camera: Camera, width: f32, height: f32) void {
-        const uniforms = GPUResources.Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
-        const uniform_array = uniforms.serialize();
-        const spheres = scene.spheres;
-    }
+    // fn initBuffers(self: *Renderer, scene: Scene, camera: Camera, width: f32, height: f32) void {
+    //     const uniforms = GPUResources.Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
+    //     const uniform_array = uniforms.serialize();
+    //     const spheres = scene.spheres;
+    // }
 
     pub fn render(self: *Renderer, app: *App) !void {
         _ = app;
         step += 1;
-        const index_buffer = self.resources.getBuffer("index");
-        const vertex_buffer = self.resources.getBuffer("vertex");
+        // const index_buffer = self.resources.getBuffer("index");
+        // const vertex_buffer = self.resources.getBuffer("vertex");
         const queue = core.queue;
         const back_buffer_view = core.swap_chain.getCurrentTextureView().?;
         const encoder = core.device.createCommandEncoder(null);
@@ -101,22 +103,23 @@ pub const Renderer = struct {
 
         const pass = encoder.beginRenderPass(&render_pass_info);
         pass.setPipeline(self.resources.getRenderPipeline("render"));
-        const bind_groups = [2]*gpu.BindGroup{ self.resources.getBindGroup("state_a"), self.resources.getBindGroup("state_b") };
-        pass.setBindGroup(0, bind_groups[step % 2], &.{0});
-        pass.setVertexBuffer(0, vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
-        pass.setIndexBuffer(index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
+        // const bind_groups = [2]*gpu.BindGroup{ self.resources.getBindGroup("state_a"), self.resources.getBindGroup("state_b") };
+        // pass.setBindGroup(0, bind_groups[step % 2], &.{0});
+        // pass.setVertexBuffer(0, vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
+        // pass.setIndexBuffer(index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
         // pass.setBindGroup(0, self.bind_group, &.{0});
-        pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
+        // pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
+        pass.draw(3, 1, 0, 0);
         pass.end();
         pass.release();
 
-        const compute_pass = encoder.beginComputePass(null);
-        compute_pass.setPipeline(self.resources.getComputePipeline("compute"));
-        compute_pass.setBindGroup(0, bind_groups[step % 2], &.{0});
-        const workgroup_count = @ceil(grid_size / workgroup_size);
-        compute_pass.dispatchWorkgroups(workgroup_count, workgroup_count, 1);
-        compute_pass.end();
-        compute_pass.release();
+        // const compute_pass = encoder.beginComputePass(null);
+        // compute_pass.setPipeline(self.resources.getComputePipeline("compute"));
+        // compute_pass.setBindGroup(0, bind_groups[step % 2], &.{0});
+        // const workgroup_count = @ceil(grid_size / workgroup_size);
+        // compute_pass.dispatchWorkgroups(workgroup_count, workgroup_count, 1);
+        // compute_pass.end();
+        // compute_pass.release();
 
         var command = encoder.finish(null);
         encoder.release();

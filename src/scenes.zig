@@ -46,19 +46,20 @@ pub const Scene = struct {
     }
 
     pub fn loadBasicScene(self: *Scene) void {
-        const default_material = Material.init("default", 0, zm.loadArr3(.{ 1, 0, 0 }, zm.splat(0), zm.splat(0), 0, 0, 0));
-        self.addMaterial(default_material);
+        _ = self;
+        // const default_material = Material.init("default", 0, zm.loadArr3(.{ 1, 0, 0 }, zm.splat(0), zm.splat(0), 0, 0, 0));
+        // self.addMaterial(default_material);
 
-        self.addSphere(zm.loadArr3(.{ -0.3, -0.65, 0.3 }), 0.35, default_material.material_id);
+        // self.addSphere(zm.loadArr3(.{ -0.3, -0.65, 0.3 }), 0.35, default_material.material_id);
 
-        self.createBVH();
+        // self.createBVH();
     }
 
-    fn createBVH(self: *Scene) void {
+    pub fn createBVH(self: *Scene) !void {
         // Take all the objects in a flat list
         // Pass them to the BVH builder
         // Get back a BVH
-        const bvh = BVHTree.init(self.allocator, self.objects.items, 0, self.objects.items.len);
+        const bvh = try BVHTree.init(self.allocator, self.objects.items, 0, self.objects.items.len);
         self.bvh = bvh;
     }
 

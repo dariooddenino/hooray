@@ -5,11 +5,11 @@ const Vec = zm.Vec;
 const Mat = zm.Mat;
 
 pub const Camera = struct {
-    view_matrix: Mat = zm.splat(0),
-    eye: Vec = zm.splat(0),
-    center: Vec = zm.splat(0),
-    up: Vec = zm.splat(0),
-    direction: Vec = zm.splat(0),
+    view_matrix: Mat = zm.matFromArr(.{0} ** 16),
+    eye: Vec = zm.splat(Vec, 0),
+    center: Vec = zm.splat(Vec, 0),
+    up: Vec = zm.splat(Vec, 0),
+    direction: Vec = zm.splat(Vec, 0),
     rotate_angle: f32 = 0,
     zoom_speed: f32 = 0.1,
     move_speed: f32 = 0.01,
