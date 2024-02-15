@@ -8,7 +8,10 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ## TODO
 
-### Data passage test
+### First connections steps
+I have to pass the uniforms and framebuffer buffers to the shaders.
+Define Uniforms in zig.
+And then the app should run, just printing a black box. 
 
 ### BVH
 The BVH is sent to a storage buffer after being serialized.
