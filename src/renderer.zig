@@ -24,29 +24,34 @@ pub const Renderer = struct {
         const resources = GPUResources.init(allocator);
 
         // Build scene
-        var scene = Scene.init(allocator);
-        scene.loadBasicScene();
-        try scene.createBVH();
+        const scene = Scene.init(allocator);
+        // scene.loadBasicScene();
+        // try scene.createBVH();
 
         // Create camera
         const camera = Camera{};
+
+        var self = Renderer{ .allocator = allocator, .resources = resources, .scene = scene, .camera = camera };
 
         // Load shaders
         const shader_module = try loadShaders(allocator);
         defer shader_module.release();
 
+        // Create BindGroupLayouts
+        // NOTE I shouldn't need these for now.
+
+        // Create PipelineLayouts
+        // NOTE I shouldn't need these for now.
+
         // Create Buffers
-        // const buffers = initBuffers(allocator, s)
 
         // Create BindGroups
 
-        // Create BindGroupLayouts
-
         // Create Pipelines
+        // TODO this hardcoded width and height should be removed, also wrong name
+        try self.initBuffers(allocator, scene, camera, shader_module, 800.0, 600.0);
 
-        // Create PipelineLayouts
-
-        return Renderer{ .allocator = allocator, .resources = resources, .scene = scene, .camera = camera };
+        return self;
     }
 
     pub fn deinit(self: *Renderer) !void {
@@ -77,11 +82,37 @@ pub const Renderer = struct {
         return core.device.createShaderModuleWGSL("hooray", file);
     }
 
-    // fn initBuffers(self: *Renderer, scene: Scene, camera: Camera, width: f32, height: f32) void {
-    //     const uniforms = GPUResources.Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
-    //     const uniform_array = uniforms.serialize();
-    //     const spheres = scene.spheres;
-    // }
+    // Note this is actually more of a initRenderPipelines...
+    fn initBuffers(self: *Renderer, _: std.mem.Allocator, scene: Scene, camera: Camera, shader_module: *gpu.ShaderModule, width: f32, height: f32) !void {
+        _ = scene;
+        _ = camera;
+        _ = width;
+        _ = height;
+        const blend = gpu.BlendState{};
+        const color_target = gpu.ColorTargetState{
+            .format = core.descriptor.format,
+            .blend = &blend,
+            .write_mask = gpu.ColorWriteMaskFlags.all,
+        };
+        const fragment = gpu.FragmentState.init(.{ .module = shader_module, .entry_point = "fs", .targets = &.{color_target} });
+        // const uniforms = GPUResources.Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
+        // const uniform_array = uniforms.serialize();
+        // const spheres = scene.spheres;
+        const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+            .fragment = &fragment,
+            // .layout = pipeline_layout,
+            .vertex = gpu.VertexState.init(.{
+                .module = shader_module,
+                .entry_point = "vs",
+                // .buffers = &.{vertex_buffer_layout},
+            }),
+            .primitive = .{
+                .cull_mode = .back,
+            },
+        };
+        var render_pipelines: [1]GPUResources.RenderPipelineAdd = .{.{ .name = "render", .render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor) }};
+        try self.resources.addRenderPipelines(&render_pipelines);
+    }
 
     pub fn render(self: *Renderer, app: *App) !void {
         _ = app;
