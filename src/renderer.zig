@@ -226,6 +226,59 @@ pub const Renderer = struct {
         };
         var render_pipelines: [1]GPUResources.RenderPipelineAdd = .{.{ .name = "render", .render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor) }};
         try self.resources.addRenderPipelines(&render_pipelines);
+
+        const compute_pipeline = core.device.createComputePipeline(&gpu.ComputePipeline.Descriptor{ .layout = pipeline_layout, .compute = gpu.ProgrammableStageDescriptor{
+            .module = shader_module,
+            .entry_point = "computeFrameBuffer",
+        } });
+        var compute_pipelines: [1]GPUResources.ComputePipelineAdd = .{.{ .name = "compute", .compute_pipeline = compute_pipeline }};
+        try self.resources.addComputePipelines(&compute_pipelines);
+    }
+
+    fn renderPass(self: *Renderer, back_buffer_view: *gpu.TextureView) void {
+        const queue = core.queue;
+        const descriptor = gpu.CommandEncoder.Descriptor{ .label = "Render encoder" };
+        const encoder = core.device.createCommandEncoder(&descriptor);
+        const color_attachment = gpu.RenderPassColorAttachment{
+            .view = back_buffer_view,
+            .clear_value = std.mem.zeroes(gpu.Color),
+            .load_op = .clear,
+            .store_op = .store,
+        };
+        const render_pass_info = gpu.RenderPassDescriptor.init(.{
+            .color_attachments = &.{color_attachment},
+        });
+
+        const pass = encoder.beginRenderPass(&render_pass_info);
+        pass.setPipeline(self.resources.getRenderPipeline("render"));
+        pass.setBindGroup(0, self.resources.getBindGroup("bind_group"), &.{0});
+        pass.setVertexBuffer(0, self.resources.getBuffer("vertex"), 0, @sizeOf(Vertex) * vertex_data.len);
+
+        pass.draw(6, 1, 0, 0);
+        pass.end();
+        pass.release();
+        var command = encoder.finish(null);
+        encoder.release();
+        queue.submit(&[_]*gpu.CommandBuffer{command});
+        command.release();
+    }
+
+    fn computePass(self: *Renderer, work_groups_needed: u32) void {
+        const queue = core.queue;
+        const descriptor = gpu.CommandEncoder.Descriptor{ .label = "Compute encoder" };
+        const encoder = core.device.createCommandEncoder(&descriptor);
+        const pass = encoder.beginComputePass(null);
+        pass.setPipeline(self.resources.getComputePipeline("compute"));
+        pass.setBindGroup(0, self.resources.getBindGroup("bind_group"), &.{0});
+        pass.dispatchWorkgroups(work_groups_needed + 1, 1, 1);
+
+        pass.end();
+        pass.release();
+
+        var command = encoder.finish(null);
+        encoder.release();
+        queue.submit(&[_]*gpu.CommandBuffer{command});
+        command.release();
     }
 
     // This would be render_animation
@@ -260,40 +313,15 @@ pub const Renderer = struct {
         // compute_pass.end();
         // compute_pass.release();
 
-        // skipping for now
+        // Hardcoded for now
+        const work_groups_needed = (screen_width * screen_height) / 64;
+        self.computePass(work_groups_needed);
 
         // Render pass
-
-        // const index_buffer = self.resources.getBuffer("index");
-        // const vertex_buffer = self.resources.getBuffer("vertex");
-        const queue = core.queue;
         const back_buffer_view = core.swap_chain.getCurrentTextureView().?;
-        const encoder = core.device.createCommandEncoder(null);
-        const color_attachment = gpu.RenderPassColorAttachment{
-            .view = back_buffer_view,
-            .clear_value = std.mem.zeroes(gpu.Color),
-            .load_op = .clear,
-            .store_op = .store,
-        };
-        const render_pass_info = gpu.RenderPassDescriptor.init(.{
-            .color_attachments = &.{color_attachment},
-        });
 
-        const pass = encoder.beginRenderPass(&render_pass_info);
-        pass.setPipeline(self.resources.getRenderPipeline("render"));
+        self.renderPass(back_buffer_view);
 
-        // TODO example stuff
-        pass.setVertexBuffer(0, self.resources.getBuffer("vertex"), 0, @sizeOf(Vertex) * vertex_data.len);
-        pass.setBindGroup(0, self.resources.getBindGroup("bind_group"), &.{0});
-        pass.draw(3, 1, 0, 0);
-        pass.end();
-        pass.release();
-
-        var command = encoder.finish(null);
-        encoder.release();
-
-        queue.submit(&[_]*gpu.CommandBuffer{command});
-        command.release();
         core.swap_chain.present();
         back_buffer_view.release();
 
