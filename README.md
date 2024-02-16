@@ -9,21 +9,9 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 ## TODO
 
 ### First connections steps
-Finish implementing everything except for the compute pipeline.
-Go through all the steps in webgpu-utils
-Go through all the steps in renderer
-
-### BVH
-The BVH is sent to a storage buffer after being serialized.
-The shader is expecting to receive this data in a specific format, so I 
-have to consider whether I want to keep my implementation or switch to
-the one.
-
-I think I can pass data structures directly from zig, I don't have to do the array thing.
-A good step could be simplifying the shaders, so that I'm able to make the program run and I can test one thing at a time.
-
-I need to find how to debug webgpu shaders.
-Maybe https://renderdoc.org/
+Finish converting the structures from the AABB.
+Connect all buffers.
+Work on the compute shader.
 
 #### Flow from WebGPU-Path-Tracer
 In initBuffers calls `scene.create_bvh`

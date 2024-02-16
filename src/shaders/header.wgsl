@@ -25,6 +25,58 @@ struct Uniforms {
   view_matrix: mat4x4f,
 }
 
+struct Ray {
+    origin: vec3f,
+    dir: vec3f,
+}
+
+struct Material {
+    color: vec3f,
+    specular_color: vec3f,
+    emission_color: vec3f,
+    specular_strength: f32,
+    roughness: f32,
+    eta: f32,
+    material_type: f32
+}
+
+struct ModelTransform {
+    model_matrix: mat4x4f,
+    inv_model_matrix: mat4x4f
+}
+
+struct Sphere {
+    center: vec3f,
+    r: f32,
+    global_id: f32,
+    local_id: f32,
+    material_id: f32
+}
+
+struct Quad {
+    Q: vec3f,
+    u: vec3f,
+    local_id: f32,
+    v: vec3f,
+    global_id: f32,
+    normal: vec3f,
+    D: f32,
+    w: vec3f,
+    material_id: f32
+}
+
+struct AABB {
+    min: vec3f,
+    right_offset: f32,
+    max: vec3f,
+
+    prim_type: f32,
+    prim_id: f32,
+    prim_count: f32,
+    skip_link: f32,
+    axis: f32
+}
+
 fn get2Dfrom1D(pos: vec2f) -> u32 {
     return (u32(pos.y) * u32(uniforms.screen_dims.x) + u32(pos.x));
 }
