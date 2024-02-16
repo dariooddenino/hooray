@@ -13,6 +13,11 @@ const Scene = scenes.Scene;
 
 const App = @import("main.zig").App;
 
+// TODO putting these two here for now, no idea if I'm going to use them.
+const screen_width = 800;
+const screen_height = 600;
+const size = screen_width * screen_height * 4;
+
 var step: u32 = 0;
 
 const Vertex = struct {
@@ -65,9 +70,10 @@ pub const Renderer = struct {
 
         // Create Buffers
         // TODO this hardcoded width and height should be removed
-        try self.initBuffers(allocator, scene, camera, 800.0, 600.0);
+        try self.initBuffers(allocator, scene, camera, screen_width, screen_height);
 
         // Create BindGroups
+        try self.initBindGroups();
 
         // Create Pipelines
         try self.initPipelines(shader_module);
@@ -105,9 +111,10 @@ pub const Renderer = struct {
 
     fn initBindGroupLayouts(self: *Renderer) !void {
         const bglu = gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0);
+        const bglf = gpu.BindGroupLayout.Entry.buffer(1, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bgl = core.device.createBindGroupLayout(
             &gpu.BindGroupLayout.Descriptor.init(.{
-                .entries = &.{bglu},
+                .entries = &.{ bglu, bglf },
             }),
         );
         var bind_group_layouts: [1]GPUResources.BindGroupLayoutAdd = .{.{ .name = "layout", .bind_group_layout = bgl }};
@@ -154,8 +161,34 @@ pub const Renderer = struct {
         // @memcpy(index_mapped.?, index_data[0..]);
         // index_buffer.unmap();
 
-        var buffers: [2]GPUResources.BufferAdd = .{ .{ .name = "vertex", .buffer = vertex_buffer }, .{ .name = "uniforms", .buffer = uniforms_buffer } };
+        // TODO this will have to become an ArrayList if the values are not hardcoded anymore.
+        const frame_num: [size]f32 = .{0} ** size;
+        const frame_buffer = core.device.createBuffer(&.{
+            .label = "Frame",
+            .usage = .{ .storage = true, .copy_src = true },
+            .size = @sizeOf(f32) * size,
+            .mapped_at_creation = .true,
+        });
+        const frame_mapped = frame_buffer.getMappedRange(f32, 0, size);
+        @memcpy(frame_mapped.?, frame_num[0..]);
+        frame_buffer.unmap();
+
+        var buffers: [3]GPUResources.BufferAdd = .{ .{ .name = "vertex", .buffer = vertex_buffer }, .{ .name = "uniforms", .buffer = uniforms_buffer }, .{ .name = "frame", .buffer = frame_buffer } };
         try self.resources.addBuffers(&buffers);
+    }
+
+    fn initBindGroups(self: *Renderer) !void {
+        const layout = self.resources.getBindGroupLayout("layout");
+        const uniforms_buffer = self.resources.getBuffer("uniforms");
+        const frame_buffer = self.resources.getBuffer("frame");
+        const bind_group = core.device.createBindGroup(
+            &gpu.BindGroup.Descriptor.init(.{
+                .layout = layout,
+                .entries = &.{ gpu.BindGroup.Entry.buffer(0, uniforms_buffer, 0, @sizeOf(Uniforms)), gpu.BindGroup.Entry.buffer(1, frame_buffer, 0, @sizeOf(f32) * size) },
+            }),
+        );
+        var bind_groups: [1]GPUResources.BindGroupAdd = .{.{ .name = "bind_group", .bind_group = bind_group }};
+        try self.resources.addBindGroups(&bind_groups);
     }
 
     fn initPipelines(self: *Renderer, shader_module: *gpu.ShaderModule) !void {
@@ -176,8 +209,6 @@ pub const Renderer = struct {
             .attributes = &vertex_attributes,
         });
         const pipeline_layout = self.resources.getPipelineLayout("layout");
-        // const uniforms = GPUResources.Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
-        // const uniform_array = uniforms.serialize();
         // const spheres = scene.spheres;
         const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
             .fragment = &fragment,
@@ -231,6 +262,7 @@ pub const Renderer = struct {
         // pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
         // END GAME OF LIFE
 
+        pass.setBindGroup(0, self.resources.getBindGroup("bind_group"), &.{0});
         // TODO no idea here
         pass.draw(3, 1, 0, 0);
         pass.end();
