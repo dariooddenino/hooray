@@ -8,27 +8,37 @@ const scenes = @import("scenes.zig");
 
 const Camera = @import("camera.zig").Camera;
 const GPUResources = gpu_resources.GPUResources;
+const Uniforms = gpu_resources.Uniforms;
 const Scene = scenes.Scene;
 
 const App = @import("main.zig").App;
 
 var step: u32 = 0;
 
-// TODO data for the hardcoded quad example
-const Vertex = extern struct { pos: @Vector(2, f32), col: @Vector(3, f32) };
-const vertices = [_]Vertex{
-    .{ .pos = .{ -0.5, -0.5 }, .col = .{ 1, 0, 0 } },
-    .{ .pos = .{ 0.5, -0.5 }, .col = .{ 0, 1, 0 } },
-    .{ .pos = .{ 0.5, 0.5 }, .col = .{ 0, 0, 1 } },
-    .{ .pos = .{ -0.5, 0.5 }, .col = .{ 1, 1, 1 } },
+const Vertex = struct {
+    pos: @Vector(2, f32),
 };
-const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
+
+// Screen size quad.
+const vertex_data = [_]Vertex{ Vertex{ .pos = .{ -1, -1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ 1, 1 } } };
+
+// TODO data for the hardcoded quad example
+// const Vertex = extern struct { pos: @Vector(2, f32), col: @Vector(3, f32) };
+// const vertices = [_]Vertex{
+//     .{ .pos = .{ -0.5, -0.5 }, .col = .{ 1, 0, 0 } },
+//     .{ .pos = .{ 0.5, -0.5 }, .col = .{ 0, 1, 0 } },
+//     .{ .pos = .{ 0.5, 0.5 }, .col = .{ 0, 0, 1 } },
+//     .{ .pos = .{ -0.5, 0.5 }, .col = .{ 1, 1, 1 } },
+// };
+// const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
 
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
     resources: GPUResources,
     scene: Scene,
     camera: Camera,
+    // TODO this feels out of place here maybe
+    uniforms: ?Uniforms = null,
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
@@ -48,10 +58,10 @@ pub const Renderer = struct {
         defer shader_module.release();
 
         // Create BindGroupLayouts
-        // NOTE I shouldn't need these for now.
+        try self.initBindGroupLayouts();
 
         // Create PipelineLayouts
-        // NOTE I shouldn't need these for now.
+        try self.initPipelineLayouts();
 
         // Create Buffers
         // TODO this hardcoded width and height should be removed
@@ -73,8 +83,8 @@ pub const Renderer = struct {
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
-        // const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
-        const shader_files = .{"simple"};
+        const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
+        // const shader_files = .{"simple"};
         const ext = ".wgsl";
         const folder = "./shaders/";
         inline for (shader_files) |file| {
@@ -93,30 +103,58 @@ pub const Renderer = struct {
         return core.device.createShaderModuleWGSL("hooray", file);
     }
 
+    fn initBindGroupLayouts(self: *Renderer) !void {
+        const bglu = gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0);
+        const bgl = core.device.createBindGroupLayout(
+            &gpu.BindGroupLayout.Descriptor.init(.{
+                .entries = &.{bglu},
+            }),
+        );
+        var bind_group_layouts: [1]GPUResources.BindGroupLayoutAdd = .{.{ .name = "layout", .bind_group_layout = bgl }};
+        try self.resources.addBindGroupLayouts(&bind_group_layouts);
+    }
+
+    fn initPipelineLayouts(self: *Renderer) !void {
+        const bind_group_layout = self.resources.getBindGroupLayout("layout");
+        const pipeline_layout = core.device.createPipelineLayout(
+            &gpu.PipelineLayout.Descriptor.init(.{
+                .bind_group_layouts = &.{bind_group_layout},
+            }),
+        );
+        var pipeline_layouts: [1]GPUResources.PipelineLayoutAdd = .{.{ .name = "layout", .pipeline_layout = pipeline_layout }};
+        try self.resources.addPipelineLayouts(&pipeline_layouts);
+    }
+
     // TODO for now I'm hardcoding a lot of things.
     fn initBuffers(self: *Renderer, allocator: std.mem.Allocator, scene: Scene, camera: Camera, width: f32, height: f32) !void {
         _ = allocator;
         _ = scene;
-        _ = camera;
-        _ = width;
-        _ = height;
-        // This is for the hardcoded quad example
-        const vertex_buffer = core.device.createBuffer(&.{ .label = "Vertex", .usage = .{ .vertex = true, .copy_dst = true }, .size = @sizeOf(Vertex) * vertices.len, .mapped_at_creation = .true });
-        const vertex_mapped = vertex_buffer.getMappedRange(Vertex, 0, vertices.len);
-        @memcpy(vertex_mapped.?, vertices[0..]);
+
+        const vertex_buffer = core.device.createBuffer(&.{ .label = "Vertex", .usage = .{ .vertex = true, .copy_dst = true }, .size = @sizeOf(Vertex) * vertex_data.len, .mapped_at_creation = .true });
+        const vertex_mapped = vertex_buffer.getMappedRange(Vertex, 0, vertex_data.len);
+        @memcpy(vertex_mapped.?, vertex_data[0..]);
         vertex_buffer.unmap();
 
-        // TODO for the example
-        const index_buffer = core.device.createBuffer(&.{
-            .usage = .{ .index = true },
-            .size = @sizeOf(u32) * index_data.len,
-            .mapped_at_creation = .true,
+        self.uniforms = Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
+        const uniforms_buffer = core.device.createBuffer(&.{
+            .label = "Uniforms",
+            .usage = .{ .uniform = true, .copy_dst = true },
+            .size = @sizeOf(Uniforms),
+            .mapped_at_creation = .false,
         });
-        const index_mapped = index_buffer.getMappedRange(u32, 0, index_data.len);
-        @memcpy(index_mapped.?, index_data[0..]);
-        index_buffer.unmap();
+        core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{self.uniforms.?});
 
-        var buffers: [2]GPUResources.BufferAdd = .{ .{ .name = "vertex", .buffer = vertex_buffer }, .{ .name = "index", .buffer = index_buffer } };
+        // TODO for the example
+        // const index_buffer = core.device.createBuffer(&.{
+        //     .usage = .{ .index = true },
+        //     .size = @sizeOf(u32) * index_data.len,
+        //     .mapped_at_creation = .true,
+        // });
+        // const index_mapped = index_buffer.getMappedRange(u32, 0, index_data.len);
+        // @memcpy(index_mapped.?, index_data[0..]);
+        // index_buffer.unmap();
+
+        var buffers: [2]GPUResources.BufferAdd = .{ .{ .name = "vertex", .buffer = vertex_buffer }, .{ .name = "uniforms", .buffer = uniforms_buffer } };
         try self.resources.addBuffers(&buffers);
     }
 
@@ -131,18 +169,19 @@ pub const Renderer = struct {
         // TODO QUAD example
 
         // NOTE the buffer layout indicates how to map stuff from zig to the shader
-        const vertex_attributes = [_]gpu.VertexAttribute{ .{ .format = .float32x4, .offset = @offsetOf(Vertex, "pos"), .shader_location = 0 }, .{ .format = .float32x4, .offset = @offsetOf(Vertex, "col"), .shader_location = 1 } };
+        const vertex_attributes = [_]gpu.VertexAttribute{.{ .format = .float32x2, .offset = @offsetOf(Vertex, "pos"), .shader_location = 0 }};
         const vertex_buffer_layout = gpu.VertexBufferLayout.init(.{
             .array_stride = @sizeOf(Vertex),
             .step_mode = .vertex,
             .attributes = &vertex_attributes,
         });
+        const pipeline_layout = self.resources.getPipelineLayout("layout");
         // const uniforms = GPUResources.Uniforms{ .screen_dims = .{ width, height }, .frame_num = 0, .reset_buffer = 0, .view_matrix = camera.view_matrix };
         // const uniform_array = uniforms.serialize();
         // const spheres = scene.spheres;
         const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
             .fragment = &fragment,
-            // .layout = pipeline_layout,
+            .layout = pipeline_layout,
             .vertex = gpu.VertexState.init(.{
                 .module = shader_module,
                 .entry_point = "vs",
@@ -178,9 +217,9 @@ pub const Renderer = struct {
         pass.setPipeline(self.resources.getRenderPipeline("render"));
 
         // TODO example stuff
-        pass.setVertexBuffer(0, self.resources.getBuffer("vertex"), 0, @sizeOf(Vertex) * vertices.len);
-        pass.setIndexBuffer(self.resources.getBuffer("index"), .uint32, 0, @sizeOf(u32) * index_data.len);
-        pass.drawIndexed(index_data.len, 1, 0, 0, 0);
+        pass.setVertexBuffer(0, self.resources.getBuffer("vertex"), 0, @sizeOf(Vertex) * vertex_data.len);
+        // pass.setIndexBuffer(self.resources.getBuffer("index"), .uint32, 0, @sizeOf(u32) * index_data.len);
+        // pass.drawIndexed(index_data.len, 1, 0, 0, 0);
         // ENDTODO
 
         // GAME OF LIFE
@@ -192,7 +231,8 @@ pub const Renderer = struct {
         // pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
         // END GAME OF LIFE
 
-        // pass.draw(3, 1, 0, 0);
+        // TODO no idea here
+        pass.draw(3, 1, 0, 0);
         pass.end();
         pass.release();
 

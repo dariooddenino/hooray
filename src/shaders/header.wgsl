@@ -12,9 +12,9 @@ const STRATIFY = false;
 const IMPORTANCE_SAMPLING = false;
 const STACK_SIZE = 20;
 
-@group(0) @bindings(0) var<uniform> uniforms : Uniforms;
+@group(0) @binding(0) var<uniform> uniforms : Uniforms;
 // TODO: this was actually 3
-@group(0) @bindings(1) var<storage, read_write> framebuffer : array<vec4f>;
+@group(0) @binding(1) var<storage, read_write> framebuffer : array<vec4f>;
 
 struct Uniforms {
   screenDims: vec2f,
@@ -25,16 +25,6 @@ struct Uniforms {
 
 fn get2Dfrom1D(pos: vec2f) -> u32 {
     return (u32(pos.y) * u32(uniforms.screenDims.x) + u32(pos.x));
-}
-
-fn aces_approx(v: vec3f) -> vec3f {
-    let v1 = v * 0.6f;
-    const a = 2.51f;
-    const b = 0.03f;
-    const c = 2.43f;
-    const d = 0.59f;
-    const e = 0.14f;
-    return clamp((v1 * (a * v1 + b)) / (v1 * (c * v1 + d) + e), vec3(0.0f), vec3(1.0f));
 }
 
 @fragment
