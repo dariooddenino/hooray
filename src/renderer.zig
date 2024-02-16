@@ -44,6 +44,9 @@ pub const Renderer = struct {
     camera: Camera,
     // TODO this feels out of place here maybe
     uniforms: ?Uniforms = null,
+    frame_num: f32 = 0,
+    avg_frame_time: f32 = 0,
+    last_frame_time: i64 = 0,
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
@@ -77,6 +80,8 @@ pub const Renderer = struct {
 
         // Create Pipelines
         try self.initPipelines(shader_module);
+
+        self.last_frame_time = std.time.milliTimestamp();
 
         return self;
     }
@@ -151,16 +156,6 @@ pub const Renderer = struct {
         });
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{self.uniforms.?});
 
-        // TODO for the example
-        // const index_buffer = core.device.createBuffer(&.{
-        //     .usage = .{ .index = true },
-        //     .size = @sizeOf(u32) * index_data.len,
-        //     .mapped_at_creation = .true,
-        // });
-        // const index_mapped = index_buffer.getMappedRange(u32, 0, index_data.len);
-        // @memcpy(index_mapped.?, index_data[0..]);
-        // index_buffer.unmap();
-
         // TODO this will have to become an ArrayList if the values are not hardcoded anymore.
         const frame_num: [size]f32 = .{0} ** size;
         const frame_buffer = core.device.createBuffer(&.{
@@ -226,9 +221,28 @@ pub const Renderer = struct {
         try self.resources.addRenderPipelines(&render_pipelines);
     }
 
+    // This would be render_animation
     pub fn render(self: *Renderer, app: *App) !void {
         _ = app;
-        step += 1;
+        self.frame_num += 1;
+        // TODO mmm
+        var uniforms = &self.uniforms.?;
+        const resources = self.resources;
+        var camera = &self.camera;
+
+        // Update uniforms
+        uniforms.frame_num = self.frame_num;
+        uniforms.reset_buffer = if (camera.moving or camera.key_press) 1 else 0;
+
+        if (camera.moving or camera.key_press) {
+            self.frame_num = 1;
+            camera.key_press = false;
+        }
+
+        uniforms.view_matrix = camera.view_matrix;
+        const uniforms_buffer = resources.getBuffer("uniforms");
+        core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
+
         // const index_buffer = self.resources.getBuffer("index");
         // const vertex_buffer = self.resources.getBuffer("vertex");
         const queue = core.queue;
