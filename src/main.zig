@@ -3,7 +3,9 @@ const core = @import("mach-core");
 const gpu = core.gpu;
 const queue = core.queue;
 
+const Camera = @import("camera.zig").Camera;
 const Renderer = @import("renderer.zig").Renderer;
+const Vec = @import("zmath").Vec;
 pub const App = @This();
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -20,7 +22,12 @@ pub fn init(app: *App) !void {
     });
     core.setFrameRateLimit(5);
 
-    const renderer = try Renderer.init(gpa.allocator());
+    var camera = Camera{};
+    camera.setCamera(Vec{ 0.5, 0, 2.5, 0 }, Vec{ 0.5, 0, 0, 0 }, Vec{ 0, 1, 0, 0 });
+    var renderer = try Renderer.init(gpa.allocator(), camera);
+
+    // Just fps and optional camera for now
+    renderer.setRenderParameters(61, null);
 
     app.title_timer = try core.Timer.start();
     app.timer = try core.Timer.start();

@@ -47,17 +47,15 @@ pub const Renderer = struct {
     frame_num: f32 = 0,
     avg_frame_time: f32 = 0,
     last_frame_time: i64 = 0,
+    req_frame_delay: f32 = 0,
 
-    pub fn init(allocator: std.mem.Allocator) !Renderer {
+    pub fn init(allocator: std.mem.Allocator, camera: Camera) !Renderer {
         const resources = GPUResources.init(allocator);
 
         // Build scene
         const scene = Scene.init(allocator);
         // scene.loadBasicScene();
         // try scene.createBVH();
-
-        // Create camera
-        const camera = Camera{};
 
         var self = Renderer{ .allocator = allocator, .resources = resources, .scene = scene, .camera = camera };
 
@@ -81,9 +79,18 @@ pub const Renderer = struct {
         // Create Pipelines
         try self.initPipelines(shader_module);
 
-        self.last_frame_time = std.time.milliTimestamp();
-
         return self;
+    }
+
+    pub fn setRenderParameters(self: *Renderer, max_fps: f32, camera: ?Camera) void {
+        self.frame_num = 0;
+        self.avg_frame_time = 0;
+        self.last_frame_time = std.time.milliTimestamp();
+        self.req_frame_delay = 1000 / max_fps;
+        if (camera) |c| {
+            self.camera = c;
+        }
+        // TODO in theory width and height
     }
 
     pub fn deinit(self: *Renderer) !void {
@@ -243,6 +250,20 @@ pub const Renderer = struct {
         const uniforms_buffer = resources.getBuffer("uniforms");
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
 
+        // Compute pass
+
+        // const compute_pass = encoder.beginComputePass(null);
+        // compute_pass.setPipeline(self.resources.getComputePipeline("compute"));
+        // compute_pass.setBindGroup(0, bind_groups[step % 2], &.{0});
+        // const workgroup_count = @ceil(grid_size / workgroup_size);
+        // compute_pass.dispatchWorkgroups(workgroup_count, workgroup_count, 1);
+        // compute_pass.end();
+        // compute_pass.release();
+
+        // skipping for now
+
+        // Render pass
+
         // const index_buffer = self.resources.getBuffer("index");
         // const vertex_buffer = self.resources.getBuffer("vertex");
         const queue = core.queue;
@@ -263,32 +284,10 @@ pub const Renderer = struct {
 
         // TODO example stuff
         pass.setVertexBuffer(0, self.resources.getBuffer("vertex"), 0, @sizeOf(Vertex) * vertex_data.len);
-        // pass.setIndexBuffer(self.resources.getBuffer("index"), .uint32, 0, @sizeOf(u32) * index_data.len);
-        // pass.drawIndexed(index_data.len, 1, 0, 0, 0);
-        // ENDTODO
-
-        // GAME OF LIFE
-        // const bind_groups = [2]*gpu.BindGroup{ self.resources.getBindGroup("state_a"), self.resources.getBindGroup("state_b") };
-        // pass.setBindGroup(0, bind_groups[step % 2], &.{0});
-        // pass.setVertexBuffer(0, vertex_buffer, 0, @sizeOf(Vertex) * vertices.len);
-        // pass.setIndexBuffer(index_buffer, .uint32, 0, @sizeOf(u32) * index_data.len);
-        // pass.setBindGroup(0, self.bind_group, &.{0});
-        // pass.drawIndexed(index_data.len, grid_size * grid_size, 0, 0, 0);
-        // END GAME OF LIFE
-
         pass.setBindGroup(0, self.resources.getBindGroup("bind_group"), &.{0});
-        // TODO no idea here
         pass.draw(3, 1, 0, 0);
         pass.end();
         pass.release();
-
-        // const compute_pass = encoder.beginComputePass(null);
-        // compute_pass.setPipeline(self.resources.getComputePipeline("compute"));
-        // compute_pass.setBindGroup(0, bind_groups[step % 2], &.{0});
-        // const workgroup_count = @ceil(grid_size / workgroup_size);
-        // compute_pass.dispatchWorkgroups(workgroup_count, workgroup_count, 1);
-        // compute_pass.end();
-        // compute_pass.release();
 
         var command = encoder.finish(null);
         encoder.release();
@@ -297,5 +296,15 @@ pub const Renderer = struct {
         command.release();
         core.swap_chain.present();
         back_buffer_view.release();
+
+        // VSync & Performance Logging
+        const current_time = std.time.milliTimestamp();
+        const elapsed_time: f32 = @floatFromInt(current_time - self.last_frame_time);
+
+        if (elapsed_time < self.req_frame_delay) {
+            // WAIT frame_delay - elapsed_time
+        }
+
+        self.last_frame_time = std.time.milliTimestamp();
     }
 };

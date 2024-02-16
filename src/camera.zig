@@ -17,7 +17,7 @@ pub const Camera = struct {
     moving: bool = false, // TODO not sure about these ones
     key_press: bool = false,
 
-    fn setCamera(self: *Camera, eye: ?Vec, center: ?Vec, up: ?Vec) void {
+    pub fn setCamera(self: *Camera, eye: ?Vec, center: ?Vec, up: ?Vec) void {
         if (eye) |e| {
             self.eye = e;
         }
@@ -27,10 +27,10 @@ pub const Camera = struct {
         if (up) |u| {
             self.up = u;
         }
-        // TODO normalize?
-        self.direction = zm.normalize(center - eye);
+        // TODO normalize has other 2 versions, not sure...
+        self.direction = zm.normalize2(self.center - self.eye);
         // TODO no idea here.
-        self.view_matrix = zm.lookAtRh(eye, center, up);
+        self.view_matrix = zm.lookAtRh(self.eye, self.center, self.up);
     }
 
     pub fn zoom(self: *Camera, delta: f32) void {
