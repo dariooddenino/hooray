@@ -57,15 +57,15 @@ pub const BVHTree = struct {
                 right = try constructTree(allocator, objects, mid, end);
             },
         }
-        return makeNode(allocator, left, right, Aabb.fromBoxes(left.bounding_box, right.bounding_box));
+        return makeNode(allocator, left, right, Aabb.fromBoxes(left.bbox, right.bbox));
     }
 
-    fn makeNode(allocator: std.mem.Allocator, left: *const BVHNode, right: *const BVHNode, bounding_box: Aabb) !*BVHNode {
+    fn makeNode(allocator: std.mem.Allocator, left: *const BVHNode, right: *const BVHNode, bbox: Aabb) !*BVHNode {
         const result = try allocator.create(BVHNode);
         result.left = left;
         result.right = right;
         result.leaf = null;
-        result.bbox = bounding_box;
+        result.bbox = bbox;
         return result;
     }
 
@@ -74,12 +74,12 @@ pub const BVHTree = struct {
         result.leaf = object.globalId();
         result.left = null;
         result.right = null;
-        result.bbox = object.boundingBox();
+        result.bbox = object.bBox();
         return result;
     }
 
     fn boxCompare(a: Object, b: Object, axis_index: u32) bool {
-        return a.boundingBox().axis(axis_index).min < b.boundingBox().axis(axis_index).min;
+        return a.bBox().axis(axis_index).min < b.bBox().axis(axis_index).min;
     }
 
     fn boxComparator(axis: u32, a: Object, b: Object) bool {

@@ -3,15 +3,11 @@ const core = @import("mach-core");
 const gpu = core.gpu;
 const zm = @import("zmath");
 
-pub const Uniforms = struct {
+pub const Uniforms = extern struct {
     screen_dims: [2]f32,
     frame_num: f32,
     reset_buffer: f32,
     view_matrix: zm.Mat,
-
-    pub fn serialize(self: Uniforms) [6]f32 {
-        return .{ self.screenDims[0], self.screenDims[1], self.frameNum, self.resetBuffer, 0.0, 0.0 };
-    }
 };
 
 pub const GPUResources = struct {
@@ -64,12 +60,27 @@ pub const GPUResources = struct {
     fn deinitResources(comptime T: type, resources: T) !void {
         var it = resources.valueIterator();
         while (it.next()) |entry| {
-            // TODO why do I have to do this here?
+            // TODO I need to come back to this.
             switch (@TypeOf(entry)) {
                 *gpu.BindGroup => entry.release(),
                 *gpu.Buffer => entry.release(),
+                *gpu.RenderPipeline => entry.release(),
                 else => {},
             }
+        }
+    }
+
+    pub const BindGroupLayoutAdd = struct { name: []const u8, bind_group_layout: *gpu.BindGroupLayout };
+    pub fn addBindGroupLayouts(self: *GPUResources, layouts: []BindGroupLayoutAdd) !void {
+        for (layouts) |bg| {
+            try self.bind_group_layouts.put(bg.name, bg.bind_group_layout);
+        }
+    }
+
+    pub const PipelineLayoutAdd = struct { name: []const u8, pipeline_layout: *gpu.PipelineLayout };
+    pub fn addPipelineLayouts(self: *GPUResources, layouts: []PipelineLayoutAdd) !void {
+        for (layouts) |pl| {
+            try self.pipline_layouts.put(pl.name, pl.pipeline_layout);
         }
     }
 
@@ -101,6 +112,11 @@ pub const GPUResources = struct {
         }
     }
 
+    pub fn getBindGroupLayout(self: GPUResources, name: []const u8) *gpu.BindGroupLayout {
+        // TODO should handle.
+        return self.bind_group_layouts.get(name).?;
+    }
+
     pub fn getBindGroup(self: GPUResources, name: []const u8) *gpu.BindGroup {
         // TODO should handle.
         return self.bind_groups.get(name).?;
@@ -119,5 +135,10 @@ pub const GPUResources = struct {
     pub fn getComputePipeline(self: GPUResources, name: []const u8) *gpu.ComputePipeline {
         // TODO should handle.
         return self.compute_pipelines.get(name).?;
+    }
+
+    pub fn getPipelineLayout(self: GPUResources, name: []const u8) *gpu.PipelineLayout {
+        // TODO should handle.
+        return self.pipline_layouts.get(name).?;
     }
 };

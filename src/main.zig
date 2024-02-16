@@ -3,7 +3,9 @@ const core = @import("mach-core");
 const gpu = core.gpu;
 const queue = core.queue;
 
+const Camera = @import("camera.zig").Camera;
 const Renderer = @import("renderer.zig").Renderer;
+const Vec = @import("zmath").Vec;
 pub const App = @This();
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -13,14 +15,20 @@ timer: core.Timer,
 renderer: Renderer,
 
 pub fn init(app: *App) !void {
+    const frame_rate = 61;
     try core.init(.{
         .title = "Hooray",
         .power_preference = .high_performance,
-        .size = .{ .width = 600, .height = 600 },
+        .size = .{ .width = 800, .height = 600 },
     });
-    core.setFrameRateLimit(5);
+    core.setFrameRateLimit(frame_rate);
 
-    const renderer = try Renderer.init(gpa.allocator());
+    var camera = Camera{};
+    camera.setCamera(Vec{ 0.5, 0, 2.5, 0 }, Vec{ 0.5, 0, 0, 0 }, Vec{ 0, 1, 0, 0 });
+    var renderer = try Renderer.init(gpa.allocator(), camera);
+
+    // Just fps and optional camera for now
+    renderer.setRenderParameters(frame_rate, null);
 
     app.title_timer = try core.Timer.start();
     app.timer = try core.Timer.start();

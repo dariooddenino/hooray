@@ -5,11 +5,11 @@ const Vec = zm.Vec;
 const Mat = zm.Mat;
 
 pub const Camera = struct {
-    view_matrix: Mat = zm.splat(0),
-    eye: Vec = zm.splat(0),
-    center: Vec = zm.splat(0),
-    up: Vec = zm.splat(0),
-    direction: Vec = zm.splat(0),
+    view_matrix: Mat = zm.matFromArr(.{0} ** 16),
+    eye: Vec = zm.splat(Vec, 0),
+    center: Vec = zm.splat(Vec, 0),
+    up: Vec = zm.splat(Vec, 0),
+    direction: Vec = zm.splat(Vec, 0),
     rotate_angle: f32 = 0,
     zoom_speed: f32 = 0.1,
     move_speed: f32 = 0.01,
@@ -17,7 +17,7 @@ pub const Camera = struct {
     moving: bool = false, // TODO not sure about these ones
     key_press: bool = false,
 
-    fn setCamera(self: *Camera, eye: ?Vec, center: ?Vec, up: ?Vec) void {
+    pub fn setCamera(self: *Camera, eye: ?Vec, center: ?Vec, up: ?Vec) void {
         if (eye) |e| {
             self.eye = e;
         }
@@ -27,10 +27,10 @@ pub const Camera = struct {
         if (up) |u| {
             self.up = u;
         }
-        // TODO normalize?
-        self.direction = zm.normalize(center - eye);
+        // TODO normalize has other 2 versions, not sure...
+        self.direction = zm.normalize2(self.center - self.eye);
         // TODO no idea here.
-        self.view_matrix = zm.lookAtRh(eye, center, up);
+        self.view_matrix = zm.lookAtRh(self.eye, self.center, self.up);
     }
 
     pub fn zoom(self: *Camera, delta: f32) void {
