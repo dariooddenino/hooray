@@ -13,30 +13,32 @@ const IMPORTANCE_SAMPLING = false;
 const STACK_SIZE = 20;
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
-// TODO: this was actually 3
 @group(0) @binding(1) var<storage, read_write> framebuffer : array<vec4f>;
 
+var<private> rand_state : u32 = 0u;
+var<private> pixel_coords : vec3f;
+
 struct Uniforms {
-  screenDims: vec2f,
-  frameNum: f32,
-  resetBuffer: f32,
-  viewMatrix: mat4x4f,
+  screen_dims: vec2f,
+  frame_num: f32,
+  reset_buffer: f32,
+  view_matrix: mat4x4f,
 }
 
 fn get2Dfrom1D(pos: vec2f) -> u32 {
-    return (u32(pos.y) * u32(uniforms.screenDims.x) + u32(pos.x));
+    return (u32(pos.y) * u32(uniforms.screen_dims.x) + u32(pos.x));
 }
 
 @fragment
 fn fs(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
 
     let i = get2Dfrom1D(fragCoord.xy);
-    var color = framebuffer[i].xyz / uniforms.frameNum;
+    var color = framebuffer[i].xyz / uniforms.frame_num;
 
     color = aces_approx(color.xyz);
     color = pow(color.xyz, vec3f(1 / 2.2));
 
-    if uniforms.resetBuffer == 1 {
+    if uniforms.reset_buffer == 1 {
         framebuffer[i] = vec4f(0);
     }
 

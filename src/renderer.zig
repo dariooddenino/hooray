@@ -5,11 +5,13 @@ const zm = @import("zmath");
 const utils = @import("utils.zig");
 const gpu_resources = @import("gpu_resources.zig");
 const scenes = @import("scenes.zig");
+const objects = @import("objects.zig");
 
 const Camera = @import("camera.zig").Camera;
 const GPUResources = gpu_resources.GPUResources;
 const Uniforms = gpu_resources.Uniforms;
 const Scene = scenes.Scene;
+const Sphere = objects.Sphere;
 
 const App = @import("main.zig").App;
 
@@ -175,6 +177,15 @@ pub const Renderer = struct {
         @memcpy(frame_mapped.?, frame_num[0..]);
         frame_buffer.unmap();
 
+        // TODO here I might have to use a different structure?
+        // I think I have to tackle the aabb and bvhs first.
+        // const spheres_buffer = core.device.createBuffer(&.{
+        //     .label = "Spheres",
+        //     .usage = .{ .storage = true, .copy_dst = true },
+        //     .size = scene.spheres.items.len * @sizeOf(Sphere),
+        //     .mapped_at_creation = .true,
+        // });
+
         var buffers: [3]GPUResources.BufferAdd = .{ .{ .name = "vertex", .buffer = vertex_buffer }, .{ .name = "uniforms", .buffer = uniforms_buffer }, .{ .name = "frame", .buffer = frame_buffer } };
         try self.resources.addBuffers(&buffers);
     }
@@ -304,14 +315,6 @@ pub const Renderer = struct {
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
 
         // Compute pass
-
-        // const compute_pass = encoder.beginComputePass(null);
-        // compute_pass.setPipeline(self.resources.getComputePipeline("compute"));
-        // compute_pass.setBindGroup(0, bind_groups[step % 2], &.{0});
-        // const workgroup_count = @ceil(grid_size / workgroup_size);
-        // compute_pass.dispatchWorkgroups(workgroup_count, workgroup_count, 1);
-        // compute_pass.end();
-        // compute_pass.release();
 
         // Hardcoded for now
         const work_groups_needed = (screen_width * screen_height) / 64;

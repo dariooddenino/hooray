@@ -10,6 +10,8 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ### First connections steps
 Finish implementing everything except for the compute pipeline.
+Go through all the steps in webgpu-utils
+Go through all the steps in renderer
 
 ### BVH
 The BVH is sent to a storage buffer after being serialized.
