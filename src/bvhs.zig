@@ -27,6 +27,7 @@ pub const BVHPair = struct {
 pub fn buildBVH(objects: *std.ArrayList(Object), flattened_array: *std.ArrayList(Aabb_GPU)) !void {
     var bvh = BVH.createBVH(objects);
     // TODO not sure about this
+    // TODO NEXT find how this is initialized
     bvh.populateLinks(null);
 
     var flattened_id: usize = 0;
@@ -38,19 +39,19 @@ pub fn buildBVH(objects: *std.ArrayList(Object), flattened_array: *std.ArrayList
 
 // TODO why can't I just use a tree of ids?
 pub const BVH = struct {
-    left: ?*const BVH = null,
-    right: ?*const BVH = null,
+    left: ?*BVH = null,
+    right: ?*BVH = null,
     bbox: Aabb = Aabb{},
-    obj: ?*const Object = null,
+    obj: ?*Object = null,
 
     start_id: f32 = -1,
     tri_count: f32 = 0,
 
     id: f32 = -1,
     // These two hold the ids.
-    hit_node: ?f32 = null,
-    miss_node: ?f32 = null,
-    right_offset: ?f32 = null,
+    hit_node: ?*BVH = null,
+    miss_node: ?*BVH = null,
+    right_offset: ?*BVH = null,
 
     axis: u32 = 0,
 
@@ -73,7 +74,7 @@ pub const BVH = struct {
         const obj_span = end - start;
 
         // Create a new node. If single object present then it is a leaf node.
-        if (obj_span <= 0) {
+        if (obj_span <= 1) {
             node.obj = &objects.items[start];
             node.start_id = @floatFromInt(start);
             node.tri_count = @floatFromInt(end - start + 1);
@@ -86,25 +87,26 @@ pub const BVH = struct {
 
             // Assign the first half to the left child and the secodn half to the right child.
             const mid = start + obj_span / 2;
-            node.left = &generateBVHHierarchy(objects, start, mid);
-            node.right = &generateBVHHierarchy(objects, mid, end);
+            // TODO I think I have to allocate this?
+            var left = generateBVHHierarchy(objects, start, mid);
+            var right = generateBVHHierarchy(objects, mid, end);
+            node.left = &left;
+            node.right = &right;
             node.axis = axis;
 
             node.bbox.mergeBbox(node.left.?.bbox, node.right.?.bbox);
         }
-
         return node;
     }
 
-    pub fn populateLinks(self: *BVH, next_right_node: ?*const BVH) void {
+    pub fn populateLinks(self: *BVH, next_right_node: ?*BVH) void {
         if (self.obj) |_| {
-            self.hit_node = next_right_node.?.id;
+            self.hit_node = next_right_node;
             self.miss_node = self.hit_node;
         } else {
-            self.hit_node = self.left.?.id;
-            self.miss_node = next_right_node.?.id;
-            // TODO This was equaling self.right
-            self.right_offset = self.right.?.right_offset.?;
+            self.hit_node = self.left;
+            self.miss_node = next_right_node;
+            self.right_offset = self.right;
 
             if (self.left) |_| {
                 self.left.?.populateLinks(self.right);
@@ -120,28 +122,43 @@ pub const BVH = struct {
         self.id = @floatFromInt(flattened_id.*);
         flattened_id.* += 1;
 
+        // TODO It's passing the nullable object as it is, I'm assume it
+        // uses the implicit casting to num??
+        var right_offset: f32 = 0;
+        if (self.right_offset) |_| {
+            right_offset = 1;
+        }
+        // TODO idem
+        var miss_node: f32 = -1;
+        if (self.miss_node) |o| {
+            miss_node = o.id;
+        }
+
         var bbox = Aabb_GPU{
             .mins = self.bbox.min,
-            .right_offset = self.right_offset.?, // TODO watchout
+            .right_offset = right_offset,
             .maxs = self.bbox.max,
             .type = -1,
             .start_id = -1,
             .tri_count = -1,
-            .miss_node = self.miss_node.?, // TODO watchout
+            .miss_node = miss_node,
             .axis = @floatFromInt(self.axis),
         };
         if (self.obj) |obj| {
+            std.debug.print("{any}\n", .{obj});
+            // TODO Fix
             bbox.type = obj.getType();
             bbox.start_id = self.start_id;
             bbox.tri_count = self.tri_count;
         }
         try flattened_array.append(bbox);
+
         if (self.left) |_| {
             try self.left.?.flatten(flattened_id, flattened_array);
         }
-        if (self.right) |_| {
-            try self.right.?.flatten(flattened_id, flattened_array);
-        }
+        // if (self.right) |_| {
+        //     try self.right.?.flatten(flattened_id, flattened_array);
+        // }
     }
 
     //

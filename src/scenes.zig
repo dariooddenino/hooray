@@ -86,18 +86,18 @@ pub const Scene = struct {
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {
-        const sphere = Sphere.init(center, radius, self.global_id, self.sphere_id, material_id);
+        var sphere = Sphere.init(center, radius, self.global_id, self.sphere_id, material_id);
         try self.spheres.append(sphere);
-        // try self.objects.append(Object{ .sphere = sphere });
+        try self.objects.append(Object{ .sphere = &sphere });
 
         self.sphere_id += 1;
         self.global_id += 1;
     }
 
     fn addQuad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32) !void {
-        const quad = Quad.init(Q, u, v, self.global_id, self.quad_id, material_id);
+        var quad = Quad.init(Q, u, v, self.global_id, self.quad_id, material_id);
         try self.quads.append(quad);
-        // try self.objects.append(Object{ .quad = quad });
+        try self.objects.append(Object{ .quad = &quad });
 
         self.quad_id += 1;
         self.global_id += 1;
