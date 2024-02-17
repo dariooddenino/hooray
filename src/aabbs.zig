@@ -7,8 +7,8 @@ const Interval = intervals.Interval;
 const Vec = @Vector(3, f32);
 
 pub const Aabb = struct {
-    min: Vec = Vec{ .x = utils.infinity, .y = utils.infinity, .z = utils.infinity },
-    max: Vec = Vec{ .x = -utils.infinity, .y = -utils.infinity, .z = -utils.infinity },
+    min: Vec = Vec{ utils.infinity, utils.infinity, utils.infinity },
+    max: Vec = Vec{ -utils.infinity, utils.infinity, -utils.infinity },
 
     pub fn init(a: Vec, b: Vec) Aabb {
         return Aabb{
@@ -44,11 +44,11 @@ pub const Aabb = struct {
     }
 
     pub fn merge(self: *Aabb, a: Aabb) void {
-        self.mergeBbox(a, self);
+        self.mergeBbox(a, self.*);
     }
 
     pub fn pad(self: *Aabb) void {
-        const delta = 0.0001 / 2;
+        const delta: f32 = 0.0001 / 2.0;
         if (self.max[0] - self.min[0] < delta) {
             self.max[0] += delta;
             self.min[0] -= delta;
@@ -77,6 +77,6 @@ pub const Aabb = struct {
     }
 
     pub fn axis(self: Aabb, a: usize) @Vector(2, f32) {
-        return @Vector(2, f32){ .x = self.min[a], .y = self.max[a] };
+        return @Vector(2, f32){ self.min[a], self.max[a] };
     }
 };

@@ -57,20 +57,20 @@ pub const Scene = struct {
         self.lights.deinit();
     }
 
-    pub fn loadBasicScene(self: *Scene) void {
-        const default_material = Material.init(0, Vec{ 1, 0, 0 }, zm.splat(0), zm.splat(0), 0, 0, 0);
-        self.addMaterial("default", default_material);
+    pub fn loadBasicScene(self: *Scene) !void {
+        const default_material = Material.init(0, Vec{ 1, 0, 0 }, zm.splat(Vec, 0), zm.splat(Vec, 0), 0, 0, 0);
+        const default_material_id = try self.addMaterial("default", default_material);
 
-        self.addSphere(zm.loadArr3(.{ -0.3, -0.65, 0.3 }), 0.35, default_material.material_id);
+        try self.addSphere(Vec{ -0.3, -0.65, 0.3 }, 0.35, default_material_id);
 
-        const light_material = Material.init(0, zm.splat(0), zm.splat(0), zm.splat(2), 0, 0, 0);
-        self.addMaterial("light", light_material);
+        const light_material = Material.init(0, zm.splat(Vec, 0), zm.splat(Vec, 0), zm.splat(Vec, 2), 0, 0, 0);
+        const light_material_id = try self.addMaterial("light", light_material);
 
-        self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material.material_id);
+        try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
 
         // TODO used this same quad as a light
 
-        self.createBVH();
+        try self.createBVH();
     }
 
     pub fn createBVH(self: *Scene) !void {
@@ -79,33 +79,37 @@ pub const Scene = struct {
         // the objs property goes into triangles
         // the flattened_array prop goes into bvh_array
         // let temp = [this.triangles].flat(); // TODO why?
-        const bvh = bvhs.buildBVH(self.allocator, self.objects.items, self.bvh_array);
+        try bvhs.buildBVH(&self.objects, &self.bvh_array);
         // self.triangles = bvh.objs;
-        self.bvh_array = bvh.flattened_array;
+        // TODO I'm passing by reference...
+        // self.bvh_array.* = bvh.flattened_array;
     }
 
-    fn addSphere(self: *Scene, center: zm.Vector, radius: f32, material_id: u32) void {
-        const sphere = Sphere.init(center, radius, self.global_id, self.sphere_id, self.materials.items[material_id]);
-        self.spheres.append(sphere);
-        self.objects.append(Object{ .sphere = sphere });
+    fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {
+        const sphere = Sphere.init(center, radius, self.global_id, self.sphere_id, material_id);
+        try self.spheres.append(sphere);
+        // try self.objects.append(Object{ .sphere = sphere });
 
         self.sphere_id += 1;
         self.global_id += 1;
     }
 
-    fn addquad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32) void {
-        const quad = Quad.init(Q, u, v, self.global_id, self.local_id, material_id);
-        self.quads.append(quad);
-        self.objects.append(Object{ .quad = quad });
+    fn addQuad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32) !void {
+        const quad = Quad.init(Q, u, v, self.global_id, self.quad_id, material_id);
+        try self.quads.append(quad);
+        // try self.objects.append(Object{ .quad = quad });
 
         self.quad_id += 1;
         self.global_id += 1;
     }
 
-    fn addMaterial(self: *Scene, label: []const u8, material: Material) void {
-        self.materials.append(material);
-        self.material_dict.put(label, self.materials.items[self.material_id]);
+    fn addMaterial(self: *Scene, label: []const u8, material: Material) !u32 {
+        const id = self.material_id;
+        try self.materials.append(material);
+        try self.material_dict.put(label, &self.materials.items[id]);
 
         self.material_id += 1;
+
+        return id;
     }
 };

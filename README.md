@@ -9,9 +9,9 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 ## TODO
 
 ### First connections steps
-Finish converting the structures from the AABB.
-Connect all buffers.
-Work on the compute shader.
+Sphere / Quads structures don't match with what I have in the shaders.
+Maybe I can carry that data in a wrapper? or I can transform the shapes beforehand
+Then I need to reenable the other buffers and see what happens
 
 #### Flow from WebGPU-Path-Tracer
 In initBuffers calls `scene.create_bvh`
