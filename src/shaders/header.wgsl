@@ -13,10 +13,25 @@ const IMPORTANCE_SAMPLING = false;
 const STACK_SIZE = 20;
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
+// @group(0) @binding(1) var<storage, read> sphere_objs : array<Sphere>;
+// @group(0) @binding(2) var<storage, read> quad_objs : array<Quad>;
 @group(0) @binding(1) var<storage, read_write> framebuffer : array<vec4f>;
+// @group(0) @binding(4) var<storage, read> materials: array<Material>;
+// @group(0) @binding(5) var<storage, read> bvh: array<AABB>;
+
+var<private> NUM_SPHERES : i32;
+var<private> NUM_QUADS : i32;
+var<private> NUM_AABB : i32;
 
 var<private> rand_state : u32 = 0u;
 var<private> pixel_coords : vec3f;
+
+var<private> hit_rec : HitRecord;
+var<private> scatter_rec : ScatterRecord;
+var<private> lights : Quad;
+var<private> ray_tmin : f32 = 0.000001;
+var<private> ray_tmax : f32 = MAX_FLOAT;
+var<private> stack : array<i32, STACK_SIZE>;
 
 struct Uniforms {
   screen_dims: vec2f,
@@ -75,6 +90,20 @@ struct AABB {
     prim_count: f32,
     skip_link: f32,
     axis: f32
+}
+
+struct HitRecord {
+    p: vec3f,
+    t: f32,
+    normal: vec3f,
+    front_face: bool,
+    material: Material
+}
+
+struct ScatterRecord {
+    pdf: f32,
+    skip_pdf: bool,
+    skip_pdf_ray: Ray,
 }
 
 fn get2Dfrom1D(pos: vec2f) -> u32 {
