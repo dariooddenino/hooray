@@ -8,31 +8,12 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ## TODO
 
-### First connections steps
-Sphere / Quads structures don't match with what I have in the shaders.
-Maybe I can carry that data in a wrapper? or I can transform the shapes beforehand
-Then I need to reenable the other buffers and see what happens
+### Pointers
+I think I should simplify things and avoid pointers as much as possible.
 
-#### Flow from WebGPU-Path-Tracer
-In initBuffers calls `scene.create_bvh`
-Then `scene.get_bvh` which is put into the buffer
-
-##### scene.create_bvh
-- gets the flattened triangles in the scene
-- builds the bvh out of flattened triangles by calling `builder.build_bvh`
-- saves the scene triangles
-- saves the flattened `bvh_array`
-
-###### builder.build_bvh
-- calls `BVH.create_bvh`
-- calls `BVH.populate_links`
-- calls `builder.flattenBVH`
-- does some weird operation to the flattened array at some specific indexes
-- returns both the bvh and the flattened one
-
-##### scene.get_bvh
-Returns the flattened bvh as an array of f32
-
+### Fix bvh
+The program crashes during `flatten`.
+I'm not sure why, I should have been more careful with my code.
 
 ### Camera
 - The moveCamera function will have to be designed in a completely different way.

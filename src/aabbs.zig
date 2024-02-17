@@ -8,7 +8,7 @@ const Vec = @Vector(3, f32);
 
 pub const Aabb = struct {
     min: Vec = Vec{ utils.infinity, utils.infinity, utils.infinity },
-    max: Vec = Vec{ -utils.infinity, utils.infinity, -utils.infinity },
+    max: Vec = Vec{ -utils.infinity, -utils.infinity, -utils.infinity },
 
     pub fn init(a: Vec, b: Vec) Aabb {
         return Aabb{

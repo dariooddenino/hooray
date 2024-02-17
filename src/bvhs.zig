@@ -134,7 +134,7 @@ pub const BVH = struct {
             miss_node = o.id;
         }
 
-        var bbox = Aabb_GPU{
+        const bbox = Aabb_GPU{
             .mins = self.bbox.min,
             .right_offset = right_offset,
             .maxs = self.bbox.max,
@@ -144,21 +144,21 @@ pub const BVH = struct {
             .miss_node = miss_node,
             .axis = @floatFromInt(self.axis),
         };
-        if (self.obj) |obj| {
-            std.debug.print("{any}\n", .{obj});
-            // TODO Fix
-            bbox.type = obj.getType();
-            bbox.start_id = self.start_id;
-            bbox.tri_count = self.tri_count;
-        }
+        // if (self.obj) |_| {
+        // std.debug.print("{any}\n", .{obj});
+        // TODO Fix
+        // bbox.type = obj.getType();
+        // bbox.start_id = self.start_id;
+        // bbox.tri_count = self.tri_count;
+        // }
         try flattened_array.append(bbox);
 
         if (self.left) |_| {
             try self.left.?.flatten(flattened_id, flattened_array);
         }
-        // if (self.right) |_| {
-        //     try self.right.?.flatten(flattened_id, flattened_array);
-        // }
+        if (self.right) |_| {
+            try self.right.?.flatten(flattened_id, flattened_array);
+        }
     }
 
     //
