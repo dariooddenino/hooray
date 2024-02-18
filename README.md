@@ -8,12 +8,12 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ## TODO
 
-### Pointers
-I think I should simplify things and avoid pointers as much as possible.
+### Shaders
+Keep on adding the shaders.
 
-### Fix bvh
-The program crashes during `flatten`.
-I'm not sure why, I should have been more careful with my code.
+### Aabb_GPU
+I need to read this and check hitRay to figure out what the right offset and other nodes are supposed to be.
+https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/):
 
 ### Camera
 - The moveCamera function will have to be designed in a completely different way.

@@ -10,6 +10,7 @@ const Aabb_GPU = bvhs.Aabb_GPU;
 const Vec = @Vector(3, f32);
 
 // TODO I need to revise this
+// TODO I dn't think lights were actually used
 pub const Scene = struct {
     allocator: std.mem.Allocator,
 
@@ -23,7 +24,7 @@ pub const Scene = struct {
     spheres: std.ArrayList(Sphere),
     quads: std.ArrayList(Quad),
     objects: std.ArrayList(Object),
-    lights: std.ArrayList(Quad),
+    // lights: std.ArrayList(Quad),
     // triangles: std.ArrayList(Object),
     bvh_array: std.ArrayList(Aabb_GPU),
 
@@ -33,7 +34,7 @@ pub const Scene = struct {
         const spheres = std.ArrayList(Sphere).init(allocator);
         const quads = std.ArrayList(Quad).init(allocator);
         const objects = std.ArrayList(Object).init(allocator);
-        const lights = std.ArrayList(Quad).init(allocator);
+        // const lights = std.ArrayList(Quad).init(allocator);
         const bvh_array = std.ArrayList(Aabb_GPU).init(allocator);
 
         return Scene{
@@ -43,7 +44,7 @@ pub const Scene = struct {
             .spheres = spheres,
             .quads = quads,
             .objects = objects,
-            .lights = lights,
+            // .lights = lights,
             .bvh_array = bvh_array,
         };
     }
@@ -68,8 +69,6 @@ pub const Scene = struct {
         const light_material_id = try self.addMaterial("light", light_material);
 
         try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
-
-        // TODO used this same quad as a light
 
         try self.createBVH();
     }

@@ -129,6 +129,8 @@ pub const BVH = struct {
         } else {
             self.hit_node = self.left;
             self.miss_node = next_right_node;
+            // TODO https://pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies#CompactBVHForTraversal
+            // I need to read this to see what this is actually doing
             self.right_offset = self.right;
 
             if (self.left) |_| {

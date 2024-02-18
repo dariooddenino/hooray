@@ -13,4 +13,6 @@
     cam_origin = (uniforms.view_matrix * vec4f(0, 0, 0, 1)).xyz;
 
     rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
+
+    get_lights();
 }
