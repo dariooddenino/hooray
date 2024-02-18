@@ -8,12 +8,19 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ## TODO
 
+### BVH
+Finish reconciling the [book](https://pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies) implementation to what I had before.
+I moved the old implementation to ref-bvhs.zig
+Plausible steps:
+- [ ] flattenBVH needs to return the correct fields (I'm not sure about them all) for Aabb_GPU
+- [ ] call the new functions from scene
+- [ ] once everything is fine, cleanup
+
+https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/cpu/aggregates.h
+https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/cpu/aggregates.cpp
+
 ### Shaders
 Keep on adding the shaders.
-
-### Aabb_GPU
-I need to read this and check hitRay to figure out what the right offset and other nodes are supposed to be.
-https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/):
 
 ### Camera
 - The moveCamera function will have to be designed in a completely different way.

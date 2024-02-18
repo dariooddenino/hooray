@@ -70,17 +70,20 @@ pub const Scene = struct {
 
         try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
 
-        try self.createBVH();
+        // try self.createBVH();
     }
 
     pub fn createBVH(self: *Scene) !void {
+        _ = self;
         // TODO Take all the triangles in a flat list. Why? what are these triangles? I think they are objects?
         // Call build_bvh, which I need to implement
         // the objs property goes into triangles
         // the flattened_array prop goes into bvh_array
         // let temp = [this.triangles].flat(); // TODO why?
-        const bvh = try bvhs.buildBVH(self.allocator, self.objects, &self.bvh_array);
-        defer bvh.deinit(self.allocator);
+
+        // const bvh = try bvhs.buildBVH(self.allocator, self.objects, &self.bvh_array);
+        // defer bvh.deinit(self.allocator);
+
         // self.triangles = bvh.objs;
         // TODO I'm passing by reference...
         // self.bvh_array.* = bvh.flattened_array;

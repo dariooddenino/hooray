@@ -6,6 +6,21 @@ const utils = @import("utils.zig");
 const Interval = intervals.Interval;
 const Vec = @Vector(3, f32);
 
+// A representation for the shaders.
+// TODO maybe I could add a method to aabb to generate these, with the required extra data.
+// TODO I need to plug the fields I know about, and then figure out how to handle the other ones.
+// TODO Can I use `u32`s here?
+pub const Aabb_GPU = extern struct {
+    mins: Vec,
+    right_offset: f32,
+    maxs: Vec,
+    type: f32,
+    start_id: f32,
+    tri_count: f32,
+    miss_node: f32,
+    axis: f32,
+};
+
 pub const Aabb = struct {
     min: Vec = Vec{ utils.infinity, utils.infinity, utils.infinity },
     max: Vec = Vec{ -utils.infinity, -utils.infinity, -utils.infinity },
@@ -30,21 +45,23 @@ pub const Aabb = struct {
         };
     }
 
-    pub fn mergeBbox(self: *Aabb, a: Aabb, b: Aabb) void {
-        self.min = Vec{
+    pub fn mergeBbox(a: Aabb, b: Aabb) Aabb {
+        const min = Vec{
             @min(a.min[0], b.min[0]),
             @min(a.min[1], b.min[1]),
             @min(a.min[2], b.min[2]),
         };
-        self.max = Vec{
+        const max = Vec{
             @max(a.max[0], b.max[0]),
             @max(a.max[1], b.max[1]),
             @max(a.max[2], b.max[2]),
         };
+
+        return Aabb{ .min = min, .max = max };
     }
 
     pub fn merge(self: *Aabb, a: Aabb) void {
-        self.mergeBbox(a, self.*);
+        self.bbox = mergeBbox(self.*, a);
     }
 
     pub fn pad(self: *Aabb) void {
