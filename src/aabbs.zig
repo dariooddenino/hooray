@@ -12,12 +12,13 @@ const Vec = @Vector(3, f32);
 // TODO Can I use `u32`s here?
 pub const Aabb_GPU = extern struct {
     mins: Vec,
-    right_offset: f32,
+    right_offset: u32,
     maxs: Vec,
-    type: f32,
-    start_id: f32,
-    tri_count: f32,
-    miss_node: f32,
+    type: u32,
+    start_id: u32,
+    tri_count: u32,
+    hit_node: u32,
+    miss_node: u32,
     axis: f32,
 };
 
@@ -61,7 +62,9 @@ pub const Aabb = struct {
     }
 
     pub fn merge(self: *Aabb, a: Aabb) void {
-        self.bbox = mergeBbox(self.*, a);
+        const merged = mergeBbox(self.*, a);
+        self.min = merged.min;
+        self.max = merged.max;
     }
 
     pub fn pad(self: *Aabb) void {

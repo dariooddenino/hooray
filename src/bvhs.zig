@@ -30,11 +30,12 @@ pub const BVHBuildNode = struct {
     n_primitives: u32 = 0,
     left: ?*BVHBuildNode = null,
     right: ?*BVHBuildNode = null,
+    linear_node: Aabb_GPU = Aabb_GPU{},
 
     // Build a leaf (no children)
-    pub fn initLeaf(self: *BVHBuildNode, first: u32, n: u32, b: Aabb) void {
+    pub fn initLeaf(self: *BVHBuildNode, first: u32, n: usize, b: Aabb) void {
         self.first_prim_offset = first;
-        self.n_primitives = n;
+        self.n_primitives = @intCast(n);
         self.bounds = b;
         self.left = null;
         self.right = null;
@@ -65,16 +66,16 @@ pub const BVHAggregate = struct {
         self.arena.deinit();
     }
 
-    pub fn init(in_allocator: std.mem.Allocator, primitives: []Object, max_prims_in_node: u32, split_method: SplitMethod) BVHAggregate {
+    pub fn init(in_allocator: std.mem.Allocator, primitives: []Object, max_prims_in_node: usize, split_method: SplitMethod) !BVHAggregate {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
         defer arena.deinit();
-        const allocator = arena.allocator;
-        var linear_nodes = std.ArrayList(Aabb_GPU).init(allocator);
+        const allocator = arena.allocator();
+        var linear_nodes = try std.ArrayList(Aabb_GPU).initCapacity(allocator, primitives.len);
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
         for (0..primitives.len) |i| {
-            bvh_primitives.append(BVHPrimitive{
+            try bvh_primitives.append(BVHPrimitive{
                 .primitive_index = i,
                 .bounds = primitives[i].getBbox(),
             });
@@ -89,7 +90,7 @@ pub const BVHAggregate = struct {
             unreachable;
         } else {
             var ordered_prims_offset: u32 = 0;
-            root = try buildRecursive(allocator, bvh_primitives, &ordered_prims_offset, &ordered_primitives, primitives);
+            root = try buildRecursive(allocator, bvh_primitives, &ordered_prims_offset, try ordered_primitives.toOwnedSlice(), primitives);
         }
 
         // TODO why is this needed and how to implement?
@@ -100,13 +101,13 @@ pub const BVHAggregate = struct {
         // bvh_primitives.resize(0)
         // bvh_primitives.shrink_to_fit();
 
-        var offset = 0;
+        var offset: usize = 0;
         _ = flattenBVH(root, &linear_nodes, &offset);
 
         return BVHAggregate{
             .arena = arena,
             .allocator = allocator,
-            .max_prims_in_node = max_prims_in_node,
+            .max_prims_in_node = @intCast(max_prims_in_node),
             .primitives = primitives,
             .linear_nodes = linear_nodes,
             .split_method = split_method,
@@ -127,22 +128,22 @@ pub const BVHAggregate = struct {
             bounds.merge(p.bounds);
         }
 
-        var node = allocator.create(BVHBuildNode);
+        var node = try allocator.create(BVHBuildNode);
         node.* = BVHBuildNode{};
-        const extent = bounds.extent();
+        const surface_area = bounds.surfaceArea();
         // var axis: u32 = 0;
         // if (extent[1] > extent[0]) axis = 1;
         // if (extent[2] > extent[axis]) axis = 2;
-        if (extent == 0 or bvh_primitives.items.len == 1) {
+        if (surface_area == 0 or bvh_primitives.items.len == 1) {
             // Create leaf
             const first_prim_offset = ordered_prims_offset;
-            ordered_prims_offset += bvh_primitives.items.len;
+            ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
 
             for (0..bvh_primitives.items.len) |i| {
                 const index = bvh_primitives.items[i].primitive_index;
-                ordered_prims[first_prim_offset + i] = primitives[index];
+                ordered_prims[first_prim_offset.* + i] = primitives[index];
             }
-            node.initLeaf(first_prim_offset, bvh_primitives.items.len, bounds);
+            node.initLeaf(first_prim_offset.*, bvh_primitives.items.len, bounds);
             return node;
         } else {
             // Compute bound of primitive centroids and choose split dimension _dim_
@@ -152,25 +153,49 @@ pub const BVHAggregate = struct {
         return node;
     }
 
+    TODO this is all wrong.
+    // Not sure of how I can get out of this mess.
+    // I think I have to build the linear_node immediately and carry it around.
+    // So that I can initialize some fields like in the original code.
+    // Find where it was updated in the original code (I think when building the tree)
     pub fn flattenBVH(node: *BVHBuildNode, linear_nodes: *std.ArrayList(Aabb_GPU), offset: *usize) u32 {
-        var linear_node = linear_nodes.items[offset.*];
-        linear_node.bounds = node.bounds;
+        // var linear_node = linear_nodes.items[offset.*];
+        // linear_node.bounds = node.bounds;
         const node_offset = offset.*;
-        offset.* += 1;
+
+        var linear_node = Aabb_GPU{
+            .mins = node.bounds.min,
+            .right_offset = -1, // -1 means there's no right offset
+            .maxs = node.bounds.max,
+            .type = -1, // NOTE: without the objects I can't get the type anymore.
+            .start_id = -1,
+            .tri_count = -1,
+            .miss_node = -1,
+            .axis = node.axis, // NOTE: not sure about this
+        };
+
         if (node.n_primitives > 0) {
-            linear_node.primitives_offset = node.first_prim_offset;
-            linear_node.n_primitives = node.n_primitives;
+            linear_node.start_id = node.first_prim_offset;
+            linear_node.tri_count = node.n_primitives;
+            linear_node.hit_node = node.right.?.first_prim_offset; // TODO maybe??
+            linear_node.miss_node = node.hit_node; // original hit node
         } else {
             // Create interior flattened BVH node
             linear_node.axis = node.split_axis;
-            linear_node.n_primitives = 0;
+            linear_node.tri_count = 0;
+            linear_node.hit_node = node.left.?.first_prim_offset; // TODO maybe??
+            linear_node.miss_node = node.right.?.first_prim_offset; // TODO maybe??
             if (node.left) |left| {
                 _ = flattenBVH(left, linear_nodes, offset);
             }
             if (node.right) |right| {
-                linear_node.second_child_offset = flattenBVH(right, linear_nodes, offset);
+                _ = flattenBVH(right, linear_nodes, offset);
             }
         }
+
+        linear_nodes.items[offset.*] = linear_node;
+
+        offset.* += 1;
         return node_offset;
     }
 };

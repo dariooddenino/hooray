@@ -14,9 +14,9 @@ const STACK_SIZE = 20;
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
 @group(0) @binding(1) var<storage, read> sphere_objs : array<Sphere>;
-@group(0) @binding(2) var<storage, read> quad_objs : array<Quad>;
-@group(0) @binding(3) var<storage, read_write> framebuffer : array<vec4f>;
-@group(0) @binding(4) var<storage, read> materials: array<Material>;
+// @group(0) @binding(2) var<storage, read> quad_objs : array<Quad>;
+@group(0) @binding(2) var<storage, read_write> framebuffer : array<vec4f>;
+@group(0) @binding(3) var<storage, read> materials: array<Material>;
 // @group(0) @binding(4) var<storage, read> bvh: array<AABB>;
 
 var<private> NUM_SPHERES : i32;

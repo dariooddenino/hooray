@@ -6,7 +6,7 @@ const Material = @import("materials.zig").Material;
 const Object = @import("objects.zig").Object;
 const Quad = @import("objects.zig").Quad;
 const Sphere = @import("objects.zig").Sphere;
-const Aabb_GPU = bvhs.Aabb_GPU;
+const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
 const Vec = @Vector(3, f32);
 
 // TODO I need to revise this
@@ -65,16 +65,15 @@ pub const Scene = struct {
 
         try self.addSphere(Vec{ -0.3, -0.65, 0.3 }, 0.35, default_material_id);
 
-        const light_material = Material.init(0, zm.splat(Vec, 0), zm.splat(Vec, 0), zm.splat(Vec, 2), 0, 0, 0);
-        const light_material_id = try self.addMaterial("light", light_material);
+        // const light_material = Material.init(0, zm.splat(Vec, 0), zm.splat(Vec, 0), zm.splat(Vec, 2), 0, 0, 0);
+        // const light_material_id = try self.addMaterial("light", light_material);
 
-        try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
+        // try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
 
-        // try self.createBVH();
+        try self.createBVH();
     }
 
     pub fn createBVH(self: *Scene) !void {
-        _ = self;
         // TODO Take all the triangles in a flat list. Why? what are these triangles? I think they are objects?
         // Call build_bvh, which I need to implement
         // the objs property goes into triangles
@@ -83,6 +82,10 @@ pub const Scene = struct {
 
         // const bvh = try bvhs.buildBVH(self.allocator, self.objects, &self.bvh_array);
         // defer bvh.deinit(self.allocator);
+
+        const bvh = try bvhs.BVHAggregate.init(self.allocator, try self.objects.toOwnedSlice(), self.objects.items.len, bvhs.SplitMethod.Middle);
+        self.bvh_array.deinit();
+        self.bvh_array = bvh.linear_nodes;
 
         // self.triangles = bvh.objs;
         // TODO I'm passing by reference...

@@ -12,8 +12,11 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 Finish reconciling the [book](https://pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies) implementation to what I had before.
 I moved the old implementation to ref-bvhs.zig
 Plausible steps:
+- [ ] A couple of calls in the generator functions are commented and I need to figure out how to handle them.
 - [ ] flattenBVH needs to return the correct fields (I'm not sure about them all) for Aabb_GPU
 - [ ] call the new functions from scene
+- [ ] test it with one object only
+- [ ] implement the missing else part in the generator function
 - [ ] once everything is fine, cleanup
 
 https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/cpu/aggregates.h

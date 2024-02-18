@@ -3,7 +3,7 @@ pub const BVHPair = struct {
     flattened_array: *std.ArrayList(Aabb_GPU),
 };
 
-// TODO This returns the BVH AND modifies the input array. I can't say I like this approach.
+// TODO This returns the BVH AND modifies the input array. I can't say I like this approach.aba
 pub fn buildBVH(allocator: std.mem.Allocator, objects: std.ArrayList(Object), flattened_array: *std.ArrayList(Aabb_GPU)) !*BVH {
     var bvh = try BVH.createBVH(allocator, objects);
     // TODO not sure about this
