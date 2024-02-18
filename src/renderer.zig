@@ -32,16 +32,6 @@ const Vertex = struct {
 // Screen size quad.
 const vertex_data = [_]Vertex{ Vertex{ .pos = .{ -1, -1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ 1, 1 } } };
 
-// TODO data for the hardcoded quad example
-// const Vertex = extern struct { pos: @Vector(2, f32), col: @Vector(3, f32) };
-// const vertices = [_]Vertex{
-//     .{ .pos = .{ -0.5, -0.5 }, .col = .{ 1, 0, 0 } },
-//     .{ .pos = .{ 0.5, -0.5 }, .col = .{ 0, 1, 0 } },
-//     .{ .pos = .{ 0.5, 0.5 }, .col = .{ 0, 0, 1 } },
-//     .{ .pos = .{ -0.5, 0.5 }, .col = .{ 1, 1, 1 } },
-// };
-// const index_data = [_]u32{ 0, 1, 2, 2, 3, 0 };
-
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
     resources: GPUResources,
@@ -129,14 +119,20 @@ pub const Renderer = struct {
     // TODO I don't remember how these are used (i.e. the indexes...)
     fn initBindGroupLayouts(self: *Renderer) !void {
         const bglu = gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0);
-        const bglf = gpu.BindGroupLayout.Entry.buffer(1, .{ .fragment = true, .compute = true }, .storage, false, 0);
-        // const bglm = gpu.BindGroupLayout.Entry.buffer(2, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bgls = gpu.BindGroupLayout.Entry.buffer(1, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bglq = gpu.BindGroupLayout.Entry.buffer(2, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bglf = gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bglm = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        // const bglb = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bgl = core.device.createBindGroupLayout(
             &gpu.BindGroupLayout.Descriptor.init(.{
                 .entries = &.{
                     bglu,
+                    bgls,
+                    bglq,
                     bglf,
-                    // bglm
+                    bglm,
+                    // bglb,
                 },
             }),
         );
@@ -185,38 +181,37 @@ pub const Renderer = struct {
         @memcpy(frame_mapped.?, frame_num[0..]);
         frame_buffer.unmap();
 
-        // const spheres_buffer = core.device.createBuffer(&.{
-        //     .label = "Spheres",
-        //     .usage = .{ .storage = true, .copy_dst = true },
-        //     .size = scene.spheres.items.len * @sizeOf(Sphere),
-        //     .mapped_at_creation = .true,
-        // });
-        // const spheres_mapped = spheres_buffer.getMappedRange(Sphere, 0, scene.spheres.items.len);
-        // @memcpy(spheres_mapped.?, scene.spheres.items[0..]);
-        // spheres_buffer.unmap();
+        const spheres_buffer = core.device.createBuffer(&.{
+            .label = "Spheres",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = scene.spheres.items.len * @sizeOf(Sphere),
+            .mapped_at_creation = .true,
+        });
+        const spheres_mapped = spheres_buffer.getMappedRange(Sphere, 0, scene.spheres.items.len);
+        @memcpy(spheres_mapped.?, scene.spheres.items[0..]);
+        spheres_buffer.unmap();
 
-        // const quads_buffer = core.device.createBuffer(&.{
-        //     .label = "Quads",
-        //     .usage = .{ .storage = true, .copy_dst = true },
-        //     .size = scene.quads.items.len * @sizeOf(Quad),
-        //     .mapped_at_creation = .true,
-        // });
-        // const quads_mapped = quads_buffer.getMappedRange(Quad, 0, scene.quads.items.len);
-        // @memcpy(quads_mapped.?, scene.quads.items[0..]);
-        // quads_buffer.unmap();
+        const quads_buffer = core.device.createBuffer(&.{
+            .label = "Quads",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = scene.quads.items.len * @sizeOf(Quad),
+            .mapped_at_creation = .true,
+        });
+        const quads_mapped = quads_buffer.getMappedRange(Quad, 0, scene.quads.items.len);
+        @memcpy(quads_mapped.?, scene.quads.items[0..]);
+        quads_buffer.unmap();
 
-        _ = scene;
-        // const MT = [13]f32;
-        // const materials: [1]MT = .{.{0} ** 13};
-        // const materials_buffer = core.device.createBuffer(&.{
-        //     .label = "Materials",
-        //     .usage = .{ .storage = true, .copy_dst = true },
-        //     .size = materials.len * @sizeOf(MT),
-        //     .mapped_at_creation = .true,
-        // });
-        // const materials_mapped = materials_buffer.getMappedRange(MT, 0, materials.len);
-        // @memcpy(materials_mapped.?, materials[0..]);
-        // materials_buffer.unmap();
+        const MT = [13]f32;
+        const materials: [1]MT = .{.{0} ** 13};
+        const materials_buffer = core.device.createBuffer(&.{
+            .label = "Materials",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = materials.len * @sizeOf(MT),
+            .mapped_at_creation = .true,
+        });
+        const materials_mapped = materials_buffer.getMappedRange(MT, 0, materials.len);
+        @memcpy(materials_mapped.?, materials[0..]);
+        materials_buffer.unmap();
 
         // const bvh_buffer = core.device.createBuffer(&.{
         //     .label = "BVH",
@@ -228,12 +223,12 @@ pub const Renderer = struct {
         // @memcpy(bvh_mapped.?, scene.bvh_array.items[0..]);
         // bvh_buffer.unmap();
 
-        var buffers: [3]GPUResources.BufferAdd = .{
+        var buffers: [6]GPUResources.BufferAdd = .{
             .{ .name = "vertex", .buffer = vertex_buffer },
             .{ .name = "uniforms", .buffer = uniforms_buffer },
-            // .{ .name = "spheres", .buffer = spheres_buffer },
-            // .{ .name = "quads", .buffer = quads_buffer },
-            // .{ .name = "materials", .buffer = materials_buffer },
+            .{ .name = "spheres", .buffer = spheres_buffer },
+            .{ .name = "quads", .buffer = quads_buffer },
+            .{ .name = "materials", .buffer = materials_buffer },
             // .{ .name = "bvh", .buffer = bvh_buffer },
             .{ .name = "frame", .buffer = frame_buffer },
         };
@@ -243,21 +238,21 @@ pub const Renderer = struct {
     fn initBindGroups(self: *Renderer) !void {
         const layout = self.resources.getBindGroupLayout("layout");
         const uniforms_buffer = self.resources.getBuffer("uniforms");
-        // const spheres_buffer = self.resources.getBuffer("spheres");
-        // const quads_buffer = self.resources.getBuffer("quads");
+        const spheres_buffer = self.resources.getBuffer("spheres");
+        const quads_buffer = self.resources.getBuffer("quads");
         const frame_buffer = self.resources.getBuffer("frame");
-        // const materials_buffer = self.resources.getBuffer("materials");
+        const materials_buffer = self.resources.getBuffer("materials");
         // const bvh_buffer = self.resources.getBuffer("bvh");
         const bind_group = core.device.createBindGroup(
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = layout,
                 .entries = &.{
                     gpu.BindGroup.Entry.buffer(0, uniforms_buffer, 0, @sizeOf(Uniforms)),
-                    // gpu.BindGroup.Entry.buffer(1, spheres_buffer, 0, @sizeOf(Sphere) * self.scene.spheres.items.len),
-                    // gpu.BindGroup.Entry.buffer(2, quads_buffer, 0, @sizeOf(Quad) * self.scene.quads.items.len),
-                    gpu.BindGroup.Entry.buffer(1, frame_buffer, 0, @sizeOf(f32) * size),
-                    // gpu.BindGroup.Entry.buffer(2, materials_buffer, 0, @sizeOf([13]f32)),
-                    // gpu.BindGroup.Entry.buffer(2, bvh_buffer, 0, @sizeOf(Aabb_GPU) * self.scene.bvh_array.items.len),
+                    gpu.BindGroup.Entry.buffer(1, spheres_buffer, 0, @sizeOf(Sphere) * self.scene.spheres.items.len),
+                    gpu.BindGroup.Entry.buffer(2, quads_buffer, 0, @sizeOf(Quad) * self.scene.quads.items.len),
+                    gpu.BindGroup.Entry.buffer(3, frame_buffer, 0, @sizeOf(f32) * size),
+                    gpu.BindGroup.Entry.buffer(4, materials_buffer, 0, @sizeOf([13]f32)),
+                    // gpu.BindGroup.Entry.buffer(4, bvh_buffer, 0, @sizeOf(Aabb_GPU) * self.scene.bvh_array.items.len),
                 },
             }),
         );

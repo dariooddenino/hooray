@@ -8,7 +8,7 @@ const Renderer = @import("renderer.zig").Renderer;
 const Vec = @import("zmath").Vec;
 pub const App = @This();
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var gpa = std.heap.GeneralPurposeAllocator(.{ .verbose_log = true, .retain_metadata = true }){};
 
 title_timer: core.Timer,
 timer: core.Timer,

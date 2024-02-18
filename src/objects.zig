@@ -5,10 +5,9 @@ const vec = @import("vec.zig");
 const Vec = @Vector(3, f32);
 const Aabb = @import("aabbs.zig").Aabb;
 
-// TODO I need to put back the type here
 pub const Object = union(enum) {
-    sphere: *Sphere,
-    quad: *Quad,
+    sphere: Sphere,
+    quad: Quad,
 
     pub fn getBbox(self: Object) Aabb {
         switch (self) {

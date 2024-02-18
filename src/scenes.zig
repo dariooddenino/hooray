@@ -49,12 +49,13 @@ pub const Scene = struct {
     }
 
     pub fn deinit(self: *Scene) void {
-        self.materials.deinit();
-        self.material_dict.deinit();
-        self.spheres.deinit();
-        self.quads.deinit();
-        self.objects.deinit();
-        self.lights.deinit();
+        _ = self;
+        // self.materials.deinit();
+        // self.material_dict.deinit();
+        // self.spheres.deinit();
+        // self.quads.deinit();
+        // self.objects.deinit();
+        // self.lights.deinit();
     }
 
     pub fn loadBasicScene(self: *Scene) !void {
@@ -79,25 +80,26 @@ pub const Scene = struct {
         // the objs property goes into triangles
         // the flattened_array prop goes into bvh_array
         // let temp = [this.triangles].flat(); // TODO why?
-        try bvhs.buildBVH(&self.objects, &self.bvh_array);
+        const bvh = try bvhs.buildBVH(self.allocator, self.objects, &self.bvh_array);
+        defer bvh.deinit(self.allocator);
         // self.triangles = bvh.objs;
         // TODO I'm passing by reference...
         // self.bvh_array.* = bvh.flattened_array;
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {
-        var sphere = Sphere.init(center, radius, self.global_id, self.sphere_id, material_id);
+        const sphere = Sphere.init(center, radius, self.global_id, self.sphere_id, material_id);
         try self.spheres.append(sphere);
-        try self.objects.append(Object{ .sphere = &sphere });
+        try self.objects.append(Object{ .sphere = sphere });
 
         self.sphere_id += 1;
         self.global_id += 1;
     }
 
     fn addQuad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32) !void {
-        var quad = Quad.init(Q, u, v, self.global_id, self.quad_id, material_id);
+        const quad = Quad.init(Q, u, v, self.global_id, self.quad_id, material_id);
         try self.quads.append(quad);
-        try self.objects.append(Object{ .quad = &quad });
+        try self.objects.append(Object{ .quad = quad });
 
         self.quad_id += 1;
         self.global_id += 1;

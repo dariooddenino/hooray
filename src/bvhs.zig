@@ -23,26 +23,27 @@ pub const BVHPair = struct {
     flattened_array: *std.ArrayList(Aabb_GPU),
 };
 
-// TODO deinit here
-pub fn buildBVH(objects: *std.ArrayList(Object), flattened_array: *std.ArrayList(Aabb_GPU)) !void {
-    var bvh = BVH.createBVH(objects);
+// TODO This returns the BVH AND modifies the input array. I can't say I like this approach.
+pub fn buildBVH(allocator: std.mem.Allocator, objects: std.ArrayList(Object), flattened_array: *std.ArrayList(Aabb_GPU)) !*BVH {
+    var bvh = try BVH.createBVH(allocator, objects);
     // TODO not sure about this
     // TODO NEXT find how this is initialized
-    bvh.populateLinks(null);
+    try bvh.populateLinks(allocator, null);
 
     var flattened_id: usize = 0;
 
     try bvh.flatten(&flattened_id, flattened_array);
 
-    // return BVHPair{ .bvh = bvh, .flattened_array = flattened_array };
+    return bvh;
 }
 
 // TODO why can't I just use a tree of ids?
+// TODO I need a deinit here
 pub const BVH = struct {
     left: ?*BVH = null,
     right: ?*BVH = null,
     bbox: Aabb = Aabb{},
-    obj: ?*Object = null,
+    obj: ?Object = null,
 
     start_id: f32 = -1,
     tri_count: f32 = 0,
@@ -55,12 +56,23 @@ pub const BVH = struct {
 
     axis: u32 = 0,
 
-    fn createBVH(objects: *std.ArrayList(Object)) BVH {
-        return generateBVHHierarchy(objects, 0, objects.items.len);
+    pub fn deinit(self: *BVH, allocator: std.mem.Allocator) void {
+        if (self.left) |left| {
+            left.deinit(allocator);
+        }
+        if (self.right) |right| {
+            right.deinit(allocator);
+        }
+        allocator.destroy(self);
     }
 
-    fn generateBVHHierarchy(objects: *std.ArrayList(Object), start: usize, end: usize) BVH {
-        var node = BVH{};
+    fn createBVH(allocator: std.mem.Allocator, objects: std.ArrayList(Object)) !*BVH {
+        return try generateBVHHierarchy(allocator, objects, 0, objects.items.len);
+    }
+
+    fn generateBVHHierarchy(allocator: std.mem.Allocator, objects: std.ArrayList(Object), start: usize, end: usize) !*BVH {
+        var node = try allocator.create(BVH);
+        node.* = BVH{};
         for (start..end) |i| {
             node.bbox.merge(objects.items[i].getBbox());
         }
@@ -75,7 +87,7 @@ pub const BVH = struct {
 
         // Create a new node. If single object present then it is a leaf node.
         if (obj_span <= 1) {
-            node.obj = &objects.items[start];
+            node.obj = objects.items[start];
             node.start_id = @floatFromInt(start);
             node.tri_count = @floatFromInt(end - start + 1);
         } else {
@@ -88,18 +100,29 @@ pub const BVH = struct {
             // Assign the first half to the left child and the secodn half to the right child.
             const mid = start + obj_span / 2;
             // TODO I think I have to allocate this?
-            var left = generateBVHHierarchy(objects, start, mid);
-            var right = generateBVHHierarchy(objects, mid, end);
-            node.left = &left;
-            node.right = &right;
+            const left_node = try generateBVHHierarchy(allocator, objects, start, mid);
+            const right_node = try generateBVHHierarchy(allocator, objects, mid, end);
+            node.left = left_node;
+            node.right = right_node;
             node.axis = axis;
 
-            node.bbox.mergeBbox(node.left.?.bbox, node.right.?.bbox);
+            // TODO There has to be a better way to do this?
+            // TODO does it even make sense to do it?
+            // if (node.left) |left| {
+            //     if (node.right) |right| {
+            //         node.bbox.mergeBbox(left.bbox, right.bbox);
+            //     } else {
+            //         node.bbox = left.bbox;
+            //     }
+            // } else if (node.right) |right| {
+            //     // Here left is null
+            //     node.bbox = right.bbox;
+            // }
         }
         return node;
     }
 
-    pub fn populateLinks(self: *BVH, next_right_node: ?*BVH) void {
+    pub fn populateLinks(self: *BVH, allocator: std.mem.Allocator, next_right_node: ?*BVH) !void {
         if (self.obj) |_| {
             self.hit_node = next_right_node;
             self.miss_node = self.hit_node;
@@ -109,10 +132,10 @@ pub const BVH = struct {
             self.right_offset = self.right;
 
             if (self.left) |_| {
-                self.left.?.populateLinks(self.right);
+                try self.left.?.populateLinks(allocator, self.right);
             }
             if (self.right) |_| {
-                self.right.?.populateLinks(next_right_node);
+                try self.right.?.populateLinks(allocator, next_right_node);
             }
         }
     }
@@ -134,7 +157,7 @@ pub const BVH = struct {
             miss_node = o.id;
         }
 
-        const bbox = Aabb_GPU{
+        var bbox = Aabb_GPU{
             .mins = self.bbox.min,
             .right_offset = right_offset,
             .maxs = self.bbox.max,
@@ -144,20 +167,18 @@ pub const BVH = struct {
             .miss_node = miss_node,
             .axis = @floatFromInt(self.axis),
         };
-        // if (self.obj) |_| {
-        // std.debug.print("{any}\n", .{obj});
-        // TODO Fix
-        // bbox.type = obj.getType();
-        // bbox.start_id = self.start_id;
-        // bbox.tri_count = self.tri_count;
-        // }
+        if (self.obj) |obj| {
+            bbox.type = obj.getType();
+            bbox.start_id = self.start_id;
+            bbox.tri_count = self.tri_count;
+        }
         try flattened_array.append(bbox);
 
-        if (self.left) |_| {
-            try self.left.?.flatten(flattened_id, flattened_array);
+        if (self.left) |left| {
+            try left.flatten(flattened_id, flattened_array);
         }
-        if (self.right) |_| {
-            try self.right.?.flatten(flattened_id, flattened_array);
+        if (self.right) |right| {
+            try right.flatten(flattened_id, flattened_array);
         }
     }
 
@@ -165,18 +186,6 @@ pub const BVH = struct {
     pub fn boxCompare(axis_index: u32, a: Object, b: Object) bool {
         return a.getBbox().axis(axis_index)[0] < b.getBbox().axis(axis_index)[0];
     }
-
-    // pub fn boxXCompare(a: Object, b: Object) bool {
-    //     return boxCompare(a, b, 0);
-    // }
-
-    // pub fn boxYCompare(a: Object, b: Object) bool {
-    //     return boxCompare(a, b, 1);
-    // }
-
-    // pub fn boxZCompare(a: Object, b: Object) bool {
-    //     return boxCompare(a, b, 2);
-    // }
 
     // TODO Surface Area Heuristic
     pub fn generateBVHHierarchySAH() void {}
