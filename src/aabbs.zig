@@ -11,15 +11,15 @@ const Vec = @Vector(3, f32);
 // TODO I need to plug the fields I know about, and then figure out how to handle the other ones.
 // TODO Can I use `u32`s here?
 pub const Aabb_GPU = extern struct {
-    mins: Vec,
-    right_offset: u32,
-    maxs: Vec,
-    type: u32,
-    start_id: u32,
-    tri_count: u32,
-    hit_node: u32,
-    miss_node: u32,
-    axis: f32,
+    mins: Vec = Vec{ 0, 0, 0 },
+    right_offset: i32 = -1,
+    maxs: Vec = Vec{ 0, 0, 0 },
+    type: i32 = -1,
+    start_id: i32 = -1,
+    tri_count: i32 = -1,
+    hit_node: i32 = -1,
+    miss_node: i32 = -1,
+    axis: i32 = -1,
 };
 
 pub const Aabb = struct {

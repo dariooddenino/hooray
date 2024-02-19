@@ -23,17 +23,17 @@ pub const BVHBuildNode = struct {
     // was bbox
     bounds: Aabb = Aabb{},
     // was axis
-    split_axis: u32 = 0,
+    split_axis: u16 = 0,
     // I think this was start_id
-    first_prim_offset: u32 = 0,
+    first_prim_offset: u16 = 0,
     // I think this was triangles
-    n_primitives: u32 = 0,
+    n_primitives: u16 = 0,
     left: ?*BVHBuildNode = null,
     right: ?*BVHBuildNode = null,
-    linear_node: Aabb_GPU = Aabb_GPU{},
+    linear_node: Aabb_GPU = Aabb_GPU{}, // Part of the data is collected during tree building.
 
     // Build a leaf (no children)
-    pub fn initLeaf(self: *BVHBuildNode, first: u32, n: usize, b: Aabb) void {
+    pub fn initLeaf(self: *BVHBuildNode, first: u16, n: usize, b: Aabb) void {
         self.first_prim_offset = first;
         self.n_primitives = @intCast(n);
         self.bounds = b;
@@ -42,12 +42,17 @@ pub const BVHBuildNode = struct {
     }
 
     // Build an interior node, assumes the two nodes have already been created.
-    pub fn initInterior(self: *BVHBuildNode, axis: u32, c0: *BVHBuildNode, c1: *BVHBuildNode) void {
+    pub fn initInterior(self: *BVHBuildNode, axis: u16, c0: *BVHBuildNode, c1: *BVHBuildNode) void {
         self.left = c0;
         self.right = c1;
         self.bounds = Aabb.mergeBbox(c0.bounds, c1.bounds);
         self.split_axis = axis;
         self.n_primitives = 0;
+    }
+
+    pub fn getOffset(node: ?*BVHBuildNode) i32 {
+        if (node == null) return -1;
+        return node.?.first_prim_offset;
     }
 };
 
@@ -71,6 +76,7 @@ pub const BVHAggregate = struct {
         defer arena.deinit();
         const allocator = arena.allocator();
         var linear_nodes = try std.ArrayList(Aabb_GPU).initCapacity(allocator, primitives.len);
+        linear_nodes.expandToCapacity();
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
@@ -83,14 +89,15 @@ pub const BVHAggregate = struct {
 
         var root: *BVHBuildNode = undefined;
         // Build BVH for primitives
-        var ordered_primitives = std.ArrayList(Object).init(allocator);
+        var ordered_primitives = try std.ArrayList(Object).initCapacity(allocator, primitives.len);
+        ordered_primitives.expandToCapacity();
         if (split_method == SplitMethod.HLBVH) {
             // TODO need to implement in the future.
             std.debug.print("HLBVH not implemented yet\n", .{});
             unreachable;
         } else {
-            var ordered_prims_offset: u32 = 0;
-            root = try buildRecursive(allocator, bvh_primitives, &ordered_prims_offset, try ordered_primitives.toOwnedSlice(), primitives);
+            var ordered_prims_offset: u16 = 0;
+            root = try buildRecursive(allocator, bvh_primitives, &ordered_prims_offset, &ordered_primitives, primitives);
         }
 
         // TODO why is this needed and how to implement?
@@ -102,6 +109,7 @@ pub const BVHAggregate = struct {
         // bvh_primitives.shrink_to_fit();
 
         var offset: usize = 0;
+        populateLinks(root, null);
         _ = flattenBVH(root, &linear_nodes, &offset);
 
         return BVHAggregate{
@@ -118,8 +126,8 @@ pub const BVHAggregate = struct {
     pub fn buildRecursive(
         allocator: std.mem.Allocator,
         bvh_primitives: std.ArrayList(BVHPrimitive), // Pre-prepared array of primitives
-        ordered_prims_offset: *u32,
-        ordered_prims: []Object, // Array of primitives reordered NOTE: should be empty, maybe not pass it from outside?
+        ordered_prims_offset: *u16,
+        ordered_prims: *std.ArrayList(Object), // Array of primitives reordered NOTE: should be empty, maybe not pass it from outside?
         primitives: []Object,
     ) !*BVHBuildNode {
         // Compute bounds of all primitives in BVH node
@@ -136,14 +144,14 @@ pub const BVHAggregate = struct {
         // if (extent[2] > extent[axis]) axis = 2;
         if (surface_area == 0 or bvh_primitives.items.len == 1) {
             // Create leaf
-            const first_prim_offset = ordered_prims_offset;
+            const first_prim_offset = ordered_prims_offset.*;
             ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
 
             for (0..bvh_primitives.items.len) |i| {
                 const index = bvh_primitives.items[i].primitive_index;
-                ordered_prims[first_prim_offset.* + i] = primitives[index];
+                ordered_prims.items[first_prim_offset + i] = primitives[index];
             }
-            node.initLeaf(first_prim_offset.*, bvh_primitives.items.len, bounds);
+            node.initLeaf(first_prim_offset, bvh_primitives.items.len, bounds);
             return node;
         } else {
             // Compute bound of primitive centroids and choose split dimension _dim_
@@ -153,38 +161,52 @@ pub const BVHAggregate = struct {
         return node;
     }
 
-    TODO this is all wrong.
+    pub fn populateLinks(node: *BVHBuildNode, next_right_node: ?*BVHBuildNode) void {
+        // If not leaf node
+        // NOTE I wonder if this check is correct.
+        if (node.left != null) {
+            node.linear_node.hit_node = BVHBuildNode.getOffset(node.left);
+            node.linear_node.miss_node = BVHBuildNode.getOffset(next_right_node);
+            node.linear_node.right_offset = BVHBuildNode.getOffset(node.right);
+
+            if (node.left) |left| {
+                populateLinks(left, node.right);
+            }
+            if (node.right) |right| {
+                populateLinks(right, next_right_node);
+            }
+        } else {
+            node.linear_node.hit_node = BVHBuildNode.getOffset(next_right_node);
+            node.linear_node.miss_node = node.linear_node.hit_node;
+        }
+    }
+
+    // TODO VERY unsure here
     // Not sure of how I can get out of this mess.
     // I think I have to build the linear_node immediately and carry it around.
     // So that I can initialize some fields like in the original code.
     // Find where it was updated in the original code (I think when building the tree)
-    pub fn flattenBVH(node: *BVHBuildNode, linear_nodes: *std.ArrayList(Aabb_GPU), offset: *usize) u32 {
+    pub fn flattenBVH(node: *BVHBuildNode, linear_nodes: *std.ArrayList(Aabb_GPU), offset: *usize) usize {
         // var linear_node = linear_nodes.items[offset.*];
         // linear_node.bounds = node.bounds;
         const node_offset = offset.*;
 
-        var linear_node = Aabb_GPU{
-            .mins = node.bounds.min,
-            .right_offset = -1, // -1 means there's no right offset
-            .maxs = node.bounds.max,
-            .type = -1, // NOTE: without the objects I can't get the type anymore.
-            .start_id = -1,
-            .tri_count = -1,
-            .miss_node = -1,
-            .axis = node.axis, // NOTE: not sure about this
-        };
+        // NOTE some of this stuff could be moved to node building?
+        node.linear_node.mins = node.bounds.min;
+        node.linear_node.maxs = node.bounds.max;
+        node.linear_node.axis = node.split_axis;
 
         if (node.n_primitives > 0) {
-            linear_node.start_id = node.first_prim_offset;
-            linear_node.tri_count = node.n_primitives;
-            linear_node.hit_node = node.right.?.first_prim_offset; // TODO maybe??
-            linear_node.miss_node = node.hit_node; // original hit node
+            node.linear_node.start_id = node.first_prim_offset;
+            node.linear_node.tri_count = node.n_primitives;
+            node.linear_node.hit_node = BVHBuildNode.getOffset(node.right); // TODO maybe??
+            node.linear_node.miss_node = node.linear_node.hit_node; // original hit node
         } else {
             // Create interior flattened BVH node
-            linear_node.axis = node.split_axis;
-            linear_node.tri_count = 0;
-            linear_node.hit_node = node.left.?.first_prim_offset; // TODO maybe??
-            linear_node.miss_node = node.right.?.first_prim_offset; // TODO maybe??
+            node.linear_node.axis = @intCast(node.split_axis);
+            node.linear_node.tri_count = 0;
+            node.linear_node.hit_node = BVHBuildNode.getOffset(node.left); // TODO maybe??
+            node.linear_node.miss_node = BVHBuildNode.getOffset(node.right); // TODO maybe??
             if (node.left) |left| {
                 _ = flattenBVH(left, linear_nodes, offset);
             }
@@ -193,7 +215,7 @@ pub const BVHAggregate = struct {
             }
         }
 
-        linear_nodes.items[offset.*] = linear_node;
+        linear_nodes.items[offset.*] = node.linear_node;
 
         offset.* += 1;
         return node_offset;

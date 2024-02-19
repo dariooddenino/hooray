@@ -13,11 +13,14 @@ Finish reconciling the [book](https://pbr-book.org/4ed/Primitives_and_Intersecti
 I moved the old implementation to ref-bvhs.zig
 Plausible steps:
 - [ ] A couple of calls in the generator functions are commented and I need to figure out how to handle them.
-- [ ] flattenBVH needs to return the correct fields (I'm not sure about them all) for Aabb_GPU
-- [ ] call the new functions from scene
+- [X] flattenBVH needs to return the correct fields (I'm not sure about them all) for Aabb_GPU
+- [X] call the new functions from scene
 - [ ] test it with one object only
 - [ ] implement the missing else part in the generator function
 - [ ] once everything is fine, cleanup
+
+I've wired a few more things, but initBuffers is crashing the app.
+I think I need all buffers to be filled? Weird though.
 
 https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/cpu/aggregates.h
 https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/cpu/aggregates.cpp

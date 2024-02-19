@@ -7,26 +7,26 @@ fn hitScene(ray: Ray) -> bool {
         if medium < ISOTROPIC {
             if hit_sphere(sphere_objs[i], ray_tmin, closest_so_far, ray) {
                 hit_anything = true;
-                closest_so_far = hitRec.t;
+                closest_so_far = hit_rec.t;
             }
         } else {
             if hit_volume(sphere_objs[i], ray_tmin, closest_so_far, ray) {
                 hit_anything = true;
-                closest_so_far = hitRec.t;
+                closest_so_far = hit_rec.t;
             }
         }
 
 		// if(hit_sphere(sphere_objs[i], ray_tmin, closest_so_far, ray))
 		// {
 		// 	hit_anything = true;
-		// 	closest_so_far = hitRec.t;
+		// 	closest_so_far = hit_rec.t;
 		// }
     }
 
     for (var i = 0; i < NUM_QUADS; i++) {
         if hit_quad(quad_objs[i], ray_tmin, closest_so_far, ray) {
             hit_anything = true;
-            closest_so_far = hitRec.t;
+            closest_so_far = hit_rec.t;
         }
     }
 

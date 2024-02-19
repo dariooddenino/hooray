@@ -84,8 +84,9 @@ pub const Scene = struct {
         // defer bvh.deinit(self.allocator);
 
         const bvh = try bvhs.BVHAggregate.init(self.allocator, try self.objects.toOwnedSlice(), self.objects.items.len, bvhs.SplitMethod.Middle);
-        self.bvh_array.deinit();
-        self.bvh_array = bvh.linear_nodes;
+        _ = bvh;
+        // self.bvh_array.deinit();
+        // self.bvh_array = bvh.linear_nodes;
 
         // self.triangles = bvh.objs;
         // TODO I'm passing by reference...
