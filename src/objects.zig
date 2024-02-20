@@ -8,6 +8,7 @@ const Aabb = @import("aabbs.zig").Aabb;
 pub const Object = union(enum) {
     sphere: Sphere,
     quad: Quad,
+    triangle: Triangle,
 
     pub fn getBbox(self: Object) Aabb {
         switch (self) {
@@ -75,5 +76,28 @@ pub const Quad = struct {
             .material_id = material_id,
             .bbox = bbox,
         };
+    }
+};
+
+pub const Triangle = struct {
+    global_id: u32,
+    local_id: u32,
+    material_id: u32,
+    bbox: Aabb,
+    A: Vec,
+    B: Vec,
+    C: Vec,
+    type: f32 = 2,
+
+    // TODO This is weirder. Uses the mesh_id (material_id here) as the global_id.
+    pub fn init(A: Vec, B: Vec, C: Vec, normalA: Vec, normalB: Vec, normalC: Vec, material_id: u32, local_id: u32) Triangle {
+        _ = A;
+        _ = B;
+        _ = C;
+        _ = normalA;
+        _ = normalB;
+        _ = normalC;
+        _ = material_id;
+        _ = local_id;
     }
 };

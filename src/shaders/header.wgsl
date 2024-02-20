@@ -16,8 +16,9 @@ const STACK_SIZE = 20;
 @group(0) @binding(1) var<storage, read> sphere_objs : array<Sphere>;
 @group(0) @binding(2) var<storage, read> quad_objs : array<Quad>;
 @group(0) @binding(3) var<storage, read_write> framebuffer : array<vec4f>;
-@group(0) @binding(4) var<storage, read> materials: array<Material>;
-@group(0) @binding(5) var<storage, read> bvh: array<AABB>;
+@group(0) @binding(4) var<storage, read> triangles: array<Triangle>;
+@group(0) @binding(5) var<storage, read> materials: array<Material>;
+@group(0) @binding(6) var<storage, read> bvh: array<AABB>;
 
 var<private> NUM_SPHERES : i32;
 var<private> NUM_QUADS : i32;
@@ -78,6 +79,16 @@ struct Quad {
     D: f32,
     w: vec3f,
     material_id: f32
+}
+
+struct Triangle {
+    A: vec3f,
+    B: vec3f,
+    C: vec3f,
+    normalA: vec3f,
+    normalB: vec3f,
+    normalC: vec3f,
+    mesh_id: f32,
 }
 
 struct AABB {

@@ -15,6 +15,7 @@ const Material = @import("materials.zig").Material;
 const Quad = objects.Quad;
 const Scene = scenes.Scene;
 const Sphere = objects.Sphere;
+const Triangle = objects.Triangle;
 
 const App = @import("main.zig").App;
 
@@ -97,7 +98,6 @@ pub const Renderer = struct {
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
         const shader_files = .{ "header", "common", "main", "shootRay", "hitRay", "traceRay", "scatterRay", "importanceSampling" };
-        // const shader_files = .{"simple"};
         const ext = ".wgsl";
         const folder = "./shaders/";
         inline for (shader_files) |file| {
@@ -122,8 +122,9 @@ pub const Renderer = struct {
         const bgls = gpu.BindGroupLayout.Entry.buffer(1, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bglq = gpu.BindGroupLayout.Entry.buffer(2, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bglf = gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .storage, false, 0);
-        const bglm = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .storage, false, 0);
-        const bglb = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bglt = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bglm = gpu.BindGroupLayout.Entry.buffer(5, .{ .fragment = true, .compute = true }, .storage, false, 0);
+        const bglb = gpu.BindGroupLayout.Entry.buffer(6, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bgl = core.device.createBindGroupLayout(
             &gpu.BindGroupLayout.Descriptor.init(.{
                 .entries = &.{
@@ -131,6 +132,7 @@ pub const Renderer = struct {
                     bgls,
                     bglq,
                     bglf,
+                    bglt,
                     bglm,
                     bglb,
                 },
@@ -197,9 +199,19 @@ pub const Renderer = struct {
             .size = scene.quads.items.len * @sizeOf(Quad),
             .mapped_at_creation = .true,
         });
-        // const quads_mapped = quads_buffer.getMappedRange(Quad, 0, scene.quads.items.len);
-        // @memcpy(quads_mapped.?, scene.quads.items[0..]);
-        // quads_buffer.unmap();
+        if (scene.quads.items.len > 0) {
+            const quads_mapped = quads_buffer.getMappedRange(Quad, 0, scene.quads.items.len);
+            @memcpy(quads_mapped.?, scene.quads.items[0..]);
+            quads_buffer.unmap();
+        }
+
+        const triangles_buffer = core.device.createBuffer(&.{
+            .label = "Triangles",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = scene.triangles.items.len * @sizeOf(Triangle),
+            .mapped_at_creation = .true,
+        });
+        // TODO map
 
         const MT = [13]f32;
         const materials: [1]MT = .{.{0} ** 13};
@@ -219,15 +231,18 @@ pub const Renderer = struct {
             .size = scene.bvh_array.items.len * @sizeOf(Aabb_GPU),
             .mapped_at_creation = .true,
         });
-        const bvh_mapped = bvh_buffer.getMappedRange(Aabb_GPU, 0, scene.bvh_array.items.len);
-        @memcpy(bvh_mapped.?, scene.bvh_array.items[0..]);
-        bvh_buffer.unmap();
+        if (scene.bvh_array.items.len > 0) {
+            const bvh_mapped = bvh_buffer.getMappedRange(Aabb_GPU, 0, scene.bvh_array.items.len);
+            @memcpy(bvh_mapped.?, scene.bvh_array.items[0..]);
+            bvh_buffer.unmap();
+        }
 
-        var buffers: [7]GPUResources.BufferAdd = .{
+        var buffers: [8]GPUResources.BufferAdd = .{
             .{ .name = "vertex", .buffer = vertex_buffer },
             .{ .name = "uniforms", .buffer = uniforms_buffer },
             .{ .name = "spheres", .buffer = spheres_buffer },
             .{ .name = "quads", .buffer = quads_buffer },
+            .{ .name = "triangles", .buffer = triangles_buffer },
             .{ .name = "materials", .buffer = materials_buffer },
             .{ .name = "bvh", .buffer = bvh_buffer },
             .{ .name = "frame", .buffer = frame_buffer },
@@ -243,6 +258,7 @@ pub const Renderer = struct {
         const frame_buffer = self.resources.getBuffer("frame");
         const materials_buffer = self.resources.getBuffer("materials");
         const bvh_buffer = self.resources.getBuffer("bvh");
+        const triangles_buffer = self.resources.getBuffer("triangles");
         const bind_group = core.device.createBindGroup(
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = layout,
@@ -251,8 +267,9 @@ pub const Renderer = struct {
                     gpu.BindGroup.Entry.buffer(1, spheres_buffer, 0, @sizeOf(Sphere) * self.scene.spheres.items.len),
                     gpu.BindGroup.Entry.buffer(2, quads_buffer, 0, @sizeOf(Quad) * self.scene.quads.items.len),
                     gpu.BindGroup.Entry.buffer(3, frame_buffer, 0, @sizeOf(f32) * size),
-                    gpu.BindGroup.Entry.buffer(4, materials_buffer, 0, @sizeOf([13]f32)),
-                    gpu.BindGroup.Entry.buffer(5, bvh_buffer, 0, @sizeOf(Aabb_GPU) * self.scene.bvh_array.items.len),
+                    gpu.BindGroup.Entry.buffer(4, triangles_buffer, 0, @sizeOf(Triangle) * self.scene.triangles.items.len),
+                    gpu.BindGroup.Entry.buffer(5, materials_buffer, 0, @sizeOf([13]f32)),
+                    gpu.BindGroup.Entry.buffer(6, bvh_buffer, 0, @sizeOf(Aabb_GPU) * self.scene.bvh_array.items.len),
                 },
             }),
         );

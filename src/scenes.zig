@@ -6,6 +6,7 @@ const Material = @import("materials.zig").Material;
 const Object = @import("objects.zig").Object;
 const Quad = @import("objects.zig").Quad;
 const Sphere = @import("objects.zig").Sphere;
+const Triangle = @import("objects.zig").Triangle;
 const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
 const Vec = @Vector(3, f32);
 
@@ -24,8 +25,8 @@ pub const Scene = struct {
     spheres: std.ArrayList(Sphere),
     quads: std.ArrayList(Quad),
     objects: std.ArrayList(Object),
+    triangles: std.ArrayList(Triangle),
     // lights: std.ArrayList(Quad),
-    // triangles: std.ArrayList(Object),
     bvh_array: std.ArrayList(Aabb_GPU),
 
     pub fn init(allocator: std.mem.Allocator) Scene {
@@ -36,6 +37,7 @@ pub const Scene = struct {
         const objects = std.ArrayList(Object).init(allocator);
         // const lights = std.ArrayList(Quad).init(allocator);
         const bvh_array = std.ArrayList(Aabb_GPU).init(allocator);
+        const triangles = std.ArrayList(Triangle).init(allocator);
 
         return Scene{
             .allocator = allocator,
@@ -46,6 +48,7 @@ pub const Scene = struct {
             .objects = objects,
             // .lights = lights,
             .bvh_array = bvh_array,
+            .triangles = triangles,
         };
     }
 
@@ -57,6 +60,7 @@ pub const Scene = struct {
         // self.quads.deinit();
         // self.objects.deinit();
         // self.lights.deinit();
+        // self.traingles.deinit()
     }
 
     pub fn loadBasicScene(self: *Scene) !void {
