@@ -79,7 +79,7 @@ fn hitScene(ray: Ray) -> bool {
             cur_node_idx = stack[to_visit_offset];
         }
 
-        if to_visit_Offset >= STACK_SIZE {
+        if to_visit_offset >= STACK_SIZE {
 			    break;
         }
     }

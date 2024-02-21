@@ -34,9 +34,32 @@ pub const Sphere = struct {
     bbox: Aabb,
     type: f32 = 0,
 
+    pub const Sphere_GPU = extern struct {
+        center: Vec,
+        r: f32,
+        global_id: f32,
+        local_id: f32,
+        material_id: f32,
+    };
+
     pub fn init(center: Vec, radius: f32, global_id: u32, local_id: u32, material_id: u32) Sphere {
         const bbox = Aabb.init(center - zm.splat(Vec, radius), center + zm.splat(Vec, radius));
         return Sphere{ .center = center, .radius = radius, .global_id = global_id, .local_id = local_id, .material_id = material_id, .bbox = bbox };
+    }
+
+    pub fn toGPU(allocator: std.mem.Allocator, spheres: std.ArrayList(Sphere)) !std.ArrayList(Sphere_GPU) {
+        var spheres_gpu = std.ArrayList(Sphere_GPU).init(allocator);
+        for (spheres.items) |sphere| {
+            const sphere_gpu = Sphere_GPU{
+                .center = sphere.center,
+                .r = sphere.radius,
+                .global_id = @floatFromInt(sphere.global_id),
+                .local_id = @floatFromInt(sphere.local_id),
+                .material_id = @floatFromInt(sphere.material_id),
+            };
+            try spheres_gpu.append(sphere_gpu);
+        }
+        return spheres_gpu;
     }
 };
 

@@ -12,7 +12,7 @@ fn ray_color(incident_ray: Ray) -> vec3f {
         }
 
 		// unidirectional light
-        var emission_color = hitRec.material.emission_color;
+        var emission_color = hit_rec.material.emission_color;
         if !hit_rec.front_face {
             emission_color = vec3f(0);
         }
@@ -24,7 +24,7 @@ fn ray_color(incident_ray: Ray) -> vec3f {
 
             if scatter_rec.skip_pdf {
                 acc_radiance += emission_color * throughput;
-                throughput *= mix(hitRec.material.color, hitRec.material.specular_color, do_specular);
+                throughput *= mix(hit_rec.material.color, hit_rec.material.specular_color, do_specular);
 
                 curr_ray = scatter_rec.skip_pdf_ray;
 				continue;
@@ -56,7 +56,7 @@ fn ray_color(incident_ray: Ray) -> vec3f {
             acc_radiance += emission_color * throughput;
             throughput *= mix(hit_rec.material.color, hit_rec.material.specular_color, do_specular);
 
-            currRay = scattered;
+            curr_ray = scattered;
         }
 
 		// russian roulette

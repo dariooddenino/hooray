@@ -76,6 +76,10 @@ fn hit_quad(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
     return false;
 }
 
+fn hit_triangle(tri: Triangle, tmin: f32, tmax: f32, incident_ray: Ray) -> bool {
+    return false;
+}
+
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
 fn hit_aabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3f) -> bool {
     var t0s = (box.min - ray.origin) * inv_dir;
