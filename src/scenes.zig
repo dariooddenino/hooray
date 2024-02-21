@@ -53,18 +53,17 @@ pub const Scene = struct {
     }
 
     pub fn deinit(self: *Scene) void {
-        _ = self;
-        // self.materials.deinit();
-        // self.material_dict.deinit();
-        // self.spheres.deinit();
-        // self.quads.deinit();
-        // self.objects.deinit();
+        self.materials.deinit();
+        self.material_dict.deinit();
+        self.spheres.deinit();
+        self.quads.deinit();
+        self.objects.deinit();
         // self.lights.deinit();
-        // self.traingles.deinit()
+        self.triangles.deinit();
     }
 
     pub fn loadBasicScene(self: *Scene) !void {
-        const default_material = Material.init(0, Vec{ 1, 0, 0 }, zm.splat(Vec, 0), zm.splat(Vec, 0), 0, 0, 0);
+        const default_material = Material.init(0, Vec{ 1, 0, 0 }, zm.splat(Vec, 0), zm.splat(Vec, 2), 0, 0, 0);
         const default_material_id = try self.addMaterial("default", default_material);
 
         try self.addSphere(Vec{ -0.3, -0.65, 0.3 }, 0.35, default_material_id);

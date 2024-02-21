@@ -8,6 +8,9 @@ Current shaders are taken from https://github.com/Shridhar2602/WebGPU-Path-Trace
 
 ## TODO
 
+It doesn't crash anymore. Now I need to implement handling more than 1 child in the tree,
+add a light and hope that I can see something!
+
 ### BVH
 Finish reconciling the [book](https://pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies) implementation to what I had before.
 I moved the old implementation to ref-bvhs.zig
@@ -18,6 +21,7 @@ Plausible steps:
 - [ ] test it with one object only
 - [ ] implement the missing else part in the generator function
 - [ ] once everything is fine, cleanup
+- [ ] I need to check the left/right nullness handling
 
 I've wired a few more things, but initBuffers is crashing the app.
 I think I need all buffers to be filled? Weird though.
