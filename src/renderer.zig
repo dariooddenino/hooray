@@ -268,7 +268,7 @@ pub const Renderer = struct {
         // Compute pass
 
         // Hardcoded for now
-        const work_groups_needed = (screen_width * screen_height) / 64;
+        const work_groups_needed = screen_size / 64;
         self.computePass(work_groups_needed);
 
         // Render pass
