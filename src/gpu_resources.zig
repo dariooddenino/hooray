@@ -7,7 +7,7 @@ pub const Uniforms = extern struct {
     screen_dims: [2]f32,
     frame_num: f32,
     reset_buffer: f32,
-    view_matrix: zm.Mat,
+    // view_matrix: zm.Mat,
 };
 
 pub const GPUResources = struct {

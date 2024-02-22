@@ -23,7 +23,6 @@ pub const Object = union(enum) {
     }
 };
 
-// TODO I'm missing the create_sphere with the flattened structure
 // TODO I'm also missing Transform
 pub const Sphere = struct {
     center: Vec,
@@ -63,7 +62,6 @@ pub const Sphere = struct {
     }
 };
 
-// TODO I'm missing the create_quad with the flattened structure
 // TODO I'm also missing Transform
 pub const Quad = struct {
     Q: Vec,

@@ -7,9 +7,6 @@ const Interval = intervals.Interval;
 const Vec = @Vector(3, f32);
 
 // A representation for the shaders.
-// TODO maybe I could add a method to aabb to generate these, with the required extra data.
-// TODO I need to plug the fields I know about, and then figure out how to handle the other ones.
-// TODO Can I use `u32`s here?
 pub const Aabb_GPU = extern struct {
     mins: Vec = Vec{ 0, 0, 0 },
     right_offset: i32 = -1,
@@ -87,8 +84,19 @@ pub const Aabb = struct {
         return self.max - self.min;
     }
 
-    pub fn centroid(self: Aabb, a: usize) f32 {
-        return (self.min[a] + self.max[a]) / 2;
+    pub fn centroid(self: Aabb) Vec {
+        return (self.min + self.max) / zm.splat(Vec, 2);
+    }
+
+    pub fn maxDimension(self: Aabb) usize {
+        const bcentroid = self.centroid();
+        if (bcentroid[0] > bcentroid[1] and bcentroid[0] > bcentroid[2]) {
+            return 0;
+        } else if (bcentroid[1] > bcentroid[2]) {
+            return 1;
+        } else {
+            return 2;
+        }
     }
 
     pub fn surfaceArea(self: Aabb) f32 {

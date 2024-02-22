@@ -68,10 +68,10 @@ pub const Scene = struct {
 
         try self.addSphere(Vec{ -0.3, -0.65, 0.3 }, 0.35, default_material_id);
 
-        // const light_material = Material.init(0, zm.splat(Vec, 0), zm.splat(Vec, 0), zm.splat(Vec, 2), 0, 0, 0);
-        // const light_material_id = try self.addMaterial("light", light_material);
+        const light_material = Material.init(0, zm.splat(Vec, 0), zm.splat(Vec, 0), zm.splat(Vec, 2), 0, 0, 0);
+        const light_material_id = try self.addMaterial("light", light_material);
 
-        // try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
+        try self.addQuad(Vec{ -1, 1, -1 }, Vec{ 3, 0, 0 }, Vec{ 0, 0, 2 }, light_material_id);
 
         try self.createBVH();
     }

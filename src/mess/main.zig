@@ -1,23 +1,14 @@
 const std = @import("std");
-const builtin = @import("builtin");
 const core = @import("mach-core");
 const gpu = core.gpu;
 const queue = core.queue;
 
+const Camera = @import("camera.zig").Camera;
 const Renderer = @import("renderer.zig").Renderer;
+const Vec = @import("zmath").Vec;
 pub const App = @This();
 
-var gpa = switch (builtin.mode) {
-    .Debug => std.heap.GeneralPurposeAllocator(.{ .verbose_log = true, .retain_metadata = true }){},
-    else => std.heap.GeneralPurposeAllocator(){},
-};
-const allocator = gpa.allocator();
-
-// TODO these should be dynamic?
-// At least move to a config file
-pub const screen_width = 800;
-pub const screen_height = 600;
-pub const screen_size = 800 * 600;
+var gpa = std.heap.GeneralPurposeAllocator(.{ .verbose_log = true, .retain_metadata = true }){};
 
 title_timer: core.Timer,
 timer: core.Timer,
@@ -28,11 +19,16 @@ pub fn init(app: *App) !void {
     try core.init(.{
         .title = "Hooray",
         .power_preference = .high_performance,
-        .size = .{ .width = screen_width, .height = screen_height },
+        .size = .{ .width = 800, .height = 600 },
     });
     core.setFrameRateLimit(frame_rate);
 
-    const renderer = try Renderer.init(allocator);
+    var camera = Camera{};
+    camera.setCamera(Vec{ 0.5, 0, 2.5, 0 }, Vec{ 0.5, 0, 0, 0 }, Vec{ 0, 1, 0, 0 });
+    var renderer = try Renderer.init(gpa.allocator(), camera);
+
+    // Just fps and optional camera for now
+    renderer.setRenderParameters(frame_rate, null);
 
     app.title_timer = try core.Timer.start();
     app.timer = try core.Timer.start();
@@ -42,7 +38,11 @@ pub fn init(app: *App) !void {
 pub fn deinit(app: *App) void {
     defer _ = gpa.deinit();
     defer core.deinit();
-    defer app.renderer.deinit();
+
+    // TODO how to do this?
+    app.renderer.deinit() catch {
+        std.debug.print("Failed to deinit renderer\n");
+    };
 }
 
 pub fn update(app: *App) !bool {
