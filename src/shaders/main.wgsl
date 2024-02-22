@@ -9,8 +9,8 @@
     let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
     let coords = vec3f(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
 
-    let red: f32 = coords.x; // 255 * coords.x / f32(uniforms.screen_dims.x);
-    let green: f32 = coords.y; // 255 * coords.y / f32(uniforms.screen_dims.y);
+    let red: f32 = coords.x / f32(uniforms.screen_dims.x);
+    let green: f32 = coords.y / f32(uniforms.screen_dims.y);
     let blue: f32 = 0;
 
     framebuffer[pixel_index] = vec4f(red, green, blue, 1);
