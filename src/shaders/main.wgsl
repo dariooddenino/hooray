@@ -9,11 +9,19 @@
     let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
     let coords = vec3f(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
 
-    // For now...
+    fov_factor = 1 / tan(60 * (PI / 180) / 2);
     cam_origin = (uniforms.view_matrix * vec4f(0, 0, 0, 1)).xyz;
+
+    NUM_SPHERES = i32(arrayLength(&sphere_objs));
+
+    rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
 
     var path_traced_color = pathTrace();
     var frag_color = path_traced_color.xyz;
+
+    if uniforms.reset_buffer == 0 {
+        frag_color = framebuffer[pixel_index].xyz + path_traced_color;
+    }
 
     framebuffer[pixel_index] = vec4f(frag_color.xyz, 1);
 }
@@ -31,8 +39,8 @@ fn fs(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let i = get1Dfrom2D(fragCoord.xy);
     var color = framebuffer[i].xyz; // / uniforms.frame_num;
 
-    // color = aces_approx(color.xyz);
-    // color = pow(color.xyz, vec3f(1 / 2.2));
+    color = aces_approx(color.xyz);
+    color = pow(color.xyz, vec3f(1 / 2.2));
 
     if uniforms.reset_buffer == 1 {
         framebuffer[i] = vec4f(0);

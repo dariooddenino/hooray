@@ -4,9 +4,11 @@ const gpu_resources = @import("gpu_resources.zig");
 const gpu = core.gpu;
 const main = @import("main.zig");
 const zm = @import("zmath");
+const objects = @import("objects.zig");
 
 const App = @import("main.zig").App;
 const GPUResources = gpu_resources.GPUResources;
+const Sphere = objects.Sphere;
 const Uniforms = gpu_resources.Uniforms;
 
 const screen_width = main.screen_width;
@@ -51,7 +53,7 @@ pub const Renderer = struct {
 
         // Create Buffers
         // TODO this hardcoded width and height should be removed
-        try self.initBuffers();
+        try self.initBuffers(allocator);
 
         // Create BindGroups
         try self.initBindGroups();
@@ -87,11 +89,13 @@ pub const Renderer = struct {
     fn initBindGroupLayouts(self: *Renderer) !void {
         const bgl_framebuffer = gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bgl_uniforms = gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0);
+        const bgl_spheres = gpu.BindGroupLayout.Entry.buffer(2, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
         const bgl = core.device.createBindGroupLayout(
             &gpu.BindGroupLayout.Descriptor.init(.{
                 .entries = &.{
                     bgl_framebuffer,
                     bgl_uniforms,
+                    bgl_spheres,
                 },
             }),
         );
@@ -110,7 +114,7 @@ pub const Renderer = struct {
         try self.resources.addPipelineLayouts(&pipeline_layouts);
     }
 
-    fn initBuffers(self: *Renderer) !void {
+    fn initBuffers(self: *Renderer, allocator: std.mem.Allocator) !void {
         const vertex_buffer = core.device.createBuffer(&.{ .label = "Vertex", .usage = .{ .vertex = true, .copy_dst = true }, .size = @sizeOf(Vertex) * vertex_data.len, .mapped_at_creation = .true });
         const vertex_mapped = vertex_buffer.getMappedRange(Vertex, 0, vertex_data.len);
         @memcpy(vertex_mapped.?, vertex_data[0..]);
@@ -135,10 +139,27 @@ pub const Renderer = struct {
         });
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{self.uniforms});
 
-        var buffers: [3]GPUResources.BufferAdd = .{
+        // Temp code here
+        var spheres = std.ArrayList(Sphere).init(allocator);
+        defer spheres.deinit();
+        try spheres.append(Sphere{ .center = .{ 0, 0, 0, 0 }, .radius = 1 });
+        const spheres_gpu = try Sphere.toGPU(allocator, spheres);
+        defer spheres_gpu.deinit();
+        const spheres_buffer = core.device.createBuffer(&.{
+            .label = "Spheres",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = spheres_gpu.items.len * @sizeOf(Sphere.Sphere_GPU),
+            .mapped_at_creation = .true,
+        });
+        const spheres_mapped = spheres_buffer.getMappedRange(Sphere.Sphere_GPU, 0, spheres_gpu.items.len);
+        @memcpy(spheres_mapped.?, spheres_gpu.items[0..]);
+        spheres_buffer.unmap();
+
+        var buffers: [4]GPUResources.BufferAdd = .{
             .{ .name = "vertex", .buffer = vertex_buffer },
             .{ .name = "frame", .buffer = frame_buffer },
             .{ .name = "uniforms", .buffer = uniforms_buffer },
+            .{ .name = "spheres", .buffer = spheres_buffer },
         };
         try self.resources.addBuffers(&buffers);
     }
@@ -147,12 +168,14 @@ pub const Renderer = struct {
         const layout = self.resources.getBindGroupLayout("layout");
         const frame_buffer = self.resources.getBuffer("frame");
         const uniforms_buffer = self.resources.getBuffer("uniforms");
+        const spheres_buffer = self.resources.getBuffer("spheres");
         const bind_group = core.device.createBindGroup(
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = layout,
                 .entries = &.{
                     gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, @sizeOf(f32) * screen_size),
                     gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, @sizeOf(Uniforms)),
+                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, @sizeOf(Sphere.Sphere_GPU) * 1),
                 },
             }),
         );

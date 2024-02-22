@@ -2,11 +2,14 @@ fn rayColor(incident_ray: Ray) -> vec3f {
     var curr_ray = incident_ray;
     var acc_radiance = vec3f(0); // initial radiance (color) is black
     var throughput = vec3f(1); // initial throughput is 1 (no attenuation)
-    let background_color = vec3f(0.8, 0.8, 1.0); // light blue
 
     for (var i = 0; i < MAX_BOUNCES; i++) {
-        acc_radiance += (background_color * throughput);
-    break;
+        if hitScene(curr_ray) == false {
+            let unit_direction = normalize(incident_ray.direction);
+            let a = 0.5 * (unit_direction.y + 1);
+            acc_radiance += (((1 - a) * vec3f(1, 1, 1) + a * vec3f(0.5, 0.7, 1)) * throughput);
+            break;
+        }
     }
 
     return acc_radiance;
