@@ -1,3 +1,11 @@
+// PCG prng
+// https://www.shadertoy.com/view/XlGcRh
+fn rand2D() -> f32 {
+    rand_state = rand_state * 747796405u + 2891336453u;
+    var word: u32 = ((rand_state >> ((rand_state >> 28u) + 4u)) ^ rand_state) * 277803737u;
+    return f32((word >> 22u) ^ word) / 4294967295;
+}
+
 // ACES approximation for tone mapping
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/):
 fn aces_approx(v: vec3f) -> vec3f {

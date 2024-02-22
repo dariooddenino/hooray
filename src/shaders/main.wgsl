@@ -9,11 +9,13 @@
     let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
     let coords = vec3f(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
 
-    let red: f32 = coords.x / f32(uniforms.screen_dims.x);
-    let green: f32 = coords.y / f32(uniforms.screen_dims.y);
-    let blue: f32 = 0;
+    // For now...
+    cam_origin = (uniforms.view_matrix * vec4f(0, 0, 0, 1)).xyz;
 
-    framebuffer[pixel_index] = vec4f(red, green, blue, 1);
+    var path_traced_color = pathTrace();
+    var frag_color = path_traced_color.xyz;
+
+    framebuffer[pixel_index] = vec4f(frag_color.xyz, 1);
 }
 
 

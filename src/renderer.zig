@@ -3,6 +3,7 @@ const core = @import("mach-core");
 const gpu_resources = @import("gpu_resources.zig");
 const gpu = core.gpu;
 const main = @import("main.zig");
+const zm = @import("zmath");
 
 const App = @import("main.zig").App;
 const GPUResources = gpu_resources.GPUResources;
@@ -33,6 +34,7 @@ pub const Renderer = struct {
             .screen_dims = .{ screen_width, screen_height },
             .frame_num = 0,
             .reset_buffer = 0,
+            .view_matrix = zm.matFromArr([_]f32{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }),
         };
 
         var self = Renderer{ .allocator = allocator, .resources = resources, .uniforms = uniforms };
@@ -67,7 +69,7 @@ pub const Renderer = struct {
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
-        const shader_files = .{ "header", "main" };
+        const shader_files = .{ "header", "main", "common", "shootRay", "traceRay" };
         const ext = ".wgsl";
         const folder = "./shaders/";
         inline for (shader_files) |file| {
