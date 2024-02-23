@@ -8,7 +8,10 @@ pub const Sphere = struct {
     center: Vec,
     radius: f32,
 
-    pub const Sphere_GPU = extern struct { center: @Vector(3, f32), radius: f32 };
+    pub const Sphere_GPU = extern struct {
+        center: @Vector(3, f32),
+        radius: f32,
+    };
 
     pub fn toGPU(allocator: std.mem.Allocator, spheres: std.ArrayList(Sphere)) !std.ArrayList(Sphere_GPU) {
         var spheres_gpu = std.ArrayList(Sphere_GPU).init(allocator);

@@ -14,7 +14,7 @@ const Uniforms = gpu_resources.Uniforms;
 
 const screen_width = main.screen_width;
 const screen_height = main.screen_height;
-const screen_size = main.screen_size;
+const screen_size = main.screen_width * main.screen_height * 4;
 
 // Output Vertex
 const Vertex = struct {
@@ -36,7 +36,7 @@ pub const Renderer = struct {
 
         var camera = try allocator.create(Camera);
         camera.* = Camera{};
-        camera.setCamera(zm.Vec{ 0, 0, 0, 0 }, zm.Vec{ 3, 3, 3, 0 }, zm.Vec{ 0, 1, 0, 0 });
+        camera.setCamera(zm.Vec{ 0, 0, 0, 0 }, zm.Vec{ 1, 1, 1, 0 }, zm.Vec{ 0, 1, 0, 0 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
@@ -149,7 +149,7 @@ pub const Renderer = struct {
         // Temp code here
         var spheres = std.ArrayList(Sphere).init(allocator);
         defer spheres.deinit();
-        try spheres.append(Sphere{ .center = .{ 0, 0, 0, 0 }, .radius = 1 });
+        try spheres.append(Sphere{ .center = .{ 0, 0, 0, 0 }, .radius = 0.1 });
         const spheres_gpu = try Sphere.toGPU(allocator, spheres);
         defer spheres_gpu.deinit();
         const spheres_buffer = core.device.createBuffer(&.{
@@ -182,6 +182,7 @@ pub const Renderer = struct {
                 .entries = &.{
                     gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, @sizeOf(f32) * screen_size),
                     gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, @sizeOf(Uniforms)),
+                    // TODO not using spheres_gpu len here
                     gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, @sizeOf(Sphere.Sphere_GPU) * 1),
                 },
             }),
@@ -263,6 +264,7 @@ pub const Renderer = struct {
         const queue = core.queue;
         const descriptor = gpu.CommandEncoder.Descriptor{ .label = "Compute encoder" };
         const encoder = core.device.createCommandEncoder(&descriptor);
+        // TODO label here too
         const pass = encoder.beginComputePass(null);
         pass.setPipeline(self.resources.getComputePipeline("compute"));
         pass.setBindGroup(0, self.resources.getBindGroup("bind_group"), &.{0});
@@ -300,7 +302,7 @@ pub const Renderer = struct {
         // Compute pass
 
         // Hardcoded for now
-        const work_groups_needed = screen_size / 64;
+        const work_groups_needed = screen_width * screen_height / 64;
         self.computePass(work_groups_needed);
 
         // Render pass
@@ -310,15 +312,5 @@ pub const Renderer = struct {
 
         core.swap_chain.present();
         back_buffer_view.release();
-
-        // VSync & Performance Logging
-        // const current_time = std.time.milliTimestamp();
-        // const elapsed_time: f32 = @floatFromInt(current_time - self.last_frame_time);
-
-        // if (elapsed_time < self.req_frame_delay) {
-        // WAIT frame_delay - elapsed_time
-        // }
-
-        // self.last_frame_time = std.time.milliTimestamp();
     }
 };

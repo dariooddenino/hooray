@@ -17,7 +17,7 @@ const allocator = gpa.allocator();
 // At least move to a config file
 pub const screen_width = 800;
 pub const screen_height = 600;
-pub const screen_size = 800 * 600 * 4;
+pub const screen_size = 800 * 600;
 
 title_timer: core.Timer,
 timer: core.Timer,

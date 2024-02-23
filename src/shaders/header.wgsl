@@ -6,7 +6,7 @@ const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
 const MAX_FLOAT = 999999999.999;
 const NUM_SAMPLES = 1;
-const MAX_BOUNCES = 10;
+const MAX_BOUNCES = 2;
 
 struct Uniforms {
   screen_dims: vec2f,
