@@ -42,29 +42,31 @@ pub const GPUResources = struct {
         };
     }
 
-    pub fn deinit(self: *GPUResources) !void {
-        try deinitResources(BindGroups, self.bind_groups);
+    pub fn deinit(self: *GPUResources) void {
+        deinitResources(BindGroups, self.bind_groups);
         self.bind_groups.deinit();
-        try deinitResources(BindGroupLayouts, self.bind_group_layouts);
+        deinitResources(BindGroupLayouts, self.bind_group_layouts);
         self.bind_group_layouts.deinit();
-        try deinitResources(Buffers, self.buffers);
+        deinitResources(Buffers, self.buffers);
         self.buffers.deinit();
-        try deinitResources(RenderPipelines, self.render_pipelines);
+        deinitResources(RenderPipelines, self.render_pipelines);
         self.render_pipelines.deinit();
-        try deinitResources(ComputePipelines, self.compute_pipelines);
+        deinitResources(ComputePipelines, self.compute_pipelines);
         self.compute_pipelines.deinit();
-        try deinitResources(PipelineLayouts, self.pipline_layouts);
+        deinitResources(PipelineLayouts, self.pipline_layouts);
         self.pipline_layouts.deinit();
     }
 
-    fn deinitResources(comptime T: type, resources: T) !void {
+    fn deinitResources(comptime T: type, resources: T) void {
         var it = resources.valueIterator();
         while (it.next()) |entry| {
-            // TODO I need to come back to this.
             switch (@TypeOf(entry)) {
                 *gpu.BindGroup => entry.release(),
+                *gpu.BindGroupLayout => entry.release(),
                 *gpu.Buffer => entry.release(),
                 *gpu.RenderPipeline => entry.release(),
+                *gpu.ComputePipeline => entry.release(),
+                *gpu.PipelineLayout => entry.release(),
                 else => {},
             }
         }

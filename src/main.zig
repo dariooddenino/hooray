@@ -51,6 +51,7 @@ pub fn update(app: *App) !bool {
         switch (event) {
             .key_press => |ev| {
                 if (ev.key == .space) return true;
+                app.renderer.camera.moveCamera(ev);
             },
             .close => return true,
             else => {},

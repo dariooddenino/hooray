@@ -36,7 +36,7 @@ pub const Renderer = struct {
 
         var camera = try allocator.create(Camera);
         camera.* = Camera{};
-        camera.setCamera(zm.Vec{ 0.5, 0, 2.5, 1 }, zm.Vec{ 0.5, 0, 0, 1 }, zm.Vec{ 0, 1, 0, 1 });
+        camera.setCamera(zm.Vec{ 3, 3, 3, 1 }, zm.Vec{ 0, 0, 0, 1 }, zm.Vec{ 0, 1, 0, 1 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
@@ -58,7 +58,6 @@ pub const Renderer = struct {
         try self.initPipelineLayouts();
 
         // Create Buffers
-        // TODO this hardcoded width and height should be removed
         try self.initBuffers(allocator);
 
         // Create BindGroups
@@ -70,9 +69,10 @@ pub const Renderer = struct {
         return self;
     }
 
-    pub fn deinit(self: *Renderer) !void {
-        try self.resources.deinit();
-        self.allocator.destroy(self.camera);
+    pub fn deinit(self: *Renderer) void {
+        defer self.resources.deinit();
+        // TODO this makes the app crash on exit, I'd rather have the leak for now.
+        // defer self.allocator.destroy(self.camera);
     }
 
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
@@ -282,16 +282,16 @@ pub const Renderer = struct {
         self.frame_num += 1;
         var uniforms = &self.uniforms;
         const resources = self.resources;
-        // var camera = &self.camera;
+        var camera = self.camera;
 
         // Update uniforms
         uniforms.frame_num = self.frame_num;
-        // uniforms.reset_buffer = if (camera.moving or camera.key_press) 1 else 0;
+        uniforms.reset_buffer = if (camera.moving or camera.key_press) 1 else 0;
 
-        // if (camera.moving or camera.key_press) {
-        //     self.frame_num = 1;
-        //     camera.key_press = false;
-        // }
+        if (camera.moving or camera.key_press) {
+            self.frame_num = 1;
+            camera.key_press = false;
+        }
 
         // uniforms.view_matrix = camera.view_matrix;
         const uniforms_buffer = resources.getBuffer("uniforms");

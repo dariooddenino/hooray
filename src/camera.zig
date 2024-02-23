@@ -1,9 +1,12 @@
 const std = @import("std");
+const core = @import("mach-core");
 const zm = @import("zmath");
 
 const Vec = zm.Vec;
 const Mat = zm.Mat;
 
+// TODO refactor the setCamera mess please
+// NOTE until I can see something, this is pointless.
 pub const Camera = struct {
     view_matrix: Mat = zm.matFromArr(.{0} ** 16),
     eye: Vec = zm.splat(Vec, 0),
@@ -43,6 +46,7 @@ pub const Camera = struct {
         self.setCamera(null, null, null);
     }
 
+    // NOTE not sure about this
     pub fn move(self: *Camera, old_coord: Vec, new_coord: Vec) Vec {
         const d_x = (new_coord[0] - old_coord[0]) * std.math.pi / 180 * self.move_speed;
         // const d_y = (new_coord[1] - old_coord[1]) * std.math.pi / 180 * self.move_speed;
@@ -56,33 +60,60 @@ pub const Camera = struct {
         self.setCamera(null, null, null);
     }
 
+    pub fn rotate(self: *Camera) void {
+        const d_a = std.math.pi / 180.0 * self.move_speed;
+        const quat = zm.quatFromAxisAngle(self.direction, d_a);
+        self.eye = zm.rotate(quat, self.eye);
+        self.setCamera(null, null, null);
+    }
+
     pub fn moveLeft(self: *Camera) void {
-        self.eye = self.eye + Vec{ self.keypress_move_speed, 0, 0 };
-        self.center = self.center + Vec{ self.keypress_move_speed, 0, 0 };
+        self.eye = self.eye + Vec{ self.keypress_move_speed, 0, 0, 0 };
+        self.center = self.center + Vec{ self.keypress_move_speed, 0, 0, 0 };
         self.setCamera(null, null, null);
     }
 
     pub fn moveRight(self: *Camera) void {
-        self.eye = self.eye - Vec{ self.keypress_move_speed, 0, 0 };
-        self.center = self.center - Vec{ self.keypress_move_speed, 0, 0 };
+        self.eye = self.eye - Vec{ self.keypress_move_speed, 0, 0, 0 };
+        self.center = self.center - Vec{ self.keypress_move_speed, 0, 0, 0 };
         self.setCamera(null, null, null);
     }
 
     pub fn moveUp(self: *Camera) void {
-        self.eye = self.eye - Vec{ 0, self.keypress_move_speed, 0 };
-        self.center = self.center - Vec{ 0, self.keypress_move_speed, 0 };
+        self.eye = self.eye - Vec{ 0, self.keypress_move_speed, 0, 0 };
+        self.center = self.center - Vec{ 0, self.keypress_move_speed, 0, 0 };
         self.setCamera(null, null, null);
     }
 
     pub fn moveDown(self: *Camera) void {
-        self.eye = self.eye + Vec{ 0, self.keypress_move_speed, 0 };
-        self.center = self.center + Vec{ 0, self.keypress_move_speed, 0 };
+        self.eye = self.eye + Vec{ 0, self.keypress_move_speed, 0, 0 };
+        self.center = self.center + Vec{ 0, self.keypress_move_speed, 0, 0 };
         self.setCamera(null, null, null);
     }
 
-    pub fn moveCamera(_: *Camera) void {
-        // TODO Here various event listeners, I think I will have to do this backwards.
-        // Or have this function accept events from webgpu.
+    pub fn moveForward(self: *Camera) void {
+        self.eye = self.eye + Vec{ 0, 0, self.keypress_move_speed, 0 };
+        self.center = self.center + Vec{ 0, 0, self.keypress_move_speed, 0 };
+        self.setCamera(null, null, null);
+    }
+
+    pub fn moveBackward(self: *Camera) void {
+        self.eye = self.eye - Vec{ 0, 0, self.keypress_move_speed, 0 };
+        self.center = self.center - Vec{ 0, 0, self.keypress_move_speed, 0 };
+        self.setCamera(null, null, null);
+    }
+
+    pub fn moveCamera(self: *Camera, event: core.KeyEvent) void {
+        switch (event.key) {
+            .w => self.moveForward(),
+            .a => self.moveLeft(),
+            .s => self.moveBackward(),
+            .d => self.moveRight(),
+            .q => self.moveUp(),
+            .e => self.moveDown(),
+            .r => self.rotate(),
+            else => {},
+        }
     }
 };
 
