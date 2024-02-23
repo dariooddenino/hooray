@@ -1,0 +1,54 @@
+fn hitScene(ray: Ray) -> bool {
+    var closest_so_far = MAX_FLOAT;
+    var hit_anything = false;
+
+    for (var i = 0; i < NUM_SPHERES; i++) {
+    // TODO There was the check for ISOTROPIC material
+        if hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray) {
+            hit_anything = true;
+            closest_so_far = hit_rec.t;
+        }
+    }
+
+    return hit_anything;
+}
+
+fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
+    let oc = ray.origin - sphere.center;
+    let a = dot(ray.direction, ray.direction);
+    let half_b = dot(ray.direction, oc);
+    let c = dot(oc, oc) - sphere.radius * sphere.radius;
+    let discriminant = half_b * half_b - a * c;
+
+    if discriminant < 0 {
+        return false;
+    }
+
+    let sqrtd = sqrt(discriminant);
+    var root = (-half_b - sqrtd) / a;
+    if root <= tmin || root >= tmax {
+        root = (-half_b + sqrtd) / a;
+        if root <= tmin || root >= tmax {
+            return false;
+        }
+    }
+
+    hit_rec.t = root;
+    hit_rec.p = at(ray, root);
+
+	// hitRec.p = (vec4f(hitRec.p, 1) * transforms[i32(sphere.id)].invModelMatrix).xyz;
+	// hitRec.t = distance(hitRec.p, incidentRay.origin);
+
+    hit_rec.normal = normalize((hit_rec.p - sphere.center) / sphere.radius);
+
+	// hitRec.normal = normalize((vec4f(hitRec.normal, 0) * transpose(transforms[i32(sphere.id)].modelMatrix)).xyz);
+
+    hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
+    if hit_rec.front_face == false {
+        hit_rec.normal = -hit_rec.normal;
+    }
+
+    // TODO material
+    // hit_rec.material = materials[i32(sphere.material_id)];
+    return true;
+}

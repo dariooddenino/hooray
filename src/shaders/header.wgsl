@@ -3,8 +3,10 @@
 @group(0) @binding(2) var<storage, read> sphere_objs : array<Sphere>;
 
 const PI = 3.1415926535897932385;
+const MIN_FLOAT = 0.0001;
+const MAX_FLOAT = 999999999.999;
 const NUM_SAMPLES = 1;
-const MAX_BOUNCES = 100;
+const MAX_BOUNCES = 10;
 
 struct Uniforms {
   screen_dims: vec2f,
@@ -36,3 +38,6 @@ var<private> rand_state : u32 = 0u;
 var<private> pixel_coords : vec3f;
 var<private> fov_factor : f32;
 var<private> cam_origin: vec3f;
+var<private> hit_rec : HitRecord;
+var<private> ray_tmin : f32 = 0.000001;
+var<private> ray_tmax : f32 = MAX_FLOAT;

@@ -49,8 +49,8 @@ struct Ray {
 struct Material {
     color: vec3f,
     specular_color: vec3f,
-    emission_color: vec3f,
-    specular_strength: f32,
+     emission_color: vec3f,
+     specular_strength: f32,
     roughness: f32,
     eta: f32,
     material_type: f32

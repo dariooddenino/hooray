@@ -1,3 +1,7 @@
+fn at(ray: Ray, t: f32) -> vec3f {
+    return ray.origin + t * ray.direction;
+}
+
 // PCG prng
 // https://www.shadertoy.com/view/XlGcRh
 fn rand2D() -> f32 {

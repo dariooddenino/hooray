@@ -16,6 +16,7 @@
 
     rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
 
+    // get_lights();
     var path_traced_color = pathTrace();
     var frag_color = path_traced_color.xyz;
 

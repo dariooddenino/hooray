@@ -7,6 +7,7 @@ const zm = @import("zmath");
 const objects = @import("objects.zig");
 
 const App = @import("main.zig").App;
+const Camera = @import("camera.zig").Camera;
 const GPUResources = gpu_resources.GPUResources;
 const Sphere = objects.Sphere;
 const Uniforms = gpu_resources.Uniforms;
@@ -28,18 +29,23 @@ pub const Renderer = struct {
     resources: GPUResources,
     uniforms: Uniforms,
     frame_num: f32 = 0,
+    camera: *Camera,
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
+
+        var camera = try allocator.create(Camera);
+        camera.* = Camera{};
+        camera.setCamera(zm.Vec{ 0.5, 0, 2.5, 1 }, zm.Vec{ 0.5, 0, 0, 1 }, zm.Vec{ 0, 1, 0, 1 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
             .frame_num = 0,
             .reset_buffer = 0,
-            .view_matrix = zm.matFromArr([_]f32{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }),
+            .view_matrix = camera.view_matrix,
         };
 
-        var self = Renderer{ .allocator = allocator, .resources = resources, .uniforms = uniforms };
+        var self = Renderer{ .allocator = allocator, .resources = resources, .uniforms = uniforms, .camera = camera };
 
         // Load shaders
         const shader_module = try loadShaders(allocator);
@@ -64,14 +70,15 @@ pub const Renderer = struct {
         return self;
     }
 
-    pub fn deinit(self: *Renderer) void {
+    pub fn deinit(self: *Renderer) !void {
         try self.resources.deinit();
+        self.allocator.destroy(self.camera);
     }
 
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
-        const shader_files = .{ "header", "main", "common", "shootRay", "traceRay" };
+        const shader_files = .{ "header", "main", "common", "shootRay", "traceRay", "hitRay" };
         const ext = ".wgsl";
         const folder = "./shaders/";
         inline for (shader_files) |file| {
