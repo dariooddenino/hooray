@@ -32,7 +32,7 @@ pub const Camera = struct {
         }
         // TODO normalize has other 2 versions, not sure...
         self.direction = zm.normalize2(self.eye - self.center);
-        self.view_matrix = zm.lookAtRh(self.eye, self.center, self.up);
+        self.view_matrix = zm.lookAtLh(self.eye, self.center, self.up);
     }
 
     pub fn zoom(self: *Camera, delta: f32) void {
@@ -69,36 +69,42 @@ pub const Camera = struct {
     pub fn moveLeft(self: *Camera) void {
         self.eye = self.eye + Vec{ self.keypress_move_speed, 0, 0, 0 };
         self.center = self.center + Vec{ self.keypress_move_speed, 0, 0, 0 };
+        self.key_press = true;
         self.setCamera(null, null, null);
     }
 
     pub fn moveRight(self: *Camera) void {
         self.eye = self.eye - Vec{ self.keypress_move_speed, 0, 0, 0 };
         self.center = self.center - Vec{ self.keypress_move_speed, 0, 0, 0 };
+        self.key_press = true;
         self.setCamera(null, null, null);
     }
 
     pub fn moveUp(self: *Camera) void {
         self.eye = self.eye - Vec{ 0, self.keypress_move_speed, 0, 0 };
         self.center = self.center - Vec{ 0, self.keypress_move_speed, 0, 0 };
+        self.key_press = true;
         self.setCamera(null, null, null);
     }
 
     pub fn moveDown(self: *Camera) void {
         self.eye = self.eye + Vec{ 0, self.keypress_move_speed, 0, 0 };
         self.center = self.center + Vec{ 0, self.keypress_move_speed, 0, 0 };
+        self.key_press = true;
         self.setCamera(null, null, null);
     }
 
     pub fn moveForward(self: *Camera) void {
         self.eye = self.eye + Vec{ 0, 0, self.keypress_move_speed, 0 };
         self.center = self.center + Vec{ 0, 0, self.keypress_move_speed, 0 };
+        self.key_press = true;
         self.setCamera(null, null, null);
     }
 
     pub fn moveBackward(self: *Camera) void {
         self.eye = self.eye - Vec{ 0, 0, self.keypress_move_speed, 0 };
         self.center = self.center - Vec{ 0, 0, self.keypress_move_speed, 0 };
+        self.key_press = true;
         self.setCamera(null, null, null);
     }
 

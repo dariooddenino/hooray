@@ -5,12 +5,14 @@ const gpu = core.gpu;
 const main = @import("main.zig");
 const zm = @import("zmath");
 const objects = @import("objects.zig");
+const scenes = @import("scenes.zig");
 
 const App = @import("main.zig").App;
 const Camera = @import("camera.zig").Camera;
 const GPUResources = gpu_resources.GPUResources;
 const Sphere = objects.Sphere;
 const Uniforms = gpu_resources.Uniforms;
+const Scene = scenes.Scene;
 
 const screen_width = main.screen_width;
 const screen_height = main.screen_height;
@@ -27,6 +29,7 @@ const vertex_data = [_]Vertex{ Vertex{ .pos = .{ -1, -1 } }, Vertex{ .pos = .{ 1
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
     resources: GPUResources,
+    scene: Scene,
     uniforms: Uniforms,
     frame_num: f32 = 0,
     camera: *Camera,
@@ -34,9 +37,18 @@ pub const Renderer = struct {
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
 
+        // Build scene
+        var scene = Scene.init(allocator);
+
+        try scene.loadBasicScene();
+
         var camera = try allocator.create(Camera);
         camera.* = Camera{};
-        camera.setCamera(zm.Vec{ 0, 0, 0, 0 }, zm.Vec{ 3, 3, 3, 0 }, zm.Vec{ 0, 1, 0, 0 });
+        camera.setCamera(
+            zm.Vec{ 0, 0, 0, 0 },
+            zm.Vec{ 0, 0, 1, 0 },
+            zm.Vec{ 0, 1, 0, 0 },
+        );
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
@@ -45,7 +57,13 @@ pub const Renderer = struct {
             .view_matrix = camera.view_matrix,
         };
 
-        var self = Renderer{ .allocator = allocator, .resources = resources, .uniforms = uniforms, .camera = camera };
+        var self = Renderer{
+            .allocator = allocator,
+            .resources = resources,
+            .scene = scene,
+            .uniforms = uniforms,
+            .camera = camera,
+        };
 
         // Load shaders
         const shader_module = try loadShaders(allocator);
@@ -70,7 +88,8 @@ pub const Renderer = struct {
     }
 
     pub fn deinit(self: *Renderer) void {
-        defer self.resources.deinit();
+        self.resources.deinit();
+        self.scene.deinit();
         // TODO this makes the app crash on exit, I'd rather have the leak for now.
         // defer self.allocator.destroy(self.camera);
     }
@@ -122,6 +141,7 @@ pub const Renderer = struct {
     }
 
     fn initBuffers(self: *Renderer, allocator: std.mem.Allocator) !void {
+        const scene = self.scene;
         const vertex_buffer = core.device.createBuffer(&.{ .label = "Vertex", .usage = .{ .vertex = true, .copy_dst = true }, .size = @sizeOf(Vertex) * vertex_data.len, .mapped_at_creation = .true });
         const vertex_mapped = vertex_buffer.getMappedRange(Vertex, 0, vertex_data.len);
         @memcpy(vertex_mapped.?, vertex_data[0..]);
@@ -146,11 +166,7 @@ pub const Renderer = struct {
         });
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{self.uniforms});
 
-        // Temp code here
-        var spheres = std.ArrayList(Sphere).init(allocator);
-        defer spheres.deinit();
-        try spheres.append(Sphere{ .center = .{ 0, 0, 0, 0 }, .radius = 0.1 });
-        const spheres_gpu = try Sphere.toGPU(allocator, spheres);
+        const spheres_gpu = try Sphere.toGPU(allocator, scene.spheres);
         defer spheres_gpu.deinit();
         const spheres_buffer = core.device.createBuffer(&.{
             .label = "Spheres",
@@ -172,6 +188,7 @@ pub const Renderer = struct {
     }
 
     fn initBindGroups(self: *Renderer) !void {
+        const scene = self.scene;
         const layout = self.resources.getBindGroupLayout("layout");
         const frame_buffer = self.resources.getBuffer("frame");
         const uniforms_buffer = self.resources.getBuffer("uniforms");
@@ -183,7 +200,7 @@ pub const Renderer = struct {
                     gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, @sizeOf(f32) * screen_size),
                     gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, @sizeOf(Uniforms)),
                     // TODO not using spheres_gpu len here
-                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, @sizeOf(Sphere.Sphere_GPU) * 1),
+                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, @sizeOf(Sphere.Sphere_GPU) * scene.spheres.items.len),
                 },
             }),
         );
@@ -295,7 +312,7 @@ pub const Renderer = struct {
             camera.key_press = false;
         }
 
-        // uniforms.view_matrix = camera.view_matrix;
+        uniforms.view_matrix = camera.view_matrix;
         const uniforms_buffer = resources.getBuffer("uniforms");
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
 

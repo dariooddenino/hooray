@@ -9,7 +9,7 @@ pub const Sphere = struct {
     radius: f32,
 
     pub const Sphere_GPU = extern struct {
-        center: @Vector(3, f32),
+        center: [3]f32,
         radius: f32,
     };
 
@@ -17,7 +17,7 @@ pub const Sphere = struct {
         var spheres_gpu = std.ArrayList(Sphere_GPU).init(allocator);
         for (spheres.items) |sphere| {
             const sphere_gpu = Sphere_GPU{
-                .center = @Vector(3, f32){ sphere.center[0], sphere.center[1], sphere.center[2] },
+                .center = [3]f32{ sphere.center[0], sphere.center[1], sphere.center[2] },
                 .radius = sphere.radius,
             };
             try spheres_gpu.append(sphere_gpu);

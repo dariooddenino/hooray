@@ -2,8 +2,7 @@ fn hitScene(ray: Ray) -> bool {
     var closest_so_far = MAX_FLOAT;
     var hit_anything = false;
 
-    for (var i = 0; i < 1; i++) {
-    // TODO There was the check for ISOTROPIC material
+    for (var i = 0; i < NUM_SPHERES; i++) {
         if hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray) {
             hit_anything = true;
             closest_so_far = hit_rec.t;
