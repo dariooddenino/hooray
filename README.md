@@ -8,13 +8,14 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-I have to try doing one pixel at a time and see if it works?
-Scrap the shaders functions and start from "scratch"?
-
-- [ ] Have a basic sphere render
+- [x] Have a basic sphere render
   - Implement HitRecord without materials
   - Implement basic hitSphere returning a single color
   - Make sure everything works fine
+- [ ] Fix the coordinates system
+  The numbers act randomly. My moveLeft acts as a turn left
+  I could try replacing with the camera code from pbr-basic
+- [ ] Solve the issue of the black pulses on update
 - [ ] Get diffuse sphere working
 - [ ] Implement basic camera movements
 - [ ] implement frame_reset and stratify

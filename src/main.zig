@@ -22,6 +22,7 @@ pub const screen_size = 800 * 600;
 title_timer: core.Timer,
 timer: core.Timer,
 renderer: Renderer,
+mouse_position: core.Position = .{ .x = 0, .y = 0 },
 
 pub fn init(app: *App) !void {
     const frame_rate = 61;
@@ -54,6 +55,13 @@ pub fn update(app: *App) !bool {
                 app.renderer.camera.moveCamera(ev);
             },
             .close => return true,
+            // .mouse_motion => |ev| {
+            //     if (app.mouse_position == ev.position) {
+            //         app.renderer.camera.stop();
+            //     } else {
+            //         self.
+            //     }
+            // }
             else => {},
         }
     }

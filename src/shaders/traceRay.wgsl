@@ -7,10 +7,10 @@ fn rayColor(incident_ray: Ray) -> vec3f {
         if hitScene(curr_ray) == false {
             let unit_direction = normalize(incident_ray.direction);
             let a = 0.5 * (unit_direction.y + 1);
-            acc_radiance += (((1 - a) * vec3f(1, 1, 1) + a * vec3f(0.5, 0.7, 1)) * throughput);
+            acc_radiance = (((1 - a) * vec3f(1, 1, 1) + a * vec3f(0.5, 0.7, 1)) * throughput);
             break;
         } else {
-            acc_radiance += vec3f(0.1, 0, 0);
+            acc_radiance = vec3f(0.1, 0, 0);
             // if ((pixel_coords.x + pixel_coords.y) % 2) < 1 {
             //     acc_radiance += (vec3f(0.0, 0.1, 0.0) * throughput);
             // } else {
