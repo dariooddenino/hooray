@@ -8,9 +8,8 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-It looks like the problem might be that the spheres are not passed correctly in the buffer?
-NUM_SPHERES is > 1 for sure. I have no idea how to debug this until I have a working renderdoc.
-I might have to put this project on pause.
+I have to try doing one pixel at a time and see if it works?
+Scrap the shaders functions and start from "scratch"?
 
 - [ ] Have a basic sphere render
   - Implement HitRecord without materials
