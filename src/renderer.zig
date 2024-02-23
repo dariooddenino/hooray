@@ -36,7 +36,7 @@ pub const Renderer = struct {
 
         var camera = try allocator.create(Camera);
         camera.* = Camera{};
-        camera.setCamera(zm.Vec{ 3, 3, 3, 1 }, zm.Vec{ 0, 0, 0, 1 }, zm.Vec{ 0, 1, 0, 1 });
+        camera.setCamera(zm.Vec{ 0, 0, 0, 0 }, zm.Vec{ 3, 3, 3, 0 }, zm.Vec{ 0, 1, 0, 0 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },

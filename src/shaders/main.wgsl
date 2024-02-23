@@ -7,7 +7,7 @@
 ) {
     let workgroup_index = workgroup_id.x + workgroup_id.y * num_workgroups.x + workgroup_id.z * num_workgroups.x * num_workgroups.y;
     let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
-    let coords = vec3f(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
+    pixel_coords = vec3f(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
 
     fov_factor = 1 / tan(60 * (PI / 180) / 2);
     cam_origin = (uniforms.view_matrix * vec4f(0, 0, 0, 1)).xyz;
@@ -40,8 +40,8 @@ fn fs(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let i = get1Dfrom2D(fragCoord.xy);
     var color = framebuffer[i].xyz; // / uniforms.frame_num;
 
-    color = aces_approx(color.xyz);
-    color = pow(color.xyz, vec3f(1 / 2.2));
+    // color = aces_approx(color.xyz);
+    // color = pow(color.xyz, vec3f(1 / 2.2));
 
     if uniforms.reset_buffer == 1 {
         framebuffer[i] = vec4f(0);

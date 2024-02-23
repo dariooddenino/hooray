@@ -31,8 +31,7 @@ pub const Camera = struct {
             self.up = u;
         }
         // TODO normalize has other 2 versions, not sure...
-        self.direction = zm.normalize2(self.center - self.eye);
-        // TODO no idea here.
+        self.direction = zm.normalize2(self.eye - self.center);
         self.view_matrix = zm.lookAtRh(self.eye, self.center, self.up);
     }
 
