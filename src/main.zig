@@ -5,10 +5,10 @@ const gpu = core.gpu;
 const queue = core.queue;
 
 // Enable sysgpu
-pub const mach_core_options = core.ComptimeOptions{
-    .use_wgpu = false,
-    .use_sysgpu = true,
-};
+// pub const mach_core_options = core.ComptimeOptions{
+//     .use_wgpu = false,
+//     .use_sysgpu = true,
+// };
 
 const Renderer = @import("renderer.zig").Renderer;
 pub const App = @This();
@@ -25,11 +25,31 @@ pub const screen_width = 800;
 pub const screen_height = 600;
 pub const screen_size = 800 * 600;
 
+pub const PressedKeys = packed struct(u16) {
+    right: bool = false,
+    left: bool = false,
+    up: bool = false,
+    down: bool = false,
+    padding: u12 = undefined,
+
+    pub inline fn areKeysPressed(self: @This()) bool {
+        return (self.up or self.down or self.left or self.right);
+    }
+
+    pub inline fn clear(self: *@This()) void {
+        self.right = false;
+        self.left = false;
+        self.up = false;
+        self.down = false;
+    }
+};
+
 title_timer: core.Timer,
 timer: core.Timer,
 renderer: Renderer,
 mouse_position: core.Position = .{ .x = 0, .y = 0 },
 is_rotating: bool = false,
+pressed_keys: PressedKeys = .{},
 
 pub fn init(app: *App) !void {
     const frame_rate = 61;
@@ -59,7 +79,10 @@ pub fn update(app: *App) !bool {
         switch (event) {
             .key_press, .key_repeat => |ev| {
                 if (ev.key == .space) return true;
-                app.renderer.camera.moveCamera(ev);
+                if (ev.key == .w or ev.key == .up) app.pressed_keys.up = true;
+                if (ev.key == .a or ev.key == .left) app.pressed_keys.left = true;
+                if (ev.key == .s or ev.key == .down) app.pressed_keys.down = true;
+                if (ev.key == .d or ev.key == .right) app.pressed_keys.right = true;
             },
             .mouse_press => |ev| {
                 if (ev.button == .left) {
@@ -70,23 +93,27 @@ pub fn update(app: *App) !bool {
             .mouse_release => |ev| {
                 if (ev.button == .left) {
                     app.is_rotating = false;
-                    app.renderer.camera.stop();
                 }
             },
-            .close => return true,
             .mouse_motion => |ev| {
                 if (app.is_rotating) {
                     const delta = [2]f32{
-                        @as(f32, @floatCast((app.mouse_position.x - ev.pos.x))),
-                        @as(f32, @floatCast((app.mouse_position.y - ev.pos.y))),
+                        @as(f32, @floatCast((app.mouse_position.x - ev.pos.x) * app.renderer.camera.rotation_speed)),
+                        @as(f32, @floatCast((app.mouse_position.y - ev.pos.y) * app.renderer.camera.rotation_speed)),
                     };
                     app.mouse_position = ev.pos;
                     app.renderer.camera.rotate(delta);
                 }
             },
+            .close => return true,
             else => {},
         }
     }
+    if (app.pressed_keys.areKeysPressed()) {
+        app.renderer.camera.calculateMovement(app.pressed_keys);
+        app.pressed_keys.clear();
+    }
+    // NOTE the example was using a "dirty" uniforms flag to determine if they need to be updated in the buffer.
 
     try app.renderer.render(app);
 

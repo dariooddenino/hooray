@@ -44,11 +44,13 @@ pub const Renderer = struct {
 
         var camera = try allocator.create(Camera);
         camera.* = Camera{};
-        camera.setCamera(
-            zm.Vec{ 0, 0, -1, 0 },
-            zm.Vec{ 0, 0, 1, 0 },
-            zm.Vec{ 0, 1, 0, 0 },
-        );
+        // camera.setCamera(
+        //     zm.Vec{ 0, 0, -1, 0 },
+        //     zm.Vec{ 0, 0, 1, 0 },
+        //     zm.Vec{ 0, 1, 0, 0 },
+        // );
+        camera.setPosition(.{ 0, 0, 0 });
+        camera.setRotation(.{ 0, 0, 0 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
@@ -90,8 +92,8 @@ pub const Renderer = struct {
     pub fn deinit(self: *Renderer) void {
         self.resources.deinit();
         self.scene.deinit();
-        // TODO this makes the app crash on exit, I'd rather have the leak for now.
-        // defer self.allocator.destroy(self.camera);
+        // TODO this makes the app crash on exit.
+        defer self.allocator.destroy(self.camera);
     }
 
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
@@ -197,10 +199,10 @@ pub const Renderer = struct {
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = layout,
                 .entries = &.{
-                    gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size, @sizeOf(f32)),
-                    gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1, @sizeOf(Uniforms)),
+                    gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size * @sizeOf(f32)),
+                    gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1 * @sizeOf(Uniforms)),
                     // TODO not using spheres_gpu len here
-                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, scene.spheres.items.len, @sizeOf(Sphere.Sphere_GPU)),
+                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, scene.spheres.items.len * @sizeOf(Sphere.Sphere_GPU)),
                 },
             }),
         );
@@ -305,11 +307,11 @@ pub const Renderer = struct {
 
         // Update uniforms
         uniforms.frame_num = self.frame_num;
-        uniforms.reset_buffer = if (camera.moving or camera.key_press) 1 else 0;
+        uniforms.reset_buffer = if (camera.moving) 1 else 0;
 
-        if (camera.moving or camera.key_press) {
+        if (camera.moving) {
             self.frame_num = 1;
-            camera.key_press = false;
+            camera.moving = false;
         }
 
         uniforms.view_matrix = camera.view_matrix;
