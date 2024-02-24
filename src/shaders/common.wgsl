@@ -10,6 +10,10 @@ fn rand2D() -> f32 {
     return f32((word >> 22u) ^ word) / 4294967295;
 }
 
+fn randomDouble(min: f32, max: f32) -> f32 {
+    return min + (max - min) * rand2D();
+}
+
 // ACES approximation for tone mapping
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/):
 fn aces_approx(v: vec3<f32>) -> vec3<f32> {

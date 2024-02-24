@@ -99,7 +99,7 @@ pub const Renderer = struct {
     fn loadShaders(allocator: std.mem.Allocator) !*gpu.ShaderModule {
         var shader_file = std.ArrayList(u8).init(allocator);
         defer shader_file.deinit();
-        const shader_files = .{ "header", "main", "common", "shootRay", "traceRay", "hitRay" };
+        const shader_files = .{ "header", "main", "common", "shootRay", "traceRay", "hitRay", "scatterRay", "importanceSampling" };
         const ext = ".wgsl";
         const folder = "./shaders/";
         inline for (shader_files) |file| {
