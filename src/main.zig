@@ -4,6 +4,12 @@ const core = @import("mach-core");
 const gpu = core.gpu;
 const queue = core.queue;
 
+// Enable sysgpu
+pub const mach_core_options = core.ComptimeOptions{
+    .use_wgpu = false,
+    .use_sysgpu = true,
+};
+
 const Renderer = @import("renderer.zig").Renderer;
 pub const App = @This();
 

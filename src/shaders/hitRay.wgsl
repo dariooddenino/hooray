@@ -35,16 +35,16 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
     hit_rec.t = root;
     hit_rec.p = at(ray, root);
 
-	// hitRec.p = (vec4f(hitRec.p, 1) * transforms[i32(sphere.id)].invModelMatrix).xyz;
+	// hitRec.p = (vec4<f32>(hitRec.p, 1) * transforms[i32(sphere.id)].invModelMatrix).xyz;
 	// hitRec.t = distance(hitRec.p, incidentRay.origin);
 
     hit_rec.normal = normalize((hit_rec.p - sphere.center) / sphere.radius);
 
-	// hitRec.normal = normalize((vec4f(hitRec.normal, 0) * transpose(transforms[i32(sphere.id)].modelMatrix)).xyz);
+	// hitRec.normal = normalize((vec4<f32>(hitRec.normal, 0) * transpose(transforms[i32(sphere.id)].modelMatrix)).xyz);
 
     hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
-    if hit_rec.front_face == false {
-        hit_rec.normal = -hit_rec.normal;
+    if !hit_rec.front_face {
+        hit_rec.normal = -1 * hit_rec.normal;
     }
 
     // TODO material

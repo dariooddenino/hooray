@@ -6,6 +6,10 @@ Built using mach-core and zig-gamedev libraries.
 
 Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU-Path-Tracer
 
+## Setup
+Clone `zig-gamdev` to /deps
+Clone `mach-core` to /deps and switch to the `sysgpu` branch
+
 
 ## TODO
 - [x] Have a basic sphere render

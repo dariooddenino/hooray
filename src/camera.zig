@@ -68,8 +68,8 @@ pub const Camera = struct {
 
     pub fn rotate(self: *Camera, delta: [2]f32) void {
         // I should update eye and center, and THEN update the view matrix...
-        self.view_matrix = zm.mul(self.view_matrix, zm.rotationX(delta[1] * self.move_speed));
-        self.view_matrix = zm.mul(self.view_matrix, zm.rotationY(delta[0] * self.move_speed));
+        self.view_matrix = zm.mul(self.view_matrix, zm.rotationY(delta[1] * self.move_speed));
+        self.view_matrix = zm.mul(self.view_matrix, zm.rotationZ(delta[0] * self.move_speed));
         self.moving = true;
     }
 

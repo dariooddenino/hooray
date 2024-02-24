@@ -20,7 +20,7 @@ const screen_size = main.screen_width * main.screen_height * 4;
 
 // Output Vertex
 const Vertex = struct {
-    pos: @Vector(2, f32),
+    pos: [2]f32,
 };
 
 // Screen size quad.
@@ -45,7 +45,7 @@ pub const Renderer = struct {
         var camera = try allocator.create(Camera);
         camera.* = Camera{};
         camera.setCamera(
-            zm.Vec{ 0, 0, 0, 0 },
+            zm.Vec{ 0, 0, -1, 0 },
             zm.Vec{ 0, 0, 1, 0 },
             zm.Vec{ 0, 1, 0, 0 },
         );
@@ -197,10 +197,10 @@ pub const Renderer = struct {
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = layout,
                 .entries = &.{
-                    gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, @sizeOf(f32) * screen_size),
-                    gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, @sizeOf(Uniforms)),
+                    gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size, @sizeOf(f32)),
+                    gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1, @sizeOf(Uniforms)),
                     // TODO not using spheres_gpu len here
-                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, @sizeOf(Sphere.Sphere_GPU) * scene.spheres.items.len),
+                    gpu.BindGroup.Entry.buffer(2, spheres_buffer, 0, scene.spheres.items.len, @sizeOf(Sphere.Sphere_GPU)),
                 },
             }),
         );

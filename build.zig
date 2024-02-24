@@ -28,19 +28,23 @@ pub fn build(b: *std.Build) !void {
         .src = "src/main.zig",
         .target = target,
         .optimize = optimize,
-        .deps = &[_]std.Build.Module.Import{ .{
-            .name = "model3d",
-            .module = b.dependency("mach_model3d", .{
-                .target = target,
-                .optimize = optimize,
-            }).module("mach-model3d"),
-        }, .{
-            .name = "assets",
-            .module = b.dependency("mach_core_example_assets", .{
-                .target = target,
-                .optimize = optimize,
-            }).module("mach-core-example-assets"),
-        }, .{ .name = "zmath", .module = zmath_pkg.zmath } },
+        .deps = &[_]std.Build.Module.Import{
+            //     .{
+            //     .name = "model3d",
+            //     .module = b.dependency("mach_model3d", .{
+            //         .target = target,
+            //         .optimize = optimize,
+            //     }).module("mach-model3d"),
+            // }, .{
+            .{
+                .name = "assets",
+                .module = b.dependency("mach_core_example_assets", .{
+                    .target = target,
+                    .optimize = optimize,
+                }).module("mach-core-example-assets"),
+            },
+            .{ .name = "zmath", .module = zmath_pkg.zmath },
+        },
     });
     if (b.args) |args| app.run.addArgs(args);
 

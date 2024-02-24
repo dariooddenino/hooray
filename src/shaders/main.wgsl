@@ -15,7 +15,7 @@ fn computeFrameBuffer(
 
     NUM_SPHERES = i32(arrayLength(&sphere_objs));
 
-    rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
+    // rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
 
     // get_lights();
     var path_traced_color = pathTrace();
@@ -59,7 +59,7 @@ struct Vertex {
 @vertex
 fn vs(
     vert: Vertex
-) -> @builtin(position) vec4f {
+) -> @builtin(position) vec4<f32> {
 
     return vec4f(vert.position, 0.0, 1.0);
 }

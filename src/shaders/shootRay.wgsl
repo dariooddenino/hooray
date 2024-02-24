@@ -1,5 +1,5 @@
-fn pathTrace() -> vec3f {
-    var pix_color = vec3f(0, 0, 0);
+fn pathTrace() -> vec3<f32> {
+    var pix_color = vec3<f32>(0, 0, 0);
 
     for (var i = 0; i < NUM_SAMPLES; i += 1) {
         let ray = getCameraRay(

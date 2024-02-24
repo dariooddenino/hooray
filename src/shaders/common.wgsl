@@ -1,4 +1,4 @@
-fn at(ray: Ray, t: f32) -> vec3f {
+fn at(ray: Ray, t: f32) -> vec3<f32> {
     return ray.origin + t * ray.direction;
 }
 
@@ -12,7 +12,7 @@ fn rand2D() -> f32 {
 
 // ACES approximation for tone mapping
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/):
-fn aces_approx(v: vec3f) -> vec3f {
+fn aces_approx(v: vec3<f32>) -> vec3<f32> {
     let v1 = v * 0.6f;
     const a = 2.51f;
     const b = 0.03f;
