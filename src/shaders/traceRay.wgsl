@@ -10,7 +10,8 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
             acc_radiance += (((1 - a) * vec3<f32>(0.8, 0.8, 0.8) + a * vec3<f32>(0.1, 0.2, 0.5)) * throughput);
             break;
         } else {
-            acc_radiance += vec3<f32>(0.1, 0, 0);
+            acc_radiance += 0.5 * (hit_rec.normal + 1) * throughput;
+            // acc_radiance += vec3<f32>(0.1, 0, 0);
             // if ((pixel_coords.x + pixel_coords.y) % 2) < 1 {
             //     acc_radiance += (vec3<f32>(0.0, 0.1, 0.0) * throughput);
             // } else {
