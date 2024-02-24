@@ -59,11 +59,22 @@ pub const Camera = struct {
         self.setCamera(null, null, null);
     }
 
-    pub fn rotate(self: *Camera) void {
-        const d_a = std.math.pi / 180.0 * self.move_speed;
-        const quat = zm.quatFromAxisAngle(self.direction, d_a);
-        self.eye = zm.rotate(quat, self.eye);
-        self.setCamera(null, null, null);
+    // pub fn rotate(self: *Camera) void {
+    //     const d_a = std.math.pi / 180.0 * self.move_speed;
+    //     const quat = zm.quatFromAxisAngle(self.direction, d_a);
+    //     self.eye = zm.rotate(quat, self.eye);
+    //     self.setCamera(null, null, null);
+    // }
+
+    pub fn rotate(self: *Camera, delta: [2]f32) void {
+        // I should update eye and center, and THEN update the view matrix...
+        self.view_matrix = zm.mul(self.view_matrix, zm.rotationX(delta[1] * self.move_speed));
+        self.view_matrix = zm.mul(self.view_matrix, zm.rotationY(delta[0] * self.move_speed));
+        self.moving = true;
+    }
+
+    pub fn stop(self: *Camera) void {
+        self.moving = false;
     }
 
     pub fn moveLeft(self: *Camera) void {
@@ -116,7 +127,7 @@ pub const Camera = struct {
             .d => self.moveRight(),
             .q => self.moveUp(),
             .e => self.moveDown(),
-            .r => self.rotate(),
+            // .r => self.rotate(),
             else => {},
         }
     }

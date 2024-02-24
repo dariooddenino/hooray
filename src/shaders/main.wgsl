@@ -41,8 +41,8 @@ fn fs(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     let i = get1Dfrom2D(fragCoord.xy);
     var color = framebuffer[i].xyz; // / uniforms.frame_num;
 
-    // color = aces_approx(color.xyz);
-    // color = pow(color.xyz, vec3f(1 / 2.2));
+    color = aces_approx(color.xyz);
+    color = pow(color.xyz, vec3f(1 / 2.2));
 
     if uniforms.reset_buffer == 1 {
         framebuffer[i] = vec4f(0);

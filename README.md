@@ -13,8 +13,12 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
   - Implement basic hitSphere returning a single color
   - Make sure everything works fine
 - [ ] Fix the coordinates system
-  The numbers act randomly. My moveLeft acts as a turn left
+  I can't really understand the init coordinates
   I could try replacing with the camera code from pbr-basic
+  Moving darkens the image, but it actually looks more correct...
+  I need to check what bounces / samples are doing in the book.
+  What do I want to follow between the two??
+
 - [ ] Solve the issue of the black pulses on update
 - [ ] Get diffuse sphere working
 - [ ] Implement basic camera movements
