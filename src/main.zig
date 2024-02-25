@@ -106,7 +106,8 @@ pub fn update(app: *App) !bool {
                         @as(f32, @floatCast(app.mouse_position.y - ev.pos.y)),
                     };
                     app.mouse_position = ev.pos;
-                    app.renderer.camera.rotate(delta);
+                    // app.renderer.camera.rotate(delta);
+                    app.renderer.camera.rotate(screen_width, screen_height, delta);
                 }
             },
             .close => return true,
@@ -114,7 +115,7 @@ pub fn update(app: *App) !bool {
         }
     }
     if (app.pressed_keys.areKeysPressed()) {
-        app.renderer.camera.calculateMovement(app.pressed_keys);
+        // app.renderer.camera.calculateMovement(app.pressed_keys);
         app.pressed_keys.clear();
     }
     // NOTE the example was using a "dirty" uniforms flag to determine if they need to be updated in the buffer.

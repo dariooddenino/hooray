@@ -43,10 +43,10 @@ pub const Renderer = struct {
         try scene.loadBasicScene();
 
         const camera = try allocator.create(Camera);
-        camera.* = Camera{};
-        camera.setPosition(.{ 0, 0, -3 });
-        camera.setRotation(.{ 0, 0, 0 });
-        // camera.* = Camera.init(.{ 0, 2.3, -3, 0 });
+        // camera.* = Camera{};
+        // camera.setPosition(.{ 0, 0, -3 });
+        // camera.setRotation(.{ 0, 0, 0 });
+        camera.* = Camera.init(.{ 0, 0, -5, 0 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
@@ -308,10 +308,11 @@ pub const Renderer = struct {
         if (camera.moving) {
             self.frame_num = 1;
             camera.moving = false;
-            uniforms.view_matrix = camera.view_matrix;
-            const uniforms_buffer = resources.getBuffer("uniforms");
-            core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
         }
+
+        uniforms.view_matrix = camera.view_matrix;
+        const uniforms_buffer = resources.getBuffer("uniforms");
+        core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
 
         // Compute pass
 

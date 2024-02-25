@@ -25,7 +25,7 @@ fn computeFrameBuffer(
     var frag_color = path_traced_color.xyz;
 
     // if uniforms.reset_buffer == 0 {
-    // frag_color = framebuffer[pixel_index].xyz + path_traced_color;
+    //     frag_color = framebuffer[pixel_index].xyz + path_traced_color;
     // }
 
     framebuffer[pixel_index] = vec4<f32>(frag_color.xyz, 1);

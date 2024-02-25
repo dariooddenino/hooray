@@ -17,21 +17,43 @@ fn pathTrace() -> vec3<f32> {
 }
 
 fn getCameraRay() -> Ray {
-    let focal_length = 1.0;
+    let up = (uniforms.view_matrix * vec4<f32>(0, 1, 0, 0)).xyz;
+    let look_at = (uniforms.view_matrix * vec4<f32>(0, 0, 1, 0)).xyz;
+    let focal_length = length(cam_origin - look_at);
     let viewport_height = 2.0;
     let viewport_width = viewport_height * uniforms.screen_dims.x / uniforms.screen_dims.y;
 
-    let viewport_u = vec3<f32>(viewport_width, 0, 0);
-    let viewport_v = vec3<f32>(0, -viewport_height, 0);
+    // Calculate the u,v,w vectors for the camera coordinate frame.
+    let w = -normalize(cam_origin - look_at);
+    let u = normalize(cross(up, w));
+    let v = cross(w, u);
+
+    let viewport_u = vec3<f32>(viewport_width) * u;
+    let viewport_v = vec3<f32>(viewport_height) * v;
 
     let pixel_delta_u = viewport_u / uniforms.screen_dims.x;
     let pixel_delta_v = viewport_v / uniforms.screen_dims.y;
-    let viewport_upper_left = cam_origin - vec3<f32>(0, 0, focal_length) - viewport_u / 2 - viewport_v / 2;
+
+    let w_focal_length = vec3<f32>(focal_length) * w;
+
+    let viewport_upper_left = cam_origin - w_focal_length - viewport_u / 2 - viewport_v / 2;
     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     let pixel_center = pixel00_loc + (pixel_coords.x * pixel_delta_u) + (pixel_coords.y * pixel_delta_v);
-    let ray_direction = pixel_center - cam_origin;
+    let ray_direction = -(pixel_center - cam_origin);
     return Ray(cam_origin, ray_direction);
 }
+// w = unit_vector(lookfrom - lookat);
+//         u = unit_vector(cross(vup, w));
+//         v = cross(w, u);
+
+// zaxis = w
+// xaxis = u
+// yaxis = v
+
+// ux vx wx
+// uy vy wy
+// uz vz wz
+// origin
 
 // fn getCameraRay(s: f32, t: f32) -> Ray {
 //     let dir = normalize(uniforms.view_matrix * vec4<f32>(vec3<f32>(s, t, -fov_factor), 0)).xyz;
