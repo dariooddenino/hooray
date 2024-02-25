@@ -8,6 +8,7 @@ pub const Uniforms = extern struct {
     frame_num: f32,
     reset_buffer: f32,
     view_matrix: zm.Mat,
+    eye: zm.Vec,
 };
 
 pub const GPUResources = struct {

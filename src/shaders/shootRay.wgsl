@@ -17,13 +17,23 @@ fn pathTrace() -> vec3<f32> {
 }
 
 fn getCameraRay() -> Ray {
-    let up = (uniforms.view_matrix * vec4<f32>(0, 1, 0, 0)).xyz;
-    let look_at = (uniforms.view_matrix * vec4<f32>(0, 0, 1, 0)).xyz;
+    // TODO hardcoding for now ~ NOT working
+    // let up = (uniforms.view_matrix * vec4<f32>(0, 1, 0, 0)).xyz;
+    let up = vec3<f32>(0, 1, 0);
+    let look_at = vec3<f32>(0, 0, 0);
+    // let look_at = (uniforms.view_matrix * vec4<f32>(0, 0, 1, 0)).xyz;
     let focal_length = length(cam_origin - look_at);
-    let viewport_height = 2.0;
+    // vertical fov
+    const theta: f32 = PI / 2;
+    const h = tan(theta / 2);
+    let viewport_height = 2.0 * h * focal_length;
     let viewport_width = viewport_height * uniforms.screen_dims.x / uniforms.screen_dims.y;
 
     // Calculate the u,v,w vectors for the camera coordinate frame.
+    // Not working
+    // let w = (uniforms.view_matrix * vec4<f32>(1, 0, 0, 0)).xyz;
+    // let v = (uniforms.view_matrix * vec4<f32>(0, 1, 0, 0)).xyz;
+    // let u = (uniforms.view_matrix * vec4<f32>(0, 0, 1, 0)).xyz;
     let w = -normalize(cam_origin - look_at);
     let u = normalize(cross(up, w));
     let v = cross(w, u);

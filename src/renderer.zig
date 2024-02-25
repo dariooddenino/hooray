@@ -46,13 +46,14 @@ pub const Renderer = struct {
         // camera.* = Camera{};
         // camera.setPosition(.{ 0, 0, -3 });
         // camera.setRotation(.{ 0, 0, 0 });
-        camera.* = Camera.init(.{ 0, 0, -5, 0 });
+        camera.* = Camera.init(.{ -2, 2, 1, 0 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },
             .frame_num = 0,
             .reset_buffer = 0,
             .view_matrix = camera.view_matrix,
+            .eye = camera.eye,
         };
 
         var self = Renderer{
@@ -311,6 +312,7 @@ pub const Renderer = struct {
         }
 
         uniforms.view_matrix = camera.view_matrix;
+        uniforms.eye = camera.eye;
         const uniforms_buffer = resources.getBuffer("uniforms");
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{uniforms.*});
 

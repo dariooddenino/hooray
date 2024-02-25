@@ -49,17 +49,18 @@ pub const Camera = struct {
 
         // step 1: Calculate amount of rotation given the mouse movement.
         // 360 degrees horizontally
-        const x_angle = delta[1] * (std.math.pi / @as(f32, @floatFromInt(screen_width)));
+        const x_angle = delta[1] * (2 * std.math.pi / @as(f32, @floatFromInt(screen_width)));
         // 180 degrees vertically
-        var y_angle = delta[0] * (2 * std.math.pi / @as(f32, @floatFromInt(screen_height)));
+        const y_angle = delta[0] * (2 * std.math.pi / @as(f32, @floatFromInt(screen_height)));
 
         // Handle direction being the same as up
         // TODO lock going too much down too?
-        const direction = self.eye - self.center;
-        const cos_angle: f32 = zm.dot2(direction, self.up)[0];
-        if (cos_angle * (y_angle / @abs(y_angle)) > 0.99) {
-            y_angle = 0;
-        }
+        // NOTE not sure it's the right angle.
+        // const direction = self.eye - self.center;
+        // const cos_angle: f32 = zm.dot2(direction, self.up)[0];
+        // if (cos_angle * (y_angle / @abs(y_angle)) > 0.99) {
+        //     y_angle = 0;
+        // }
 
         // TODO I can't ignore the up/right vectors that were used. I have to find different functions
         // step 2: Rotate the camera around the center on the first axis
