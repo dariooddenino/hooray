@@ -24,9 +24,9 @@ fn computeFrameBuffer(
     var path_traced_color = pathTrace();
     var frag_color = path_traced_color.xyz;
 
-    if uniforms.reset_buffer == 0 {
-        frag_color = framebuffer[pixel_index].xyz + path_traced_color;
-    }
+    // if uniforms.reset_buffer == 0 {
+    // frag_color = framebuffer[pixel_index].xyz + path_traced_color;
+    // }
 
     framebuffer[pixel_index] = vec4<f32>(frag_color.xyz, 1);
 }
@@ -42,14 +42,15 @@ fn get1Dfrom2D(pos: vec2<f32>) -> u32 {
 fn fs(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 
     let i = get1Dfrom2D(fragCoord.xy);
-    var color = framebuffer[i].xyz / uniforms.frame_num;
+    // var color = framebuffer[i].xyz / uniforms.frame_num;
+    var color = framebuffer[i].xyz;
 
-    color = aces_approx(color.xyz);
-    color = pow(color.xyz, vec3<f32>(1 / 2.2));
+    // color = aces_approx(color.xyz);
+    // color = pow(color.xyz, vec3<f32>(1 / 2.2));
 
-    if uniforms.reset_buffer == 1 {
-        framebuffer[i] = vec4<f32>(0);
-    }
+    // if uniforms.reset_buffer == 1 {
+    //     framebuffer[i] = vec4<f32>(0);
+    // }
 
     return vec4<f32>(color, 1);
 }

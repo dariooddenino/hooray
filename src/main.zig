@@ -97,9 +97,13 @@ pub fn update(app: *App) !bool {
             },
             .mouse_motion => |ev| {
                 if (app.is_rotating) {
+                    // const delta = [2]f32{
+                    //     @as(f32, @floatCast((app.mouse_position.x - ev.pos.x) * app.renderer.camera.rotation_speed)),
+                    //     @as(f32, @floatCast((app.mouse_position.y - ev.pos.y) * app.renderer.camera.rotation_speed)),
+                    // };
                     const delta = [2]f32{
-                        @as(f32, @floatCast((app.mouse_position.x - ev.pos.x) * app.renderer.camera.rotation_speed)),
-                        @as(f32, @floatCast((app.mouse_position.y - ev.pos.y) * app.renderer.camera.rotation_speed)),
+                        @as(f32, @floatCast(app.mouse_position.x - ev.pos.x)),
+                        @as(f32, @floatCast(app.mouse_position.y - ev.pos.y)),
                     };
                     app.mouse_position = ev.pos;
                     app.renderer.camera.rotate(delta);

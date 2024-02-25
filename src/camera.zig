@@ -10,6 +10,39 @@ const Vec = zm.Vec;
 const Vec3 = [3]f32;
 const Mat = zm.Mat;
 
+// pub const Camera = struct {
+//     view_matrix: Mat,
+//     eye: Vec, // Location of the camera
+//     center: Vec, // Look at
+//     up: Vec,
+
+//     moving: bool = false,
+
+//     pub fn init(eye: Vec) Camera {
+//         const center: Vec = .{ 0, 0, 0, 0 };
+//         const up: Vec = .{ 0, 1, 0, 0 };
+
+//         const view_matrix = zm.lookAtRh(eye, center, up);
+
+//         return Camera{
+//             .view_matrix = view_matrix,
+//             .eye = eye,
+//             .center = center,
+//             .up = up,
+//         };
+//     }
+
+//     pub fn rotate(self: *Camera, delta: [2]f32) void {
+//         self.moving = true;
+//         _ = delta;
+//     }
+
+//     pub fn calculateMovement(self: *Camera, pressed_keys: PressedKeys) void {
+//         _ = self;
+//         _ = pressed_keys;
+//     }
+// };
+
 pub const Camera = struct {
     // perspective: Mat = zm.matFromArr(.{0} ** 16),
     view_matrix: Mat = zm.matFromArr(.{0} ** 16),
