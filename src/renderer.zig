@@ -43,10 +43,7 @@ pub const Renderer = struct {
         try scene.loadBasicScene();
 
         const camera = try allocator.create(Camera);
-        // camera.* = Camera{};
-        // camera.setPosition(.{ 0, 0, -3 });
-        // camera.setRotation(.{ 0, 0, 0 });
-        camera.* = Camera.init(.{ -2, 2, 1, 0 });
+        camera.* = Camera.init(.{ -4, 4, 2, 0 });
 
         const uniforms = Uniforms{
             .screen_dims = .{ screen_width, screen_height },

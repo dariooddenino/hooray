@@ -12,9 +12,8 @@ fn computeFrameBuffer(
     let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
     pixel_coords = vec3<f32>(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
 
-    // TODO temp sysgpu fix
     fov_factor = 1 / tan(60 * (PI / 180) / 2);
-    cam_origin = (uniforms.view_matrix * vec4<f32>(0, 0, 0, 1)).xyz;
+    cam_origin = uniforms.eye;
 
     NUM_SPHERES = i32(arrayLength(&sphere_objs));
 
