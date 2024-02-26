@@ -19,9 +19,9 @@ pub const Scene = struct {
 
     pub fn loadBasicScene(self: *Scene) !void {
         try self.addSphere(Vec{ 0, -100.5, -1, 0 }, 100);
-        try self.addSphere(Vec{ 0, 0, -1, 0 }, 0.5);
-        try self.addSphere(Vec{ -1, 0, -1, 0 }, 0.5);
-        try self.addSphere(Vec{ 1, 0, -1, 0 }, 0.5);
+        try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5);
+        try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5);
+        try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5);
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32) !void {

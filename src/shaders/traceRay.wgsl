@@ -16,7 +16,9 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
             // color += vec3<f32>(0.3, 0.5, 0.2) * throughput;
             // throughput *= mix(vec3<f32>(0.3, 0.5, 0.2), vec3<f32>(0, 0, 0), do_specular);
             // curr_ray = scattered;
-            color = (hit_rec.normal + vec3<f32>(1, 1, 1)) * throughput;
+            let direction = uniform_sampling_hemisphere();
+            color = (vec3<f32>(0.3, 0.2, 0.5)) * throughput;
+            curr_ray = Ray(hit_rec.p, direction);
         }
 
         // russian roulette

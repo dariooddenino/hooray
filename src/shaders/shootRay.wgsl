@@ -42,7 +42,16 @@ fn getCameraRay() -> Ray {
     let viewport_upper_left = cam_origin - w_focal_length - viewport_u / 2 - viewport_v / 2;
     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     let pixel_center = pixel00_loc + (pixel_coords.x * pixel_delta_u) + (pixel_coords.y * pixel_delta_v);
+    let pixel_sample = pixel_center; // + pixelSampleSquare(pixel_delta_u, pixel_delta_v);
     let ray_direction = -(pixel_center - cam_origin);
     return Ray(cam_origin, ray_direction);
+}
+
+// Antialiasing
+// Retruns a random point in the square surrounding a pixel at the origin
+fn pixelSampleSquare(pixel_delta_u: vec3<f32>, pixel_delta_v: vec3<f32>) -> vec3<f32> {
+    let px = -0.5 + rand2D();
+    let py = -0.5 + rand2D();
+    return (px * pixel_delta_u) + (py * pixel_delta_v);
 }
 

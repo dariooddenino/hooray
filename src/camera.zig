@@ -47,20 +47,24 @@ pub const Camera = struct {
     pub fn rotate(self: *Camera, screen_width: u32, screen_height: u32, delta: [2]f32) void {
         self.moving = true;
 
+        // TODO might be mixed up
         // step 1: Calculate amount of rotation given the mouse movement.
         // 360 degrees horizontally
-        const x_angle = -delta[1] * (2 * std.math.pi / @as(f32, @floatFromInt(screen_width)));
+        const x_angle = delta[1] * (2 * std.math.pi / @as(f32, @floatFromInt(screen_width)));
         // 180 degrees vertically
-        var y_angle = delta[0] * (std.math.pi / @as(f32, @floatFromInt(screen_height)));
+        const y_angle = delta[0] * (std.math.pi / @as(f32, @floatFromInt(screen_height)));
+        // const y_angle = 0;
+        // _ = screen_height;
 
         // Handle direction being the same as up
         // TODO lock going too much down too?
         // NOTE not sure it's the right angle.
-        const direction = self.eye - self.center;
-        const cos_angle: f32 = zm.dot3(direction, self.up)[0];
-        if (cos_angle * (y_angle / @abs(y_angle)) > 0.99) {
-            y_angle = 0;
-        }
+        // const direction = self.eye - self.center;
+        // const cos_angle: f32 = zm.dot3(direction, self.up)[0];
+        // const cos_angle_s = cos_angle * (y_angle / @abs(y_angle));
+        // if (cos_angle_s > 0.99) {
+        //     y_angle = 0;
+        // }
 
         // TODO I can't ignore the up/right vectors that were used. I have to find different functions
         // step 2: Rotate the camera around the center on the first axis
@@ -78,8 +82,15 @@ pub const Camera = struct {
     }
 
     pub fn calculateMovement(self: *Camera, pressed_keys: PressedKeys) void {
+        std.debug.assert(pressed_keys.areKeysPressed());
         self.moving = true;
-        _ = pressed_keys;
+        const w = zm.normalize3(self.center - self.eye);
+        if (pressed_keys.up) {
+            self.eye = self.eye + w * zm.splat(Vec, self.movement_speed);
+        }
+        if (pressed_keys.down) {
+            self.eye = self.eye - w * zm.splat(Vec, self.movement_speed);
+        }
     }
 };
 

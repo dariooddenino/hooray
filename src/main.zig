@@ -115,7 +115,7 @@ pub fn update(app: *App) !bool {
         }
     }
     if (app.pressed_keys.areKeysPressed()) {
-        // app.renderer.camera.calculateMovement(app.pressed_keys);
+        app.renderer.camera.calculateMovement(app.pressed_keys);
         app.pressed_keys.clear();
     }
     // NOTE the example was using a "dirty" uniforms flag to determine if they need to be updated in the buffer.
