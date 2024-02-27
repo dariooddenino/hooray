@@ -5,8 +5,8 @@
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
 const MAX_FLOAT = 999999999.999;
-const MAX_SAMPLES = 30;
-const MAX_BOUNCES = 10;
+const MAX_SAMPLES = 50;
+const MAX_BOUNCES = 30;
 
 struct Uniforms {
   screen_dims: vec2<f32>,
@@ -40,7 +40,7 @@ var<private> pixel_coords : vec3<f32>;
 var<private> fov_factor : f32;
 var<private> cam_origin: vec3<f32>;
 var<private> hit_rec : HitRecord;
-var<private> ray_tmin : f32 = 0.000001;
+var<private> ray_tmin : f32 = 0.001;
 var<private> ray_tmax : f32 = MAX_FLOAT;
 var<private> do_specular : f32 = 0.0;
 var<private> unit_w: vec3<f32>;

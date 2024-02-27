@@ -23,9 +23,11 @@ fn computeFrameBuffer(
     var path_traced_color = pathTrace();
     var frag_color = path_traced_color.xyz;
 
-    // if uniforms.reset_buffer == 0 {
-    //     frag_color = framebuffer[pixel_index].xyz + path_traced_color;
-    // }
+    // Progressive rendering with low samples
+    if uniforms.reset_buffer == 0 {
+        let weight = 1.0 / (uniforms.frame_num +1);
+        frag_color = framebuffer[pixel_index].xyz * (1 - weight) + path_traced_color * weight;
+    }
 
     framebuffer[pixel_index] = vec4<f32>(frag_color.xyz, 1);
 }
@@ -44,9 +46,10 @@ fn fs(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     // var color = framebuffer[i].xyz / uniforms.frame_num;
     var color = framebuffer[i].xyz;
 
-    // color = aces_approx(color.xyz);
-    // color = pow(color.xyz, vec3<f32>(1 / 2.2));
+    color = aces_approx(color.xyz);
+    color = pow(color.xyz, vec3<f32>(1 / 2.2));
 
+    // This gives an unpleasant black flicker
     // if uniforms.reset_buffer == 1 {
     //     framebuffer[i] = vec4<f32>(0);
     // }

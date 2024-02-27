@@ -15,7 +15,7 @@ fn hitScene(ray: Ray) -> bool {
 fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
     let oc = ray.origin - sphere.center;
     let a = dot(ray.direction, ray.direction);
-    let half_b = dot(ray.direction, oc);
+    let half_b = dot(oc, ray.direction);
     let c = dot(oc, oc) - sphere.radius * sphere.radius;
     let discriminant = half_b * half_b - a * c;
 
@@ -35,12 +35,7 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
     hit_rec.t = root;
     hit_rec.p = at(ray, root);
 
-	// hitRec.p = (vec4<f32>(hitRec.p, 1) * transforms[i32(sphere.id)].invModelMatrix).xyz;
-	// hitRec.t = distance(hitRec.p, incidentRay.origin);
-
     hit_rec.normal = normalize((hit_rec.p - sphere.center) / sphere.radius);
-
-	// hitRec.normal = normalize((vec4<f32>(hitRec.normal, 0) * transpose(transforms[i32(sphere.id)].modelMatrix)).xyz);
 
     hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
     if !hit_rec.front_face {
