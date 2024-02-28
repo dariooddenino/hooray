@@ -20,7 +20,7 @@ pub const Sphere = struct {
     pub const Sphere_GPU = extern struct {
         center: [3]f32,
         radius: f32,
-        // material_id: f32,
+        material_id: f32,
     };
 
     pub fn toGPU(allocator: std.mem.Allocator, spheres: std.ArrayList(Sphere)) !std.ArrayList(Sphere_GPU) {

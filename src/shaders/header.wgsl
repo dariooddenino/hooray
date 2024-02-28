@@ -40,7 +40,7 @@ struct Material {
 struct Sphere {
   center: vec3<f32>,
   radius: f32,
-  // material_id: f32,
+  material_id: f32,
 }
 
 struct HitRecord {
