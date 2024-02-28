@@ -13,7 +13,8 @@ fn hitScene(ray: Ray) -> bool {
 }
 
 fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
-    let oc = ray.origin - sphere.center;
+    let center = sphere.center;
+    let oc = ray.origin - center;
     let a = dot(ray.direction, ray.direction);
     let half_b = dot(oc, ray.direction);
     let c = dot(oc, oc) - sphere.radius * sphere.radius;
@@ -35,7 +36,7 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
     hit_rec.t = root;
     hit_rec.p = at(ray, root);
 
-    hit_rec.normal = normalize((hit_rec.p - sphere.center) / sphere.radius);
+    hit_rec.normal = normalize((hit_rec.p - center) / sphere.radius);
 
     hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
     if !hit_rec.front_face {

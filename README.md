@@ -12,21 +12,17 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-- [x] Have a basic sphere render
-  - Implement HitRecord without materials
-  - Implement basic hitSphere returning a single color
-  - Make sure everything works fine
-- [ ] Fix the coordinates system
-  I can't really understand the init coordinates
-  I could try replacing with the camera code from pbr-basic
-  Moving darkens the image, but it actually looks more correct...
-  I need to check what bounces / samples are doing in the book.
-  What do I want to follow between the two??
+The problem with Sphere_GPU is that a vec3<f32> is aligned
+to 16 bits. This means that I can't pass a [3]f32 to the
+buffer.
+On discord they told me to use [4]f32, or mach.math.Vec3
+which takes care of the padding automatically.
+I've tried with [4]f32, but I couldn't make it work.
+I will try to add mach as a dependency and use Vec3.
 
-- [ ] Solve the issue of the black pulses on update
-- [ ] Get diffuse sphere working
-- [ ] Implement basic camera movements
-- [ ] implement frame_reset and stratify
+I should temporarily disable the materials buffer, and focus on spheres only.
+
+Then consider uniforms alignment.
 
 ## Delta time
 ```zig
