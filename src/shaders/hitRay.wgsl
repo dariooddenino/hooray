@@ -3,7 +3,7 @@ fn hitScene(ray: Ray) -> bool {
     var hit_anything = false;
 
     for (var i = 0; i < NUM_SPHERES; i++) {
-        if hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray) {
+         if hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray) {
             hit_anything = true;
             closest_so_far = hit_rec.t;
         }
