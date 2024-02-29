@@ -1,12 +1,27 @@
 fn materialScatter(ray_in: Ray) -> Ray {
     var scattered = Ray(vec3<f32>(0), vec3<f32>(0));
-    // do_specular = 0;
-  // LAMBERTIAN
-    let uvw = onbBuildFromW(hit_rec.normal);
-    var diffuse_dir = cosineSamplingWrtZ();
-    diffuse_dir = normalize(onbGetLocal(diffuse_dir));
+    do_specular = 0;
+    if (hit_rec.material.material_type == LAMBERTIAN) {
+        let uvw = onbBuildFromW(hit_rec.normal);
+        var diffuse_dir = cosineSamplingWrtZ();
+        diffuse_dir = normalize(onbGetLocal(diffuse_dir));
 
-    scattered = Ray(hit_rec.p, diffuse_dir);
+        scattered = Ray(hit_rec.p, diffuse_dir);
+
+        do_specular = select(0.0, 1.0, rand2D() < hit_rec.material.specular_strength);
+
+        var specular_dir = reflect(ray_in.direction, hit_rec.normal);
+        specular_dir = normalize(mix(specular_dir, diffuse_dir, hit_rec.material.roughness));
+
+        scattered = Ray(hit_rec.p, normalize(mix(diffuse_dir, specular_dir, do_specular)));
+
+        scatter_rec.skip_pdf = false;
+
+        if (do_specular == 1.0) {
+            scatter_rec.skip_pdf = true;
+            scatter_rec.skip_pdf_ray = scattered;
+        }
+    }
 
     return scattered;
 }

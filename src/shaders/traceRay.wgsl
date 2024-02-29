@@ -12,24 +12,36 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
             color = (((1 - a) * vec3<f32>(0.8, 0.8, 0.8) + a * vec3<f32>(0.1, 0.2, 0.5)) * throughput);
             break;
         } else {
-            // let scattered = materialScatter(curr_ray);
-            // color += vec3<f32>(0.3, 0.5, 0.2) * throughput;
-            // throughput *= mix(vec3<f32>(0.3, 0.5, 0.2), vec3<f32>(0, 0, 0), do_specular);
-            // curr_ray = scattered;
-            let direction = hit_rec.normal + uniform_random_in_unit_sphere();
-            // color = (vec3<f32>(0.3, 0.2, 0.5)) * throughput;
-            throughput *= 0.5;
-            curr_ray = Ray(hit_rec.p, direction);
+
+            // unidirectional light
+            var emission_color = hit_rec.material.emission_color;
+            if !hit_rec.front_face {
+                emission_color = vec3<f32>(0);
+            }
+
+            // if IMPORTANCE_SAMPLING {
+
+            // else {
+
+            let scattered = materialScatter(curr_ray);
+            color += emission_color * throughput;
+            throughput *= mix(hit_rec.material.color, hit_rec.material.specular_color, do_specular);
+            curr_ray = scattered;
+
+            // OLD simpler version
+            // let direction = hit_rec.normal + uniform_random_in_unit_sphere();
+            // throughput *= 0.5;
+            // curr_ray = Ray(hit_rec.p, direction);
         }
 
         // russian roulette
-        // if i > 2 {
-        //     let p = max(throughput.x, max(throughput.y, throughput.z));
-        //     if rand2D() > p {
-        //         break;
-        //     }
-        //     throughput = throughput * (1.0 / p);
-        // }
+        if i > 2 {
+            let p = max(throughput.x, max(throughput.y, throughput.z));
+            if rand2D() > p {
+                break;
+            }
+            throughput = throughput * (1.0 / p);
+        }
     }
 
     return color;

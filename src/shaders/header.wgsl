@@ -48,14 +48,14 @@ struct HitRecord {
   t: f32,
   normal: vec3<f32>,
   front_face: bool,
-  // material: Material
+  material: Material
 }
 
-// struct ScatterRecord {
-//   pdf: f32,
-//   skip_pdf: bool,
-//   skip_pdf_ray: Ray,
-// }
+struct ScatterRecord {
+  pdf: f32,
+  skip_pdf: bool,
+  skip_pdf_ray: Ray,
+}
 
 var<private> NUM_SPHERES : i32;
 var<private> rand_state : u32 = 0u;
@@ -63,7 +63,7 @@ var<private> pixel_coords : vec3<f32>;
 var<private> fov_factor : f32;
 var<private> cam_origin: vec3<f32>;
 var<private> hit_rec : HitRecord;
-// var<private> scatter_rec : ScatterRecord;
+var<private> scatter_rec : ScatterRecord;
 var<private> ray_tmin : f32 = 0.001;
 var<private> ray_tmax : f32 = MAX_FLOAT;
 var<private> do_specular : f32 = 0.0;

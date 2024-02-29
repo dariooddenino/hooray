@@ -43,7 +43,6 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
         hit_rec.normal = -1 * hit_rec.normal;
     }
 
-    // TODO material
-    // hit_rec.material = materials[i32(sphere.material_id)];
+    hit_rec.material = materials[i32(sphere.material_id)];
     return true;
 }

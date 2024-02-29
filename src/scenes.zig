@@ -28,18 +28,16 @@ pub const Scene = struct {
     pub fn loadBasicScene(self: *Scene) !void {
         const red = Material.lambertian(.{ 0.8, 0.1, 0.2, 1 }, 0, 1);
         const red_id = try self.addMaterial("red", red);
-        const blue = Material.lambertian(.{ 0.1, 0.2, 0.8, 1 }, 0.5, 0.5);
+        const blue = Material.lambertian(.{ 0.1, 0.2, 0.8, 1 }, 0, 1);
         const blue_id = try self.addMaterial("blue", blue);
-        const green = Material.lambertian(.{ 0.2, 0.8, 0.1, 1 }, 1, 0);
+        const green = Material.lambertian(.{ 0.2, 0.8, 0.1, 1 }, 0, 0);
         const green_id = try self.addMaterial("green", green);
-        const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 }, 0.2, 1);
+        const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 }, 0, 1);
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -100.5, -1, 0 }, 100, ground_id);
         try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
         try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, green_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, blue_id);
-        try self.addSphere(Vec{ 0, 0, 1, 0 }, 0.5, blue_id);
-        try self.addSphere(Vec{ 0, 0, -1, 0 }, 0.5, blue_id);
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {
