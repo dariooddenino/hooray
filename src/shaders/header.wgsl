@@ -1,7 +1,7 @@
 @group(0) @binding(0) var<storage, read_write> framebuffer : array<vec4<f32>>;
 @group(0) @binding(1) var<uniform> uniforms : Uniforms;
-// @group(0) @binding(2) var<storage, read> materials: array<Material>;
-@group(0) @binding(2) var<storage, read> sphere_objs : array<Sphere>;
+@group(0) @binding(2) var<storage, read> materials: array<Material>;
+@group(0) @binding(3) var<storage, read> sphere_objs : array<Sphere>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
@@ -40,7 +40,7 @@ struct Material {
 struct Sphere {
   center: vec3<f32>,
   radius: f32,
-  // material_id: f32,
+  material_id: f32,
 }
 
 struct HitRecord {

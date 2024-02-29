@@ -39,6 +39,7 @@ pub const Material = extern struct {
         roughness: f32,
         eta: f32,
         material_type: f32,
+        padding: [2]f32 = .{ 0, 0 },
     };
 
     pub fn init(material_type: MaterialType, color: Color, specular_color: Color, emission_color: Color, specular_strength: f32, roughness: f32, eta: f32) Material {

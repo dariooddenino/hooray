@@ -18,9 +18,10 @@ pub const Sphere = struct {
     }
 
     pub const Sphere_GPU = extern struct {
-        center: @Vector(3, f32),
+        center: [3]f32,
         radius: f32,
-        // material_id: f32,
+        material_id: f32,
+        padding: [3]f32 = .{ 0, 0, 0 },
     };
 
     pub fn toGPU(allocator: std.mem.Allocator, spheres: std.ArrayList(Sphere)) !std.ArrayList(Sphere_GPU) {
@@ -29,7 +30,7 @@ pub const Sphere = struct {
             const sphere_gpu = Sphere_GPU{
                 .center = .{ sphere.center[0], sphere.center[1], sphere.center[2] },
                 .radius = sphere.radius,
-                // .material_id = @floatFromInt(sphere.material_id),
+                .material_id = @floatFromInt(sphere.material_id),
             };
             try spheres_gpu.append(sphere_gpu);
         }
