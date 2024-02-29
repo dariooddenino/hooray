@@ -15,7 +15,7 @@ pub const App = @This();
 
 var gpa = switch (builtin.mode) {
     .Debug => std.heap.GeneralPurposeAllocator(.{ .verbose_log = true, .retain_metadata = true }){},
-    else => std.heap.GeneralPurposeAllocator(){},
+    else => std.heap.GeneralPurposeAllocator(.{}){},
 };
 const allocator = gpa.allocator();
 
