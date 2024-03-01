@@ -26,11 +26,11 @@ pub const Scene = struct {
     }
 
     pub fn loadBasicScene(self: *Scene) !void {
-        const red = Material.lambertian(.{ 0.8, 0.1, 0.2, 1 }, 0, 1);
+        const red = Material.lambertian(.{ 1, 0, 0, 1 }, 0, 1);
         const red_id = try self.addMaterial("red", red);
-        const blue = Material.lambertian(.{ 0.1, 0.2, 0.8, 1 }, 0, 1);
+        const blue = Material.lambertian(.{ 0, 0, 1, 1 }, 1, 0);
         const blue_id = try self.addMaterial("blue", blue);
-        const green = Material.lambertian(.{ 0.2, 0.8, 0.1, 1 }, 0, 0);
+        const green = Material.lambertian(.{ 0, 1, 0, 1 }, 0, 0);
         const green_id = try self.addMaterial("green", green);
         const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 }, 0, 1);
         const ground_id = try self.addMaterial("ground", ground);

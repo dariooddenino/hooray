@@ -9,7 +9,7 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
         if !hitScene(curr_ray) {
             let unit_direction = normalize(incident_ray.direction);
             let a = 0.5 * (unit_direction.y + 1);
-            color = (((1 - a) * vec3<f32>(0.8, 0.8, 0.8) + a * vec3<f32>(0.1, 0.2, 0.5)) * throughput);
+            color += (((1 - a) * vec3<f32>(0.8, 0.8, 0.8) + a * vec3<f32>(0.1, 0.2, 0.5)) * throughput);
             break;
         } else {
 
