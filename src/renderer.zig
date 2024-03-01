@@ -52,6 +52,7 @@ pub const Renderer = struct {
             .reset_buffer = 0,
             .view_matrix = camera.view_matrix,
             .eye = camera.eye,
+            .defocus_angle = 3,
         };
 
         var self = Renderer{

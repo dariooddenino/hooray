@@ -19,7 +19,7 @@ fn getCameraRay() -> Ray {
     //
     // let focus_dist: f32 = 5; // uniforms.focus_dist;
     let focus_dist: f32 = length(cam_origin - look_at);
-    let defocus_angle: f32 = 5; // uniforms.defocus_angle;
+    let defocus_angle: f32 = uniforms.defocus_angle;
     // vertical fov
     const theta: f32 = PI / 2;
     const h = tan(theta / 2);

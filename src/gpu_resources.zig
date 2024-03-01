@@ -4,13 +4,13 @@ const gpu = core.gpu;
 const zm = @import("zmath");
 
 pub const Uniforms = extern struct {
-    screen_dims: [2]f32,
     frame_num: f32,
     reset_buffer: f32,
-    view_matrix: zm.Mat,
-    eye: zm.Vec,
     defocus_angle: f32 = 0,
     focus_dist: f32 = 10,
+    view_matrix: zm.Mat,
+    eye: zm.Vec,
+    screen_dims: [2]f32,
 };
 
 pub const GPUResources = struct {

@@ -15,13 +15,13 @@ const MAX_SAMPLES = 50;
 const MAX_BOUNCES = 30;
 
 struct Uniforms {
-  screen_dims: vec2<f32>,
   frame_num: f32,
   reset_buffer: f32,
-  view_matrix: mat4x4<f32>,
-  eye: vec3<f32>,
   defocus_angle: f32,
   focus_dist: f32,
+  view_matrix: mat4x4<f32>,
+  eye: vec3<f32>,
+  screen_dims: vec2<f32>,
 }
 
 struct Ray {
