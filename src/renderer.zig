@@ -41,7 +41,8 @@ pub const Renderer = struct {
         // Build scene
         var scene = Scene.init(allocator);
 
-        try scene.loadBasicScene();
+        // try scene.loadBasicScene();
+        try scene.loadWeekOneScene();
 
         const camera = try allocator.create(Camera);
         camera.* = Camera.init(.{ -4, 4, 2, 0 });
@@ -52,7 +53,7 @@ pub const Renderer = struct {
             .reset_buffer = 0,
             .view_matrix = camera.view_matrix,
             .eye = camera.eye,
-            .defocus_angle = 3,
+            .defocus_angle = 1,
         };
 
         var self = Renderer{

@@ -11,7 +11,7 @@ const MIRROR = 1;
 const DIELECTRIC = 2;
 const ISOTROPIC = 3;
 const ANISOTROPIC = 4;
-const MAX_SAMPLES = 50;
+const MAX_SAMPLES = 10;
 const MAX_BOUNCES = 30;
 
 struct Uniforms {
