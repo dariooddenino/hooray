@@ -28,7 +28,7 @@ fn randomVecRange(min: f32, max: f32) -> vec3<f32> {
 
 // ACES approximation for tone mapping
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/):
-fn aces_approx(v: vec3<f32>) -> vec3<f32> {
+fn acesApprox(v: vec3<f32>) -> vec3<f32> {
     let v1 = v * 0.6f;
     const a = 2.51f;
     const b = 0.03f;

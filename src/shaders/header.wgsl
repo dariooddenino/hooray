@@ -20,6 +20,8 @@ struct Uniforms {
   reset_buffer: f32,
   view_matrix: mat4x4<f32>,
   eye: vec3<f32>,
+  defocus_angle: f32,
+  focus_dist: f32,
 }
 
 struct Ray {
@@ -70,3 +72,4 @@ var<private> do_specular : f32 = 0.0;
 var<private> unit_w: vec3<f32>;
 var<private> u: vec3<f32>;
 var<private> v: vec3<f32>;
+

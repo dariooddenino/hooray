@@ -43,10 +43,11 @@ fn get1Dfrom2D(pos: vec2<f32>) -> u32 {
 fn fs(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 
     let i = get1Dfrom2D(fragCoord.xy);
+    // This makes it fade to black.
     // var color = framebuffer[i].xyz / uniforms.frame_num;
     var color = framebuffer[i].xyz;
 
-    color = aces_approx(color.xyz);
+    color = acesApprox(color.xyz);
     color = pow(color.xyz, vec3<f32>(1 / 2.2));
 
     // This gives an unpleasant black flicker

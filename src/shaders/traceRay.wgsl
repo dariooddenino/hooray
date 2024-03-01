@@ -27,11 +27,6 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
             color += emission_color * throughput;
             throughput *= mix(hit_rec.material.color, hit_rec.material.specular_color, do_specular);
             curr_ray = scattered;
-
-            // OLD simpler version
-            // let direction = hit_rec.normal + uniform_random_in_unit_sphere();
-            // throughput *= 0.5;
-            // curr_ray = Ray(hit_rec.p, direction);
         }
 
         // russian roulette

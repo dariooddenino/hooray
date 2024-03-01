@@ -9,6 +9,8 @@ pub const Uniforms = extern struct {
     reset_buffer: f32,
     view_matrix: zm.Mat,
     eye: zm.Vec,
+    defocus_angle: f32 = 0,
+    focus_dist: f32 = 10,
 };
 
 pub const GPUResources = struct {
