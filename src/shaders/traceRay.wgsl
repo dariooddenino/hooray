@@ -5,7 +5,7 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
     // Attenuation at each bounce
     var throughput = vec3<f32>(1);
 
-    for (var i = 0; i < MAX_BOUNCES; i++) {
+    for (var i = 0; i < uniforms.max_bounces; i++) {
         if !hitScene(curr_ray) {
             let unit_direction = normalize(incident_ray.direction);
             let a = 0.5 * (unit_direction.y + 1);

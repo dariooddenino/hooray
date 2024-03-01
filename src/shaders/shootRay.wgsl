@@ -1,13 +1,13 @@
 fn pathTrace() -> vec3<f32> {
     var pix_color = vec3<f32>(0, 0, 0);
 
-    for (var i = 0; i < MAX_SAMPLES; i += 1) {
+    for (var i = 0; i < uniforms.sample_rate; i += 1) {
         let ray = getCameraRay();
 
         pix_color += rayColor(ray);
     }
 
-    pix_color = pix_color / MAX_SAMPLES;
+    pix_color = pix_color / f32(uniforms.sample_rate);
 
     return pix_color;
 }

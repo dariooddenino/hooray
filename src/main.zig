@@ -52,13 +52,13 @@ is_rotating: bool = false,
 pressed_keys: PressedKeys = .{},
 
 pub fn init(app: *App) !void {
-    const frame_rate = 61;
+    // const frame_rate = 61;
     try core.init(.{
         .title = "Hooray",
         .power_preference = .high_performance,
         .size = .{ .width = screen_width, .height = screen_height },
     });
-    core.setFrameRateLimit(frame_rate);
+    // core.setFrameRateLimit(frame_rate);
 
     const renderer = try Renderer.init(allocator);
 
@@ -125,9 +125,10 @@ pub fn update(app: *App) !bool {
     // update the window title every second
     if (app.title_timer.read() >= 1.0) {
         app.title_timer.reset();
-        try core.printTitle("Hooray [ {d}fps ] [ Input {d}hz ]", .{
+        try core.printTitle("Hooray [ {d}fps ] [ Input {d}hz ] [ Sample rate {d}/f]", .{
             core.frameRate(),
             core.inputRate(),
+            app.renderer.uniforms.sample_rate,
         });
     }
 

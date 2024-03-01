@@ -18,6 +18,8 @@ const Scene = scenes.Scene;
 const screen_width = main.screen_width;
 const screen_height = main.screen_height;
 const screen_size = main.screen_width * main.screen_height * 4;
+// TODO move to app?
+const target_frame_rate = 30;
 
 // Output Vertex
 const Vertex = struct {
@@ -27,6 +29,49 @@ const Vertex = struct {
 // Screen size quad.
 const vertex_data = [_]Vertex{ Vertex{ .pos = .{ -1, -1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ 1, 1 } } };
 
+const FrameRegulator = struct {
+    initialized: bool,
+    average: f32,
+    count: f32,
+    last_check: f32,
+
+    fn init() FrameRegulator {
+        return FrameRegulator{
+            .initialized = false,
+            .average = 0,
+            .count = 0,
+            .last_check = 0,
+        };
+    }
+
+    // TODO this explodes aftera a while
+    fn getDeltaRate(self: *FrameRegulator, frame_rate: u32) i32 {
+        const f_rate: f32 = @floatFromInt(frame_rate);
+        if (!self.initialized) {
+            if (frame_rate > 0) {
+                self.average = f_rate;
+                self.count = 1;
+                self.initialized = true;
+            }
+        } else if (self.count - self.last_check < 100) {
+            // Don't update too often
+            self.average = self.average + (f_rate - self.average) / self.count;
+            self.count += 1;
+        } else {
+            self.last_check = self.count;
+            self.average = self.average + (f_rate - self.average) / self.count;
+            self.count += 1;
+            if (self.average < f_rate) {
+                return 1;
+            }
+            if (self.average > f_rate) {
+                return -1;
+            }
+        }
+        return 0;
+    }
+};
+
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
     resources: GPUResources,
@@ -34,6 +79,7 @@ pub const Renderer = struct {
     uniforms: Uniforms,
     frame_num: f32 = 0,
     camera: *Camera,
+    frame_regulator: FrameRegulator = FrameRegulator.init(),
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
@@ -320,6 +366,12 @@ pub const Renderer = struct {
         var camera = self.camera;
 
         // Update uniforms
+        const delta_rate = self.frame_regulator.getDeltaRate(core.frameRate());
+
+        uniforms.sample_rate += delta_rate;
+        if (uniforms.sample_rate < 1) {
+            uniforms.sample_rate = 1;
+        }
         uniforms.frame_num = self.frame_num;
         uniforms.reset_buffer = if (camera.moving) 1 else 0;
 

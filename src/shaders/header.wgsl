@@ -11,14 +11,14 @@ const MIRROR = 1;
 const DIELECTRIC = 2;
 const ISOTROPIC = 3;
 const ANISOTROPIC = 4;
-const MAX_SAMPLES = 10;
-const MAX_BOUNCES = 30;
 
 struct Uniforms {
   frame_num: f32,
   reset_buffer: f32,
   defocus_angle: f32,
   focus_dist: f32,
+  sample_rate: i32,
+  max_bounces: i32,
   view_matrix: mat4x4<f32>,
   eye: vec3<f32>,
   screen_dims: vec2<f32>,
