@@ -7,7 +7,7 @@ const Color = zm.Vec;
 pub const MaterialType = union(enum) {
     lambertian,
     // mirror,
-    // glass,
+    dielectric,
     // isotropic,
     // anisotropic,
 
@@ -15,7 +15,7 @@ pub const MaterialType = union(enum) {
         switch (self) {
             .lambertian => return 0,
             // .mirror => return 1,
-            // .glass => return 2,
+            .dielectric => return 2,
             // .isotropic => return 3,
             // .anisotropic => return 4,
         }
@@ -74,6 +74,18 @@ pub const Material = extern struct {
             specular_strength,
             roughness,
             0,
+        );
+    }
+
+    pub fn dielectric(color: Color, eta: f32) Material {
+        return Material.init(
+            .dielectric,
+            color,
+            .{ 0, 0, 0, 0 },
+            .{ 0, 0, 0, 0 },
+            0,
+            0,
+            eta,
         );
     }
 

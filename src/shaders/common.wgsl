@@ -14,6 +14,10 @@ fn randomDouble(min: f32, max: f32) -> f32 {
     return min + (max - min) * rand2D();
 }
 
+fn near_zero(v : vec3f) -> bool {
+	return (abs(v[0]) < 0 && abs(v[1]) < 0 && abs(v[2]) < 0);
+}
+
 fn randomVec() -> vec3<f32> {
     return vec3<f32>(rand2D(), rand2D(), rand2D());
 }

@@ -1,3 +1,9 @@
+fn reflectance(cosine : f32, ref_idx : f32) -> f32 {
+	var r0 = (1 - ref_idx) / (1 + ref_idx);
+	r0 = r0 * r0;
+	return r0 + (1 - r0) * pow((1 - cosine), 5);
+}
+
 fn uniform_random_in_unit_sphere() -> vec3f {
     let phi = rand2D() * 2.0 * PI;
     let theta = acos(2.0 * rand2D() - 1.0);

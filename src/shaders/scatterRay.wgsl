@@ -21,6 +21,33 @@ fn materialScatter(ray_in: Ray) -> Ray {
         }
     }
 
+    else if (hit_rec.material.material_type == DIELECTRIC) {
+        var ir = hit_rec.material.eta;
+        if(hit_rec.front_face) {
+            ir = (1.0 / ir);
+        }
+
+        let unit_direction = normalize(ray_in.direction);
+        let cos_theta = min(dot(-unit_direction, hit_rec.normal), 1.0);
+        let sin_theta = sqrt(1 - cos_theta * cos_theta);
+
+        var direction = vec3<f32>(0);
+        if(ir * sin_theta > 1.0 || reflectance(cos_theta, ir) > rand2D()) {
+            direction = reflect(unit_direction, hit_rec.normal);
+        } else {
+            direction = refract(unit_direction, hit_rec.normal, ir);
+        }
+
+        if(near_zero(direction)) {
+            direction = hit_rec.normal;
+        }
+
+        scattered = Ray(hit_rec.p, normalize(direction));
+
+        scatter_rec.skip_pdf = true;
+        scatter_rec.skip_pdf_ray = scattered;
+    }
+
     return scattered;
 }
 

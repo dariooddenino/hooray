@@ -28,16 +28,19 @@ pub const Scene = struct {
     pub fn loadBasicScene(self: *Scene) !void {
         const red = Material.lambertian(.{ 1, 0, 0, 1 });
         const red_id = try self.addMaterial("red", red);
-        const blue = Material.metal(.{ 0.8, 0.8, 0.8, 1 }, 1, 0);
-        const blue_id = try self.addMaterial("blue", blue);
-        const green = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
-        const green_id = try self.addMaterial("green", green);
+        const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
+        const glass_id = try self.addMaterial("glass", glass);
+        const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
+        const b_glass_id = try self.addMaterial("glass", b_glass);
+        const metal = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
+        const metal_id = try self.addMaterial("metal", metal);
         const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 });
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -100.5, -1, 0 }, 100, ground_id);
         try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
-        try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, green_id);
-        try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, blue_id);
+        try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
+        try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
+        try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {
