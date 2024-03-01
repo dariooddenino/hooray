@@ -6,8 +6,6 @@ fn materialScatter(ray_in: Ray) -> Ray {
         var diffuse_dir = cosineSamplingWrtZ();
         diffuse_dir = normalize(onbGetLocal(diffuse_dir));
 
-        scattered = Ray(hit_rec.p, diffuse_dir);
-
         do_specular = select(0.0, 1.0, rand2D() < hit_rec.material.specular_strength);
 
         var specular_dir = reflect(ray_in.direction, hit_rec.normal);

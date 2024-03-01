@@ -28,13 +28,13 @@ struct Ray {
 }
 
 struct Material {
-  color: vec3<f32>,
-  specular_color: vec3<f32>,
-  emission_color: vec3<f32>,
+  material_type: u32,
   specular_strength: f32,
   roughness: f32,
   eta: f32,
-  material_type: f32
+  color: vec3<f32>,
+  specular_color: vec3<f32>,
+  emission_color: vec3<f32>,
 }
 
 struct Sphere {

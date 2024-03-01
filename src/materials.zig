@@ -11,7 +11,7 @@ pub const MaterialType = union(enum) {
     // isotropic,
     // anisotropic,
 
-    pub fn toType(self: MaterialType) f32 {
+    pub fn toType(self: MaterialType) u32 {
         switch (self) {
             .lambertian => return 0,
             // .mirror => return 1,
@@ -32,14 +32,13 @@ pub const Material = extern struct {
     material_type: MaterialType,
 
     pub const Material_GPU = extern struct {
-        color: @Vector(3, f32),
-        specular_color: @Vector(3, f32),
-        emission_color: @Vector(3, f32),
+        material_type: u32,
         specular_strength: f32,
         roughness: f32,
         eta: f32,
-        material_type: f32,
-        // padding: [3]f32 = .{ 0, 0, 0 },
+        color: @Vector(3, f32),
+        specular_color: @Vector(3, f32),
+        emission_color: @Vector(3, f32),
     };
 
     pub fn init(material_type: MaterialType, color: Color, specular_color: Color, emission_color: Color, specular_strength: f32, roughness: f32, eta: f32) Material {
@@ -54,13 +53,25 @@ pub const Material = extern struct {
         };
     }
 
-    pub fn lambertian(color: Color, specular_strenght: f32, roughness: f32) Material {
+    pub fn lambertian(color: Color) Material {
         return Material.init(
             .lambertian,
             color,
             .{ 0, 0, 0, 0 },
             .{ 0, 0, 0, 0 },
-            specular_strenght,
+            0,
+            1,
+            0,
+        );
+    }
+
+    pub fn metal(specular_color: Color, specular_strength: f32, roughness: f32) Material {
+        return Material.init(
+            .lambertian,
+            .{ 0, 0, 0, 0 },
+            specular_color,
+            .{ 0, 0, 0, 0 },
+            specular_strength,
             roughness,
             0,
         );
