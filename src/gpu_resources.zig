@@ -9,7 +9,7 @@ pub const Uniforms = extern struct {
     defocus_angle: f32 = 0,
     focus_dist: f32 = 10,
     sample_rate: i32 = 3,
-    max_bounces: i32 = 20,
+    max_bounces: i32 = 2000,
     rendering: u32 = 0,
     view_matrix: zm.Mat,
     eye: zm.Vec,
