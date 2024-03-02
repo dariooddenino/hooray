@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "cppdbg",
+      "type": "cppvsdbg", // "cppdbg",
       "request": "launch",
       "name": "Debug",
       "program": "${workspaceRoot}/zig-out/bin/hooray",
@@ -13,18 +13,18 @@
       "args": [],
       "cwd": "${workspaceRoot}",
       "preLaunchTask": "build",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        },
-        // {
-        //   "description": "Connect to valgrind",
-        //   "text": "${command:valgrind-task-integration.valgrindGdbArg}",
-        //   "ignoreFailures": true
-        // }
-      ]
+      // "setupCommands": [
+      //   {
+      //     "description": "Enable pretty-printing for gdb",
+      //     "text": "-enable-pretty-printing",
+      //     "ignoreFailures": true
+      //   },
+      // {
+      //   "description": "Connect to valgrind",
+      //   "text": "${command:valgrind-task-integration.valgrindGdbArg}",
+      //   "ignoreFailures": true
+      // }
+      // ]
     }
   ]
 }
