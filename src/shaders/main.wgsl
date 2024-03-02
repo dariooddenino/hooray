@@ -6,30 +6,30 @@ fn computeFrameBuffer(
     @builtin(local_invocation_index) local_invocation_index: u32,
     @builtin(num_workgroups) num_workgroups: vec3<u32>,
 ) {
-    // NOTE I've commented everything else out, line 10 is enough to make the panic happen
-    // let ray = Ray(vec3<f32>(0, 0, 0), vec3<f32>(0, 0, 0));
-    let workgroup_index = workgroup_id.x + workgroup_id.y * num_workgroups.x + workgroup_id.z * num_workgroups.x * num_workgroups.y;
-    let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
-    pixel_coords = vec3<f32>(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
+    if (uniforms.rendering == 1) {
+        let workgroup_index = workgroup_id.x + workgroup_id.y * num_workgroups.x + workgroup_id.z * num_workgroups.x * num_workgroups.y;
+        let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
+        pixel_coords = vec3<f32>(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
 
-    fov_factor = 1 / tan(60 * (PI / 180) / 2);
-    cam_origin = uniforms.eye;
+        fov_factor = 1 / tan(60 * (PI / 180) / 2);
+        cam_origin = uniforms.eye;
 
-    NUM_SPHERES = i32(arrayLength(&sphere_objs));
+        NUM_SPHERES = i32(arrayLength(&sphere_objs));
 
-    rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
+        rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
 
-    // // get_lights();
-    var path_traced_color = pathTrace();
-    var frag_color = path_traced_color.xyz;
+        // // get_lights();
+        var path_traced_color = pathTrace();
+        var frag_color = path_traced_color.xyz;
 
-    // Progressive rendering with low samples
-    if uniforms.reset_buffer == 0 {
-        let weight = 1.0 / (uniforms.frame_num +1);
-        frag_color = framebuffer[pixel_index].xyz * (1 - weight) + path_traced_color * weight;
+        // Progressive rendering with low samples
+        if uniforms.reset_buffer == 0 {
+            let weight = 1.0 / (uniforms.frame_num +1);
+            frag_color = framebuffer[pixel_index].xyz * (1 - weight) + path_traced_color * weight;
+        }
+
+        framebuffer[pixel_index] = vec4<f32>(frag_color.xyz, 1);
     }
-
-    framebuffer[pixel_index] = vec4<f32>(frag_color.xyz, 1);
 }
 
 

@@ -19,6 +19,7 @@ struct Uniforms {
   focus_dist: f32,
   sample_rate: i32,
   max_bounces: i32,
+  rendering: u32,
   view_matrix: mat4x4<f32>,
   eye: vec3<f32>,
   screen_dims: vec2<f32>,

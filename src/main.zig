@@ -21,9 +21,12 @@ const allocator = gpa.allocator();
 
 // TODO these should be dynamic?
 // At least move to a config file
-pub const screen_width = 800;
-pub const screen_height = 600;
-pub const screen_size = 800 * 600;
+pub const screen_width = 1280;
+pub const screen_height = 720;
+pub const screen_size = screen_width * screen_height;
+pub const target_frame_rate = 60;
+// Stop after a while
+pub const max_samples = 500;
 
 pub const PressedKeys = packed struct(u16) {
     right: bool = false,
@@ -125,10 +128,11 @@ pub fn update(app: *App) !bool {
     // update the window title every second
     if (app.title_timer.read() >= 1.0) {
         app.title_timer.reset();
-        try core.printTitle("Hooray [ {d}fps ] [ Input {d}hz ] [ Sample rate {d}/f]", .{
+        try core.printTitle("Hooray [ {d}fps ] [ Input {d}hz ] [ Sample rate {d}/f] [ {s} ]", .{
             core.frameRate(),
             core.inputRate(),
             app.renderer.uniforms.sample_rate,
+            if (app.renderer.uniforms.rendering == 0) "DONE" else "RUNNING",
         });
     }
 

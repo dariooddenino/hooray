@@ -18,8 +18,6 @@ const Scene = scenes.Scene;
 const screen_width = main.screen_width;
 const screen_height = main.screen_height;
 const screen_size = main.screen_width * main.screen_height * 4;
-// TODO move to app?
-const target_frame_rate = 30;
 
 // Output Vertex
 const Vertex = struct {
@@ -58,14 +56,15 @@ const FrameRegulator = struct {
             self.average = self.average + (f_rate - self.average) / self.count;
             self.count += 1;
         } else {
-            self.last_check = self.count;
             self.average = self.average + (f_rate - self.average) / self.count;
             self.count += 1;
-            if (self.average < f_rate) {
-                return 1;
-            }
-            if (self.average > f_rate) {
+            if (self.average < main.target_frame_rate) {
+                self.last_check = self.count;
                 return -1;
+            }
+            if (self.average > main.target_frame_rate) {
+                self.last_check = self.count;
+                return 1;
             }
         }
         return 0;
@@ -80,6 +79,7 @@ pub const Renderer = struct {
     frame_num: f32 = 0,
     camera: *Camera,
     frame_regulator: FrameRegulator = FrameRegulator.init(),
+    total_samples: i32 = 0,
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
@@ -368,14 +368,21 @@ pub const Renderer = struct {
         // Update uniforms
         const delta_rate = self.frame_regulator.getDeltaRate(core.frameRate());
 
-        uniforms.sample_rate += delta_rate;
-        if (uniforms.sample_rate < 1) {
-            uniforms.sample_rate = 1;
+        self.total_samples += uniforms.sample_rate;
+        if (self.total_samples > main.max_samples) {
+            uniforms.rendering = 0;
+        } else {
+            uniforms.sample_rate += delta_rate;
+            if (uniforms.sample_rate < 1) {
+                uniforms.sample_rate = 1;
+            }
         }
         uniforms.frame_num = self.frame_num;
         uniforms.reset_buffer = if (camera.moving) 1 else 0;
 
         if (camera.moving) {
+            uniforms.rendering = 1;
+            self.total_samples = 0;
             self.frame_num = 1;
             camera.moving = false;
         }
