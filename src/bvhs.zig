@@ -90,7 +90,7 @@ pub const BVHAggregate = struct {
     arena: std.heap.ArenaAllocator,
     allocator: std.mem.Allocator,
     max_prims_in_node: u32 = 0,
-    primitives: []Object,
+    primitives: *[]Object,
     linear_nodes: std.ArrayList(Aabb_GPU),
     split_method: SplitMethod,
 
@@ -101,29 +101,28 @@ pub const BVHAggregate = struct {
 
     pub fn init(
         in_allocator: std.mem.Allocator,
-        primitives: []Object,
+        primitives: *[]Object,
         max_prims_in_node: usize,
         split_method: SplitMethod,
     ) !BVHAggregate {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
-        defer arena.deinit();
         const allocator = arena.allocator();
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
-        for (0..primitives.len) |i| {
+        for (0..primitives.*.len) |i| {
             try bvh_primitives.append(BVHPrimitive.init(
                 i,
-                primitives[i].getType(),
-                primitives[i].getLocalId(),
-                primitives[i].getBbox(),
+                primitives.*[i].getType(),
+                primitives.*[i].getLocalId(),
+                primitives.*[i].getBbox(),
             ));
         }
 
         // Root node
         var root: *BVHBuildNode = undefined;
         // Primitives reordered for the BVH
-        var ordered_primitives = try std.ArrayList(Object).initCapacity(allocator, primitives.len);
+        var ordered_primitives = try std.ArrayList(Object).initCapacity(allocator, primitives.*.len);
         ordered_primitives.expandToCapacity();
         var total_nodes: u32 = 0;
 
@@ -131,14 +130,16 @@ pub const BVHAggregate = struct {
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
             var ordered_prims_offset: u32 = 0;
-            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives, split_method);
+            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives.*, split_method);
             // root = try buildRecursive(allocator, try bvh_primitives.toOwnedSlice(), &ordered_prims_offset, &ordered_primitives, primitives, split_method);
         }
 
         // TODO Not sure of this
         // primitives.swap(ordered_primitives);
-
-        // TODO not gotten here yet
+        const ordered_slice = try ordered_primitives.toOwnedSlice();
+        defer allocator.free(ordered_slice);
+        primitives.* = ordered_slice;
+        // std.mem.swap([]Object, primitives, &ordered_slice);
 
         // Convert BVH into compact representation in nodes array
         // Release bvh_primitives
@@ -148,10 +149,6 @@ pub const BVHAggregate = struct {
         linear_nodes.expandToCapacity();
         var offset: usize = 0;
         _ = try flattenBVH(root, &offset, &linear_nodes);
-
-        // populateLinks(root, null);
-
-        // _ = try flattenBVH(root, &linear_nodes, &offset);
 
         return BVHAggregate{
             .arena = arena,
@@ -404,28 +401,10 @@ pub const BVHAggregate = struct {
         return a.centroid[dim] < b.centroid[dim];
     }
 
-    // pub fn populateLinks(node: *BVHBuildNode, next_right_node: ?*BVHBuildNode) void {
-    //     // If not leaf node
-    //     // NOTE I wonder if this check is correct.
-    //     if (node.left != null) {
-    //         node.hit_node = BVHBuildNode.getOffset(node.left);
-    //         node.miss_node = BVHBuildNode.getOffset(next_right_node);
-    //         node.linear_node.right_offset = BVHBuildNode.getOffset(node.right);
-
-    //         if (node.left) |left| {
-    //             populateLinks(left, node.right);
-    //         }
-    //         if (node.right) |right| {
-    //             populateLinks(right, next_right_node);
-    //         }
-    //     } else {
-    //         node.hit_node = BVHBuildNode.getOffset(next_right_node);
-    //         node.miss_node = node.hit_node;
-    //     }
-    // }
-
     pub fn flattenBVH(node: *BVHBuildNode, offset: *usize, linear_nodes: *std.ArrayList(Aabb_GPU)) !usize {
         var linear_node = &linear_nodes.items[offset.*];
+        // TODO this was a tentative to see if it would help, probably useless.
+        linear_node.* = Aabb_GPU{};
         linear_node.mins = zm.vecToArr3(node.bounds.min);
         linear_node.maxs = zm.vecToArr3(node.bounds.max);
         const node_offset: usize = offset.*;

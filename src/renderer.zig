@@ -88,10 +88,10 @@ pub const Renderer = struct {
 
         // Build scene
         var scene = Scene.init(allocator);
-
         try scene.loadBasicScene();
         // try scene.loadWeekOneScene();
 
+        std.debug.print("{any}\n", .{scene.bvh_array.items});
         const camera = try allocator.create(Camera);
         camera.* = Camera.init(.{ -4, 4, 2, 0 });
 

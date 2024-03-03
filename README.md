@@ -12,9 +12,8 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-Rewrite linear BVH traversal code following the book.
-Adapt our requirements (prim_type, prim_id).
-Fix conde on zig side to work with this.
+There's something wrong with some values when flattening the BVH.
+I will have to debug this.
 
 ## Delta time
 ```zig

@@ -8,7 +8,8 @@ fn hitScene(ray: Ray) -> bool {
     while (true) {
         let node = bvh[current_node_index];
 
-        if hit_aabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
+        if hitAabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
+            // hit_rec.hit_bboxes += 1;
             if (node.n_primitives > 0) {
                 // It's a leaf node
                 for (var i = 0; i < i32(node.n_primitives); i++) {
@@ -52,7 +53,7 @@ fn hitScene(ray: Ray) -> bool {
 }
 
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
-fn hit_aabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3f) -> bool {
+fn hitAabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3f) -> bool {
     var t0s = (box.min - ray.origin) * inv_dir;
     var t1s = (box.max - ray.origin) * inv_dir;
 

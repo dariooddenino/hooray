@@ -72,7 +72,8 @@ struct HitRecord {
   t: f32,
   normal: vec3<f32>,
   front_face: bool,
-  material: Material
+  material: Material,
+  // hit_bboxes: u32,
 }
 
 struct ScatterRecord {

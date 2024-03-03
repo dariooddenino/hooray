@@ -45,10 +45,10 @@ pub const Scene = struct {
     pub fn loadBasicScene(self: *Scene) !void {
         const red = Material.lambertian(.{ 1, 0, 0, 1 });
         const red_id = try self.addMaterial("red", red);
-        const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
-        const glass_id = try self.addMaterial("glass", glass);
-        const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
-        const b_glass_id = try self.addMaterial("glass", b_glass);
+        // const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
+        // const glass_id = try self.addMaterial("glass", glass);
+        // const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
+        // const b_glass_id = try self.addMaterial("glass", b_glass);
         const metal = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
         const metal_id = try self.addMaterial("metal", metal);
         const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 });
@@ -56,8 +56,8 @@ pub const Scene = struct {
         try self.addSphere(Vec{ 0, -100.5, -1, 0 }, 100, ground_id);
         try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
         try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
-        try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
-        try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
+        // try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
+        // try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
 
         try self.createBVH();
     }
@@ -122,9 +122,9 @@ pub const Scene = struct {
 
     pub fn createBVH(self: *Scene) !void {
         var objects_clone = try self.objects.clone();
-        const objects_slice = try objects_clone.toOwnedSlice();
+        var objects_slice = try objects_clone.toOwnedSlice();
         defer self.allocator.free(objects_slice);
-        const bvh = try bvhs.BVHAggregate.init(self.allocator, objects_slice, self.objects.items.len, bvhs.SplitMethod.Middle);
+        const bvh = try bvhs.BVHAggregate.init(self.allocator, &objects_slice, self.objects.items.len, bvhs.SplitMethod.Middle);
         self.bvh_array = bvh.linear_nodes;
     }
 

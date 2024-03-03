@@ -24,7 +24,9 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
             // else {
 
             let scattered = materialScatter(curr_ray);
-            color += emission_color * throughput;
+            // Show hit boxes
+            // let bbox_color = vec3<f32>(1 - (f32(hit_rec.hit_bboxes) / 20), 1, 1 - (f32(hit_rec.hit_bboxes) / 20));
+            color += emission_color * throughput; // * bbox_color;
             throughput *= mix(hit_rec.material.color, hit_rec.material.specular_color, do_specular);
             curr_ray = scattered;
         }
