@@ -1,7 +1,9 @@
 @group(0) @binding(0) var<storage, read_write> framebuffer : array<vec4<f32>>;
 @group(0) @binding(1) var<uniform> uniforms : Uniforms;
 @group(0) @binding(2) var<storage, read> materials: array<Material>;
-@group(0) @binding(3) var<storage, read> sphere_objs : array<Sphere>;
+@group(0) @binding(3) var<storage, read> bvh: array<AABB>;
+@group(0) @binding(4) var<storage, read> objects: array<Object>;
+@group(0) @binding(5) var<storage, read> sphere_objs : array<Sphere>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
@@ -11,6 +13,9 @@ const MIRROR = 1;
 const DIELECTRIC = 2;
 const ISOTROPIC = 3;
 const ANISOTROPIC = 4;
+const NO_OBJ = -1;
+const SPHERE = 0;
+const STACK_SIZE = 64;
 
 struct Uniforms {
   frame_num: f32,
@@ -38,6 +43,22 @@ struct Material {
   color: vec3<f32>,
   specular_color: vec3<f32>,
   emission_color: vec3<f32>,
+}
+
+struct AABB {
+    primitive_offset: i32,
+    second_child_offset: i32,
+    n_primitives: u32,
+    axis: f32,
+    // primitive_type: i32,
+    // primitive_id: i32,
+    min: vec3<f32>,
+    max: vec3<f32>,
+}
+
+struct Object {
+  primitive_type: i32,
+  primitive_id: u32,
 }
 
 struct Sphere {
@@ -73,4 +94,5 @@ var<private> do_specular : f32 = 0.0;
 var<private> unit_w: vec3<f32>;
 var<private> u: vec3<f32>;
 var<private> v: vec3<f32>;
+var<private> nodes_to_visit : array<i32, STACK_SIZE>;
 

@@ -2,14 +2,67 @@ fn hitScene(ray: Ray) -> bool {
     var closest_so_far = MAX_FLOAT;
     var hit_anything = false;
 
-    for (var i = 0; i < NUM_SPHERES; i++) {
-         if hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray) {
-            hit_anything = true;
-            closest_so_far = hit_rec.t;
+    var inv_dir = 1 / ray.direction;
+    var to_visit_offset = 0;
+    var current_node_index = 0;
+    while (true) {
+        let node = bvh[current_node_index];
+
+        if hit_aabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
+            if (node.n_primitives > 0) {
+                // It's a leaf node
+                for (var i = 0; i < i32(node.n_primitives); i++) {
+                    var hit = false;
+                    let object = objects[node.primitive_offset + i];
+                    if (object.primitive_type == SPHERE) {
+                        let sphere = sphere_objs[object.primitive_id];
+                        hit = hitSphere(sphere, ray_tmin, closest_so_far, ray);
+                    }
+                    if (hit) {
+                        hit_anything = true;
+                        closest_so_far = hit_rec.t;
+                    }
+                    if (to_visit_offset == 0) {
+                        break;
+                    }
+                    to_visit_offset--;
+                    current_node_index = nodes_to_visit[to_visit_offset];
+                }
+            } else {
+                if ray.direction[i32(node.axis)] < 0 {
+                    nodes_to_visit[to_visit_offset] = current_node_index + 1;
+                    to_visit_offset++;
+                    current_node_index = node.second_child_offset + 1;
+                } else {
+                    nodes_to_visit[to_visit_offset] = node.second_child_offset;
+                    to_visit_offset++;
+                    current_node_index++;
+                }
+            }
+        } else {
+            if to_visit_offset == 0 {
+                break;
+            }
+            to_visit_offset--;
+            // Retrieve the offset of the next node to visit
+            current_node_index = nodes_to_visit[to_visit_offset];
         }
     }
-
     return hit_anything;
+}
+
+// https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+fn hit_aabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3f) -> bool {
+    var t0s = (box.min - ray.origin) * inv_dir;
+    var t1s = (box.max - ray.origin) * inv_dir;
+
+    var tsmaller = min(t0s, t1s);
+    var tbigger = max(t0s, t1s);
+
+    var t_min = max(tmin, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
+    var t_max = min(tmax, min(tbigger.x, min(tbigger.y, tbigger.z)));
+
+    return t_max > t_min;
 }
 
 fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {

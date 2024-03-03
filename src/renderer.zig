@@ -7,10 +7,12 @@ const zm = @import("zmath");
 const objects = @import("objects.zig");
 const scenes = @import("scenes.zig");
 
+const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
 const App = @import("main.zig").App;
 const Camera = @import("camera.zig").Camera;
 const GPUResources = gpu_resources.GPUResources;
 const Material = @import("materials.zig").Material;
+const Object = objects.Object;
 const Sphere = objects.Sphere;
 const Uniforms = gpu_resources.Uniforms;
 const Scene = scenes.Scene;
@@ -87,8 +89,8 @@ pub const Renderer = struct {
         // Build scene
         var scene = Scene.init(allocator);
 
-        // try scene.loadBasicScene();
-        try scene.loadWeekOneScene();
+        try scene.loadBasicScene();
+        // try scene.loadWeekOneScene();
 
         const camera = try allocator.create(Camera);
         camera.* = Camera.init(.{ -4, 4, 2, 0 });
@@ -161,13 +163,17 @@ pub const Renderer = struct {
         const bgl_framebuffer = gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, 0);
         const bgl_uniforms = gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0);
         const bgl_materials = gpu.BindGroupLayout.Entry.buffer(2, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
-        const bgl_spheres = gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
+        const bgl_bvh = gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
+        const bgl_objects = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
+        const bgl_spheres = gpu.BindGroupLayout.Entry.buffer(5, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
         const bgl = core.device.createBindGroupLayout(
             &gpu.BindGroupLayout.Descriptor.init(.{
                 .entries = &.{
                     bgl_framebuffer,
                     bgl_uniforms,
                     bgl_materials,
+                    bgl_bvh,
+                    bgl_objects,
                     bgl_spheres,
                 },
             }),
@@ -225,6 +231,28 @@ pub const Renderer = struct {
         @memcpy(materials_mapped.?, materials_gpu.items[0..]);
         materials_buffer.unmap();
 
+        const bvh_buffer = core.device.createBuffer(&.{
+            .label = "BVH",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = scene.bvh_array.items.len * @sizeOf(Aabb_GPU),
+            .mapped_at_creation = .true,
+        });
+        const bvh_mapped = bvh_buffer.getMappedRange(Aabb_GPU, 0, scene.bvh_array.items.len);
+        @memcpy(bvh_mapped.?, scene.bvh_array.items[0..]);
+        bvh_buffer.unmap();
+
+        const objects_gpu = try Object.toGPU(allocator, scene.objects);
+        defer objects_gpu.deinit();
+        const objects_buffer = core.device.createBuffer(&.{
+            .label = "Objects",
+            .usage = .{ .storage = true, .copy_dst = true },
+            .size = objects_gpu.items.len * @sizeOf(Object.Object_GPU),
+            .mapped_at_creation = .true,
+        });
+        const objects_mapped = objects_buffer.getMappedRange(Object.Object_GPU, 0, objects_gpu.items.len);
+        @memcpy(objects_mapped.?, objects_gpu.items[0..]);
+        objects_buffer.unmap();
+
         const spheres_gpu = try Sphere.toGPU(allocator, scene.spheres);
         defer spheres_gpu.deinit();
         const spheres_buffer = core.device.createBuffer(&.{
@@ -237,11 +265,13 @@ pub const Renderer = struct {
         @memcpy(spheres_mapped.?, spheres_gpu.items[0..]);
         spheres_buffer.unmap();
 
-        var buffers: [5]GPUResources.BufferAdd = .{
+        var buffers: [7]GPUResources.BufferAdd = .{
             .{ .name = "vertex", .buffer = vertex_buffer },
             .{ .name = "frame", .buffer = frame_buffer },
             .{ .name = "uniforms", .buffer = uniforms_buffer },
             .{ .name = "materials", .buffer = materials_buffer },
+            .{ .name = "bvh", .buffer = bvh_buffer },
+            .{ .name = "objects", .buffer = objects_buffer },
             .{ .name = "spheres", .buffer = spheres_buffer },
         };
         try self.resources.addBuffers(&buffers);
@@ -253,6 +283,8 @@ pub const Renderer = struct {
         const frame_buffer = self.resources.getBuffer("frame");
         const uniforms_buffer = self.resources.getBuffer("uniforms");
         const materials_buffer = self.resources.getBuffer("materials");
+        const bvh_buffer = self.resources.getBuffer("bvh");
+        const objects_buffer = self.resources.getBuffer("objects");
         const spheres_buffer = self.resources.getBuffer("spheres");
         // NOTE here I'm using the lenght of the original arrays instead of the GPU versions.
         const bind_group = core.device.createBindGroup(
@@ -262,7 +294,9 @@ pub const Renderer = struct {
                     gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size * @sizeOf(f32)),
                     gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1 * @sizeOf(Uniforms)),
                     gpu.BindGroup.Entry.buffer(2, materials_buffer, 0, self.scene.materials.items.len * @sizeOf(Material.Material_GPU)),
-                    gpu.BindGroup.Entry.buffer(3, spheres_buffer, 0, scene.spheres.items.len * @sizeOf(Sphere.Sphere_GPU)),
+                    gpu.BindGroup.Entry.buffer(3, bvh_buffer, 0, scene.bvh_array.items.len * @sizeOf(Aabb_GPU)),
+                    gpu.BindGroup.Entry.buffer(4, objects_buffer, 0, scene.objects.items.len * @sizeOf(Object.Object_GPU)),
+                    gpu.BindGroup.Entry.buffer(5, spheres_buffer, 0, scene.spheres.items.len * @sizeOf(Sphere.Sphere_GPU)),
                 },
             }),
         );

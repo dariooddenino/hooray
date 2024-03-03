@@ -12,17 +12,9 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-The problem with Sphere_GPU is that a vec3<f32> is aligned
-to 16 bits. This means that I can't pass a [3]f32 to the
-buffer.
-On discord they told me to use [4]f32, or mach.math.Vec3
-which takes care of the padding automatically.
-I've tried with [4]f32, but I couldn't make it work.
-I will try to add mach as a dependency and use Vec3.
-
-I should temporarily disable the materials buffer, and focus on spheres only.
-
-Then consider uniforms alignment.
+Rewrite linear BVH traversal code following the book.
+Adapt our requirements (prim_type, prim_id).
+Fix conde on zig side to work with this.
 
 ## Delta time
 ```zig
