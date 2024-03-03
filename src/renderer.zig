@@ -91,7 +91,6 @@ pub const Renderer = struct {
         try scene.loadBasicScene();
         // try scene.loadWeekOneScene();
 
-        std.debug.print("{any}\n", .{scene.bvh_array.items});
         const camera = try allocator.create(Camera);
         camera.* = Camera.init(.{ -4, 4, 2, 0 });
 
@@ -231,6 +230,7 @@ pub const Renderer = struct {
         @memcpy(materials_mapped.?, materials_gpu.items[0..]);
         materials_buffer.unmap();
 
+        std.debug.print("{any}\n", .{scene.bvh_array.items});
         const bvh_buffer = core.device.createBuffer(&.{
             .label = "BVH",
             .usage = .{ .storage = true, .copy_dst = true },
@@ -252,6 +252,7 @@ pub const Renderer = struct {
         const objects_mapped = objects_buffer.getMappedRange(Object.Object_GPU, 0, objects_gpu.items.len);
         @memcpy(objects_mapped.?, objects_gpu.items[0..]);
         objects_buffer.unmap();
+        std.debug.print("{any}\n", .{objects_gpu.items});
 
         const spheres_gpu = try Sphere.toGPU(allocator, scene.spheres);
         defer spheres_gpu.deinit();
