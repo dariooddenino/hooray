@@ -50,8 +50,6 @@ struct AABB {
     second_child_offset: i32,
     n_primitives: u32,
     axis: f32,
-    // primitive_type: i32,
-    // primitive_id: i32,
     min: vec3<f32>,
     max: vec3<f32>,
 }

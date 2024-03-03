@@ -12,8 +12,7 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-There's something wrong with some values when flattening the BVH.
-I will have to debug this.
+My suspicion is that the AABB is not aligned.
 
 ## Delta time
 ```zig
