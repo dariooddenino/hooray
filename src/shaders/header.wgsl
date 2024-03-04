@@ -46,12 +46,12 @@ struct Material {
 }
 
 struct AABB {
+    min: vec4<f32>,
+    max: vec4<f32>,
     primitive_offset: i32,
     second_child_offset: i32,
     n_primitives: u32,
     axis: f32,
-    min: vec3<f32>,
-    max: vec3<f32>,
 }
 
 struct Object {

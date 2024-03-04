@@ -84,7 +84,7 @@ pub const Sphere = struct {
         var spheres_gpu = std.ArrayList(Sphere_GPU).init(allocator);
         for (spheres.items) |sphere| {
             const sphere_gpu = Sphere_GPU{
-                .center = .{ sphere.center[0], sphere.center[1], sphere.center[2] },
+                .center = zm.vecToArr3(sphere.center),
                 .radius = sphere.radius,
                 .material_id = @floatFromInt(sphere.material_id),
             };

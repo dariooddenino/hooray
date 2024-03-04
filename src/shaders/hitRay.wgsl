@@ -2,24 +2,30 @@ fn hitScene(ray: Ray) -> bool {
     var closest_so_far = MAX_FLOAT;
     var hit_anything = false;
 
+    // for (var i = 0; i < NUM_SPHERES; i++) {
+    //     if(hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray)) {
+    //         hit_anything = true;
+    //         closest_so_far = hit_rec.t;
+    //     }
+    // }
+
+    // return hit_anything;
+    var turn = -1;
+
     var inv_dir = 1 / ray.direction;
 
     var to_visit_offset = 0;
     var current_node_index = 0;
     while (true) {
         let node = bvh[current_node_index];
+        turn++;
 
         if hitAabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
-            // hit_rec.hit_bboxes += 1;
-            // let root: f32 = 0;
-            // hit_rec.t = root;
-            // hit_rec.p = at(ray, root);
-            // hit_rec.normal = vec3<f32>(0, 0, -1);
-            // hit_rec.front_face = true;
-            // hit_rec.material = materials[0];
-            // return true;
             if (node.n_primitives > 0) {
                 // It's a leaf node
+                if (turn > 1) {
+                    return node.primitive_offset == 0;
+                }
                 for (var i = 0; i < i32(node.n_primitives); i++) {
                     var hit = false;
                     let object = objects[node.primitive_offset + i];
@@ -63,8 +69,8 @@ fn hitScene(ray: Ray) -> bool {
 
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
 fn hitAabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3f) -> bool {
-    var t0s = (box.min - ray.origin) * inv_dir;
-    var t1s = (box.max - ray.origin) * inv_dir;
+    var t0s = (box.min.xyz - ray.origin) * inv_dir;
+    var t1s = (box.max.xyz - ray.origin) * inv_dir;
 
     var tsmaller = min(t0s, t1s);
     var tbigger = max(t0s, t1s);

@@ -134,9 +134,8 @@ pub const Renderer = struct {
     }
 
     pub fn deinit(self: *Renderer) void {
-        self.resources.deinit();
-        self.scene.deinit();
-        // TODO this makes the app crash on exit.
+        defer self.resources.deinit();
+        defer self.scene.deinit();
         defer self.allocator.destroy(self.camera);
     }
 
@@ -231,9 +230,7 @@ pub const Renderer = struct {
         materials_buffer.unmap();
 
         std.debug.print("\nBVH:\n{any}\n", .{scene.bvh_array.items});
-        const mins = scene.bvh_array.items[0].mins;
-        const maxs = scene.bvh_array.items[0].maxs;
-        std.debug.print("\n {d} {d} {d}, {d} {d} {d}\n", .{ mins[0], mins[1], mins[2], maxs[0], maxs[1], maxs[2] });
+
         const bvh_buffer = core.device.createBuffer(&.{
             .label = "BVH",
             .usage = .{ .storage = true, .copy_dst = true },

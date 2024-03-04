@@ -9,14 +9,12 @@ const Vec3 = @Vector(3, f32);
 
 // A representation for the shaders.
 pub const Aabb_GPU = extern struct {
+    min: [4]f32 = .{ 0, 0, 0, 0 },
+    max: [4]f32 = .{ 0, 0, 0, 0 },
     primitive_offset: i32 = -1,
     second_child_offset: i32 = -1,
     n_primitives: u32 = 0,
     axis: i32 = -1,
-    // mins: Vec = Vec{ 0, 0, 0, 0 },
-    // maxs: Vec = Vec{ 0, 0, 0, 0 },
-    mins: [3]f32 = .{ 0, 0, 0 },
-    maxs: [3]f32 = .{ 0, 0, 0 },
 };
 
 pub const Aabb = struct {
