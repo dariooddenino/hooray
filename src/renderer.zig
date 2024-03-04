@@ -134,9 +134,8 @@ pub const Renderer = struct {
     }
 
     pub fn deinit(self: *Renderer) void {
-        self.resources.deinit();
-        self.scene.deinit();
-        // TODO this makes the app crash on exit.
+        defer self.resources.deinit();
+        defer self.scene.deinit();
         defer self.allocator.destroy(self.camera);
     }
 

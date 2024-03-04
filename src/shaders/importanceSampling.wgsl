@@ -4,7 +4,7 @@ fn reflectance(cosine : f32, ref_idx : f32) -> f32 {
 	return r0 + (1 - r0) * pow((1 - cosine), 5);
 }
 
-fn uniformRandomInUnitSphere() -> vec3f {
+fn uniformRandomInUnitSphere() -> vec3<f32> {
     let phi = rand2D() * 2.0 * PI;
     let theta = acos(2.0 * rand2D() - 1.0);
 
@@ -12,13 +12,13 @@ fn uniformRandomInUnitSphere() -> vec3f {
     let y = sin(theta) * sin(phi);
     let z = cos(theta);
 
-    return normalize(vec3f(x, y, z));
+    return normalize(vec3<f32>(x, y, z));
 }
 
-fn randomInUnitDisk() -> vec3f {
+fn randomInUnitDisk() -> vec3<f32> {
     let theta = 2 * PI * rand2D();
     let r = sqrt(rand2D());
-    return normalize(vec3f(r * cos(theta), r * sin(theta), 0));
+    return normalize(vec3<f32>(r * cos(theta), r * sin(theta), 0));
 }
 
 fn defocusDiskSample(center: vec3<f32>, defocus_disk_u: vec3<f32>, defocus_disk_v: vec3<f32>) -> vec3<f32> {
@@ -27,7 +27,7 @@ fn defocusDiskSample(center: vec3<f32>, defocus_disk_u: vec3<f32>, defocus_disk_
     return center + (p.x * defocus_disk_u) + (p.y * defocus_disk_v);
 }
 
-fn uniformSamplingHemisphere() -> vec3f {
+fn uniformSamplingHemisphere() -> vec3<f32> {
     let on_unit_sphere = uniformRandomInUnitSphere();
     let sign_dot = select(1.0, 0.0, dot(on_unit_sphere, hit_rec.normal) > 0.0);
     return normalize(mix(on_unit_sphere, -on_unit_sphere, sign_dot));

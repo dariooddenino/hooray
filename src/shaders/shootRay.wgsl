@@ -31,7 +31,7 @@ fn getCameraRay() -> Ray {
     let w = vec3<f32>(uniforms.view_matrix[0][2], uniforms.view_matrix[1][2], uniforms.view_matrix[2][2]);
 
     let viewport_u = vec3<f32>(viewport_width) * u;
-    let viewport_v = vec3<f32>(viewport_height) * -v;
+    let viewport_v = vec3<f32>(viewport_height) * v * vec3<f32>(-1);
 
     let pixel_delta_u = viewport_u / uniforms.screen_dims.x;
     let pixel_delta_v = viewport_v / uniforms.screen_dims.y;

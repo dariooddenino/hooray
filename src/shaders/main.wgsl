@@ -24,7 +24,7 @@ fn computeFrameBuffer(
 
         // Progressive rendering with low samples
         if uniforms.reset_buffer == 0 {
-            let weight = 1.0 / (uniforms.frame_num +1);
+            let weight = 1.0 / (uniforms.frame_num + 1);
             frag_color = framebuffer[pixel_index].xyz * (1 - weight) + path_traced_color * weight;
         }
 

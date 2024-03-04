@@ -21,6 +21,7 @@ pub const Object = union(enum) {
     pub const Object_GPU = extern struct {
         primitive_type: i32,
         primitive_id: u32,
+        padding: [2]f32 = .{ 0, 0 },
     };
 
     pub fn getBbox(self: Object) Aabb {

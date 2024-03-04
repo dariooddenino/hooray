@@ -62,7 +62,7 @@ fn hitScene(ray: Ray) -> bool {
 
 
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
-fn hitAabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3f) -> bool {
+fn hitAabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3<f32>) -> bool {
     var t0s = (box.min - ray.origin) * inv_dir;
     var t1s = (box.max - ray.origin) * inv_dir;
 
