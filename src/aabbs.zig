@@ -90,6 +90,20 @@ pub const Aabb = struct {
         }
     }
 
+    pub fn offset(self: Aabb, p: Vec) Vec {
+        var o: Vec = p - self.min;
+        if (self.max[0] > self.min[0]) {
+            o[0] = o[0] / (self.max[0] - self.min[0]);
+        }
+        if (self.max[1] > self.min[1]) {
+            o[1] = o[1] / (self.max[1] - self.min[1]);
+        }
+        if (self.max[2] > self.min[2]) {
+            o[2] = o[2] / (self.max[2] - self.min[2]);
+        }
+        return o;
+    }
+
     pub fn surfaceArea(self: Aabb) f32 {
         const bextent = self.extent();
         return bextent[0] * bextent[1] + bextent[1] * bextent[2] + bextent[2] * bextent[0];

@@ -94,7 +94,7 @@ pub const SplitMethod = enum { SAH, HLBVH, Middle, EqualCounts };
 pub const BVHAggregate = struct {
     arena: std.heap.ArenaAllocator,
     allocator: std.mem.Allocator,
-    max_prims_in_node: u32 = 0,
+    max_prims_in_node: u32 = 1,
     primitives: *[]Object,
     linear_nodes: std.ArrayList(Aabb_GPU),
     split_method: SplitMethod,
@@ -107,11 +107,12 @@ pub const BVHAggregate = struct {
     pub fn init(
         in_allocator: std.mem.Allocator,
         primitives: *[]Object,
-        max_prims_in_node: usize,
         split_method: SplitMethod,
     ) !BVHAggregate {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
         const allocator = arena.allocator();
+
+        const max_prims_in_node = 4;
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
@@ -135,7 +136,7 @@ pub const BVHAggregate = struct {
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
             var ordered_prims_offset: u32 = 0;
-            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives.*, split_method);
+            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives.*, split_method, max_prims_in_node);
             // root = try buildRecursive(allocator, try bvh_primitives.toOwnedSlice(), &ordered_prims_offset, &ordered_primitives, primitives, split_method);
         }
 
@@ -158,7 +159,7 @@ pub const BVHAggregate = struct {
         return BVHAggregate{
             .arena = arena,
             .allocator = allocator,
-            .max_prims_in_node = @intCast(max_prims_in_node),
+            .max_prims_in_node = max_prims_in_node,
             .primitives = primitives,
             .linear_nodes = linear_nodes,
             .split_method = split_method,
@@ -186,6 +187,7 @@ pub const BVHAggregate = struct {
         ordered_prims: *std.ArrayList(Object),
         primitives: []Object,
         split_method: SplitMethod,
+        max_prims_in_node: u32,
     ) !*BVHBuildNode {
         // Initialize the node
         var node = try allocator.create(BVHBuildNode);
@@ -243,7 +245,92 @@ pub const BVHAggregate = struct {
                         mid = splitEqualCounts(bvh_primitives);
                     },
                     SplitMethod.SAH => {
-                        // mid = splitSAH(bvh_primitives);
+                        // directly here for now
+
+                        // Partition primitives using approximate SAH
+                        if (bvh_primitives.items.len <= 2) {
+                            // Partition primitives into equally sized subsets
+                            mid = bvh_primitives.items.len / 2;
+                            nthElement(bvh_primitives);
+                        } else {
+                            // Allocate _BVHSplitBucket_ for SAH partition buckets
+                            const n_buckets = 12;
+                            var buckets: [n_buckets]BVHSplitBucket = .{BVHSplitBucket{}} ** n_buckets;
+
+                            // Initialize buckets for SAH partition
+                            for (bvh_primitives.items) |prim| {
+                                var b: usize = n_buckets * @as(usize, @intFromFloat(centroid_bounds.offset(prim.centroid)[dim]));
+                                if (b == n_buckets) {
+                                    b = n_buckets - 1;
+                                }
+                                buckets[b].count += 1;
+                                buckets[b].bounds.merge(prim.bounds);
+                            }
+
+                            // Compute costs for splitting after each bucket
+                            const n_splits = n_buckets - 1;
+                            var costs: [n_splits]f32 = .{0} ** n_splits;
+
+                            // Partially initialize _costs_ using a forward scan over splits
+                            var count_below: u32 = 0;
+                            var bound_below = Aabb{};
+                            for (0..n_splits) |i| {
+                                bound_below.merge(buckets[i].bounds);
+                                count_below += buckets[i].count;
+                                costs[i] += @as(f32, @floatFromInt(count_below)) * bound_below.surfaceArea();
+                            }
+
+                            // Finish initializing _costs_ using a backwrd scan over splits
+                            var count_above: u32 = 0;
+                            var bound_above = Aabb{};
+                            var i: usize = n_splits;
+                            while (i >= 1) : (i -= 1) {
+                                bound_above.merge(buckets[i].bounds);
+                                count_above += buckets[i].count;
+                                costs[i - 1] += @as(f32, @floatFromInt(count_above)) * bound_above.surfaceArea();
+                            }
+
+                            // Find bucket to split at that minimizes SAH metric
+                            var min_cost_split_bucket: i32 = -1;
+                            var min_cost = utils.infinity;
+                            for (0..n_splits) |j| {
+                                // Compute cost for candidate split and update minimum if necessary
+                                if (costs[j] < min_cost) {
+                                    min_cost = costs[i];
+                                    min_cost_split_bucket = @intCast(j);
+                                }
+                            }
+
+                            //Compute leaf and SAH split cost for chosen split
+                            const leaf_cost: f32 = @floatFromInt(bvh_primitives.items.len);
+                            min_cost = 1 / (2 + min_cost / bounds.surfaceArea());
+
+                            // Either create leaf or split primitives at selected SAH bucket
+                            if (bvh_primitives.items.len > max_prims_in_node or min_cost < leaf_cost) {
+                                var turn_point: u32 = 0;
+                                for (bvh_primitives.items, 0..) |prim, j| {
+                                    var b = n_buckets * centroid_bounds.offset(prim.centroid)[dim];
+                                    if (b == n_buckets) {
+                                        b = n_buckets - 1;
+                                    }
+                                    if (b > @as(f32, @floatFromInt(min_cost_split_bucket))) {
+                                        turn_point = @intCast(j);
+                                        break;
+                                    }
+                                }
+                                mid = turn_point + 1;
+                            } else {
+                                // Create leaf _BVHBuildNode_
+                                const first_prim_offset = ordered_prims_offset.*;
+                                ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
+                                for (0..bvh_primitives.items.len) |j| {
+                                    const index = bvh_primitives.items[j].primitive_index;
+                                    ordered_prims.items[first_prim_offset + j] = primitives[index];
+                                }
+                                node.initLeaf(first_prim_offset, bvh_primitives.items.len, bounds);
+                                return node;
+                            }
+                        }
                     },
                     SplitMethod.HLBVH => {},
                 }
@@ -271,6 +358,7 @@ pub const BVHAggregate = struct {
                     ordered_prims,
                     primitives,
                     split_method,
+                    max_prims_in_node,
                 );
                 const right = try buildRecursive(
                     allocator,
@@ -280,6 +368,7 @@ pub const BVHAggregate = struct {
                     ordered_prims,
                     primitives,
                     split_method,
+                    max_prims_in_node,
                 );
 
                 node.initInterior(dim, left, right);
@@ -341,84 +430,6 @@ pub const BVHAggregate = struct {
         const dim: usize = 0;
         std.sort.heap(BVHPrimitive, bvh_primitives.items, dim, boxCompare);
     }
-
-    // pub fn splitSAH(bvh_primitives: *std.ArrayList(BVHPrimitive)) usize {
-    //     // Partition primitives using approximate SAH
-    //     if (bvh_primitives.items.len <= 2) {
-    //         // Partition primitives into equally sized subsets
-    //         const mid = bvh_primitives.items.len / 2;
-    //         nthElement(bvh_primitives);
-    //         return mid;
-    //     } else {
-    //         // Allocate _BVHSplitBucket_ for SAH partition buckets
-    //         const n_buckets = 12;
-    //         var buckets: [n_buckets]BVHSplitBucket = .{BVHSplitBucket{}} ** n_buckets;
-
-    //         // Initialize buckets for SAH partition
-    //         for (bvh_primitives.items) |prim| {
-    //             var b = n_buckets * centroidBounds.Offset(prim.centroid)[dim];
-    //             if (b == n_buckets) {
-    //                 b = n_buckets - 1;
-    //             }
-    //             buckets[b].count += 1;
-    //             buckets[b].bounds.merge(prim.bounds);
-    //         }
-
-    //         // Compute costs for splitting after each bucket
-    //         const n_splits = n_buckets - 1;
-    //         var costs: [n_splits]f32 = .{0} ** n_splits;
-
-    //         // Partially initialize _costs_ using a forward scan over splits
-    //         var count_below = 0;
-    //         var bound_below = Aabb{};
-    //         for (0..n_splits) |i| {
-    //             bound_below.merge(buckets[i].bounds);
-    //             count_below += buckets[i].count;
-    //             costs[i] = count_below * bound_below.surfaceArea();
-    //         }
-
-    //         // Finish initializing _costs_ using a backwrd scan over splits
-    //         var count_above = 0;
-    //         var bound_above = Aabb{};
-    //         var i = n_splits;
-    //         while (i >= 1) : (i -= 1) {
-    //             bound_above.merge(buckets[i].bounds);
-    //             count_above += buckets[i].count;
-    //             costs[i - 1] += count_above * bound_above.surfaceArea();
-    //         }
-
-    //         // Find bucket to split at that minimizes SAH metric
-    //         var min_cost_split_bucket = -1;
-    //         var min_cost = utils.infinity;
-    //         for (0..n_splits) |i| {
-    //             // Compute cost for candidate split and update minimum if necessary
-    //             if (costs[i] < min_cost) {
-    //                 min_cost = costs[i];
-    //                 min_cost_split_bucket = i;
-    //             }
-    //         }
-
-    //         //Compute leaf and SAH split cost for chosen split
-    //         const leaf_cost = bvh_primitives.items.len;
-    //         min_cost = 1 / (2 + min_cost / bounds.surfaceArea());
-
-    //         // Either create leaf or split primitives at selected SAH bucket
-    //         if (bvh_primitives.items.len > max_prims_in_node or min_cost < leaf_cost) {
-
-    //         } else {
-    //             // Create leaf _BVHBuildNode_
-    //             const first_prim_offset = ordered_prims_offset.*;
-    //             ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
-    //             for (0..bvh_primitives.items.len) |i| {
-    //                 const index = bvh_primitives.items[i].primitive_index;
-    //                 ordered_prims.items[first_prim_offset + i] = primitives[index];
-    //             }
-    //             node.initLeaf(first_prim_offset, bvh_primitives.items.len, bounds);
-    //             return node;
-    //         }
-
-    //     }
-    // }
 
     /// Build the BVH tree recursively.
     // pub fn buildRecursives(

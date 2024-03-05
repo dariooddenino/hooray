@@ -229,8 +229,6 @@ pub const Renderer = struct {
         @memcpy(materials_mapped.?, materials_gpu.items[0..]);
         materials_buffer.unmap();
 
-        std.debug.print("\nBVH:\n{any}\n", .{scene.bvh_array.items});
-
         const bvh_buffer = core.device.createBuffer(&.{
             .label = "BVH",
             .usage = .{ .storage = true, .copy_dst = true },
@@ -252,7 +250,6 @@ pub const Renderer = struct {
         const objects_mapped = objects_buffer.getMappedRange(Object.Object_GPU, 0, objects_gpu.items.len);
         @memcpy(objects_mapped.?, objects_gpu.items[0..]);
         objects_buffer.unmap();
-        std.debug.print("\nOBJECTS:\n{any}\n", .{objects_gpu.items});
 
         const spheres_gpu = try Sphere.toGPU(allocator, scene.spheres);
         defer spheres_gpu.deinit();
@@ -265,7 +262,6 @@ pub const Renderer = struct {
         const spheres_mapped = spheres_buffer.getMappedRange(Sphere.Sphere_GPU, 0, spheres_gpu.items.len);
         @memcpy(spheres_mapped.?, spheres_gpu.items[0..]);
         spheres_buffer.unmap();
-        std.debug.print("\nSPHERES:\n{any}\n", .{spheres_gpu.items});
 
         var buffers: [7]GPUResources.BufferAdd = .{
             .{ .name = "vertex", .buffer = vertex_buffer },
