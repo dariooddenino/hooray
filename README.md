@@ -13,6 +13,10 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 ## TODO
 My suspicion is that the AABB is not aligned.
+There's some test code going on.
+Even if I manually pick the sphere, it crashes at the break point. Right after it.
+
+Then I will have to check materials alignment too, even though they worked.
 
 ## Delta time
 ```zig

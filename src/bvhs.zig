@@ -405,10 +405,8 @@ pub const BVHAggregate = struct {
         var linear_node = &linear_nodes.items[offset.*];
         // TODO this was a tentative to see if it would help, probably useless.
         linear_node.* = Aabb_GPU{};
-        linear_node.mins = zm.vecToArr3(node.bounds.min);
-        linear_node.maxs = zm.vecToArr3(node.bounds.max);
-        // linear_node.mins = node.bounds.min;
-        // linear_node.maxs = node.bounds.max;
+        linear_node.min = zm.vecToArr3(node.bounds.min);
+        linear_node.max = zm.vecToArr3(node.bounds.max);
         const node_offset: usize = offset.*;
         offset.* += 1;
 

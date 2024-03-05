@@ -2,24 +2,24 @@ fn hitScene(ray: Ray) -> bool {
     var closest_so_far = MAX_FLOAT;
     var hit_anything = false;
 
+    // for (var i = 0; i < NUM_SPHERES; i++) {
+    //     if(hitSphere(sphere_objs[i], ray_tmin, closest_so_far, ray)) {
+    //         hit_anything = true;
+    //         closest_so_far = hit_rec.t;
+    //     }
+    // }
+
+    // return hit_anything;
+
     var inv_dir = 1 / ray.direction;
 
     var to_visit_offset = 0;
-    var current_node_index = 0;
+    var current_node_index = 2;
     while (true) {
         let node = bvh[current_node_index];
 
         if hitAabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
-            // hit_rec.hit_bboxes += 1;
-            // let root: f32 = 0;
-            // hit_rec.t = root;
-            // hit_rec.p = at(ray, root);
-            // hit_rec.normal = vec3<f32>(0, 0, -1);
-            // hit_rec.front_face = true;
-            // hit_rec.material = materials[0];
-            // return true;
             if (node.n_primitives > 0) {
-                // It's a leaf node
                 for (var i = 0; i < i32(node.n_primitives); i++) {
                     var hit = false;
                     let object = objects[node.primitive_offset + i];

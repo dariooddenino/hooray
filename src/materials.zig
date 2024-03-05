@@ -32,13 +32,14 @@ pub const Material = extern struct {
     material_type: MaterialType,
 
     pub const Material_GPU = extern struct {
+        color: [3]f32,
         material_type: u32,
+        specular_color: [3]f32,
         specular_strength: f32,
+        emission_color: [3]f32,
         roughness: f32,
         eta: f32,
-        color: @Vector(3, f32),
-        specular_color: @Vector(3, f32),
-        emission_color: @Vector(3, f32),
+        padding: [3]f32 = .{ 0, 0, 0 },
     };
 
     pub fn init(material_type: MaterialType, color: Color, specular_color: Color, emission_color: Color, specular_strength: f32, roughness: f32, eta: f32) Material {
