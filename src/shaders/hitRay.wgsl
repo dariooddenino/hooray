@@ -14,7 +14,8 @@ fn hitScene(ray: Ray) -> bool {
     var inv_dir = 1 / ray.direction;
 
     var to_visit_offset = 0;
-    var current_node_index = 2;
+    var current_node_index = 0;
+
     while (true) {
         let node = bvh[current_node_index];
 
@@ -31,12 +32,12 @@ fn hitScene(ray: Ray) -> bool {
                         hit_anything = true;
                         closest_so_far = hit_rec.t;
                     }
-                    if (to_visit_offset == 0) {
-                        break;
-                    }
-                    to_visit_offset--;
-                    current_node_index = nodes_to_visit[to_visit_offset];
                 }
+                if (to_visit_offset == 0) {
+                    break;
+                }
+                to_visit_offset--;
+                current_node_index = nodes_to_visit[to_visit_offset];
             } else {
                 if ray.direction[i32(node.axis)] < 0 {
                     nodes_to_visit[to_visit_offset] = current_node_index + 1;
@@ -55,6 +56,10 @@ fn hitScene(ray: Ray) -> bool {
             to_visit_offset--;
             // Retrieve the offset of the next node to visit
             current_node_index = nodes_to_visit[to_visit_offset];
+        }
+
+        if (to_visit_offset >= STACK_SIZE) {
+            break;
         }
     }
     return hit_anything;

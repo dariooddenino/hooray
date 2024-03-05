@@ -46,23 +46,28 @@ struct Material {
 }
 
 struct AABB {
-    min: vec3<f32>,
-    primitive_offset: i32,
-    max: vec3<f32>,
-    second_child_offset: i32,
-    n_primitives: u32,
-    axis: f32,
+  min: vec3<f32>,
+  primitive_offset: i32,
+  max: vec3<f32>,
+  second_child_offset: i32,
+  n_primitives: u32,
+  axis: f32,
 }
 
 struct Object {
   primitive_type: i32,
   primitive_id: u32,
+  // pad0: f32,
+  // pad1: f32,
 }
 
 struct Sphere {
   center: vec3<f32>,
   radius: f32,
   material_id: f32,
+  // pad0: f32,
+  // pad1: f32,
+  // pad2: f32,
 }
 
 struct HitRecord {
