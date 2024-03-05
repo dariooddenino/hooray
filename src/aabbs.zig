@@ -15,7 +15,9 @@ pub const Aabb_GPU = extern struct {
     second_child_offset: i32 = -1,
     n_primitives: u32 = 0,
     axis: i32 = -1,
-    padding: [2]f32 = .{ 0, 0 },
+    pad0: f32 = 0,
+    pad1: f32 = 0,
+    // padding: [2]f32 = .{ 0, 0 },
 };
 
 pub const Aabb = struct {

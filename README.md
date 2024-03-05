@@ -12,11 +12,10 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
-My suspicion is that the AABB is not aligned.
-There's some test code going on.
-Even if I manually pick the sphere, it crashes at the break point. Right after it.
-
-Then I will have to check materials alignment too, even though they worked.
+splitMiddle partition I could avoid sorting?
+nthElement? But for now it doesn't even get called
+SAH partition? I'm not sure of whats' going on in the book code. Looking at 
+the example project might be a better idea.
 
 ## Delta time
 ```zig

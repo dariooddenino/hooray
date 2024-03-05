@@ -10,6 +10,11 @@ const Object = @import("objects.zig").Object;
 const ObjectType = @import("objects.zig").ObjectType;
 const Vec = zm.Vec;
 
+const BVHSplitBucket = struct {
+    count: u32 = 0,
+    bounds: Aabb = Aabb{},
+};
+
 // Structure to build the array used for tree construction.
 pub const BVHPrimitive = struct {
     primitive_index: usize, // Index in its own type array
@@ -211,18 +216,25 @@ pub const BVHAggregate = struct {
             for (bvh_primitives.items) |p| {
                 centroid_bounds.mergePoint(p.centroid);
             }
-            // TODO extend or centroid? Who knows
             const dim = centroid_bounds.maxDimension();
 
             // Partition primitives into two sets and build children
             if (centroid_bounds.max[dim] == centroid_bounds.min[dim]) {
                 // Create leaf BVHBuildNode
+                const first_prim_offset = ordered_prims_offset.*;
+                ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
+                for (0..bvh_primitives.items.len) |i| {
+                    const index = bvh_primitives.items[i].primitive_index;
+                    ordered_prims.items[first_prim_offset + i] = primitives[index];
+                }
+                node.initLeaf(first_prim_offset, bvh_primitives.items.len, bounds);
+                return node;
             } else {
                 var mid = bvh_primitives.items.len / 2;
                 // Partition primtives based on split_method
                 switch (split_method) {
                     SplitMethod.Middle => {
-                        mid = splitMiddle(centroid_bounds, dim, bvh_primitives);
+                        mid = try splitMiddle(allocator, centroid_bounds, dim, bvh_primitives);
                         if (mid == 0 or mid == bvh_primitives.items.len) {
                             mid = splitEqualCounts(bvh_primitives);
                         }
@@ -230,7 +242,10 @@ pub const BVHAggregate = struct {
                     SplitMethod.EqualCounts => {
                         mid = splitEqualCounts(bvh_primitives);
                     },
-                    SplitMethod.SAH, SplitMethod.HLBVH => {},
+                    SplitMethod.SAH => {
+                        // mid = splitSAH(bvh_primitives);
+                    },
+                    SplitMethod.HLBVH => {},
                 }
 
                 // It's a tentative...
@@ -274,19 +289,37 @@ pub const BVHAggregate = struct {
         return node;
     }
 
-    pub fn splitMiddle(centroid_bounds: Aabb, dim: usize, bvh_primitives: *std.ArrayList(BVHPrimitive)) usize {
+    // NOTE: both these approaches apparently give the same end result visually.
+    pub fn splitMiddle(allocator: std.mem.Allocator, centroid_bounds: Aabb, dim: usize, bvh_primitives: *std.ArrayList(BVHPrimitive)) !usize {
         // Partition primitives through node's midpoint
         const p_mid = (centroid_bounds.min[dim] + centroid_bounds.max[dim]) / 2.0;
-        std.sort.heap(BVHPrimitive, bvh_primitives.items, dim, boxCompare);
-        var turn_point: usize = 0;
-        for (bvh_primitives.items, 0..) |p, i| {
+        // std.sort.heap(BVHPrimitive, bvh_primitives.items, dim, boxCompare);
+        // var turn_point: usize = 0;
+        // for (bvh_primitives.items, 0..) |p, i| {
+        //     if (p.centroid[dim] >= p_mid) {
+        //         turn_point = i;
+        //     }
+        // }
+        // // TODO this was mid_iter - bvh_primitives.begin()
+        // // Maybe it's a way to cast to a number?
+        // return turn_point;
+        var left = std.ArrayList(BVHPrimitive).init(allocator);
+        var right = std.ArrayList(BVHPrimitive).init(allocator);
+        defer left.deinit();
+        defer right.deinit();
+
+        for (bvh_primitives.items) |p| {
             if (p.centroid[dim] >= p_mid) {
-                turn_point = i;
+                try right.append(p);
+            } else {
+                try left.append(p);
             }
         }
-        // TODO this was mid_iter - bvh_primitives.begin()
-        // Maybe it's a way to cast to a number?
-        return turn_point;
+
+        const mid = left.items.len;
+        try bvh_primitives.replaceRange(0, left.items.len, left.items);
+        try bvh_primitives.replaceRange(left.items.len, right.items.len, right.items);
+        return mid;
     }
 
     pub fn splitEqualCounts(bvh_primitives: *std.ArrayList(BVHPrimitive)) usize {
@@ -301,12 +334,91 @@ pub const BVHAggregate = struct {
         return mid;
     }
 
+    // TODO this might be a problem source
     // I' must sorting it normally, I hope it's good enough  instead of nth_elment
     // Also dim is random...
     fn nthElement(bvh_primitives: *std.ArrayList(BVHPrimitive)) void {
         const dim: usize = 0;
         std.sort.heap(BVHPrimitive, bvh_primitives.items, dim, boxCompare);
     }
+
+    // pub fn splitSAH(bvh_primitives: *std.ArrayList(BVHPrimitive)) usize {
+    //     // Partition primitives using approximate SAH
+    //     if (bvh_primitives.items.len <= 2) {
+    //         // Partition primitives into equally sized subsets
+    //         const mid = bvh_primitives.items.len / 2;
+    //         nthElement(bvh_primitives);
+    //         return mid;
+    //     } else {
+    //         // Allocate _BVHSplitBucket_ for SAH partition buckets
+    //         const n_buckets = 12;
+    //         var buckets: [n_buckets]BVHSplitBucket = .{BVHSplitBucket{}} ** n_buckets;
+
+    //         // Initialize buckets for SAH partition
+    //         for (bvh_primitives.items) |prim| {
+    //             var b = n_buckets * centroidBounds.Offset(prim.centroid)[dim];
+    //             if (b == n_buckets) {
+    //                 b = n_buckets - 1;
+    //             }
+    //             buckets[b].count += 1;
+    //             buckets[b].bounds.merge(prim.bounds);
+    //         }
+
+    //         // Compute costs for splitting after each bucket
+    //         const n_splits = n_buckets - 1;
+    //         var costs: [n_splits]f32 = .{0} ** n_splits;
+
+    //         // Partially initialize _costs_ using a forward scan over splits
+    //         var count_below = 0;
+    //         var bound_below = Aabb{};
+    //         for (0..n_splits) |i| {
+    //             bound_below.merge(buckets[i].bounds);
+    //             count_below += buckets[i].count;
+    //             costs[i] = count_below * bound_below.surfaceArea();
+    //         }
+
+    //         // Finish initializing _costs_ using a backwrd scan over splits
+    //         var count_above = 0;
+    //         var bound_above = Aabb{};
+    //         var i = n_splits;
+    //         while (i >= 1) : (i -= 1) {
+    //             bound_above.merge(buckets[i].bounds);
+    //             count_above += buckets[i].count;
+    //             costs[i - 1] += count_above * bound_above.surfaceArea();
+    //         }
+
+    //         // Find bucket to split at that minimizes SAH metric
+    //         var min_cost_split_bucket = -1;
+    //         var min_cost = utils.infinity;
+    //         for (0..n_splits) |i| {
+    //             // Compute cost for candidate split and update minimum if necessary
+    //             if (costs[i] < min_cost) {
+    //                 min_cost = costs[i];
+    //                 min_cost_split_bucket = i;
+    //             }
+    //         }
+
+    //         //Compute leaf and SAH split cost for chosen split
+    //         const leaf_cost = bvh_primitives.items.len;
+    //         min_cost = 1 / (2 + min_cost / bounds.surfaceArea());
+
+    //         // Either create leaf or split primitives at selected SAH bucket
+    //         if (bvh_primitives.items.len > max_prims_in_node or min_cost < leaf_cost) {
+
+    //         } else {
+    //             // Create leaf _BVHBuildNode_
+    //             const first_prim_offset = ordered_prims_offset.*;
+    //             ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
+    //             for (0..bvh_primitives.items.len) |i| {
+    //                 const index = bvh_primitives.items[i].primitive_index;
+    //                 ordered_prims.items[first_prim_offset + i] = primitives[index];
+    //             }
+    //             node.initLeaf(first_prim_offset, bvh_primitives.items.len, bounds);
+    //             return node;
+    //         }
+
+    //     }
+    // }
 
     /// Build the BVH tree recursively.
     // pub fn buildRecursives(
