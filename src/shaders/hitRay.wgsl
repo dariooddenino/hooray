@@ -21,7 +21,6 @@ fn hitScene(ray: Ray) -> bool {
         let node = bvh[current_node_index];
 
         if hitAabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
-
             hit_rec.hit_bboxes++;
             if (node.n_primitives > 0) {
                 for (var i = 0; i < i32(node.n_primitives); i++) {
@@ -35,6 +34,9 @@ fn hitScene(ray: Ray) -> bool {
                         hit_anything = true;
                         closest_so_far = hit_rec.t;
                     }
+        if (current_node_index == 28 || current_node_index == 29) {
+            hit_anything = true;
+        }
                 }
                 if (to_visit_offset == 0) {
                     break;

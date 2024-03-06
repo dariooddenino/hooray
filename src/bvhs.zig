@@ -147,9 +147,9 @@ pub const BVHAggregate = struct {
 
         // TODO Not sure of this
         // primitives.swap(ordered_primitives);
-        const ordered_slice = try ordered_primitives.toOwnedSlice();
-        defer allocator.free(ordered_slice);
-        primitives.* = ordered_slice;
+        // const ordered_slice = try ordered_primitives.toOwnedSlice();
+        // defer allocator.free(ordered_slice);
+        // primitives.* = ordered_slice;
         // std.mem.swap([]Object, primitives, &ordered_slice);
 
         // Convert BVH into compact representation in nodes array
