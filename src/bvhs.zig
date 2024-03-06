@@ -132,6 +132,8 @@ pub const BVHAggregate = struct {
         ordered_primitives.expandToCapacity();
         var total_nodes: u32 = 0;
 
+        std.debug.print("BUILDING BVH FOR {d} OBJECTS\n", .{primitives.*.len});
+        const pre_build_t = std.time.microTimestamp();
         if (split_method == SplitMethod.HLBVH) {
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
@@ -139,6 +141,9 @@ pub const BVHAggregate = struct {
             root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives.*, split_method, max_prims_in_node);
             // root = try buildRecursive(allocator, try bvh_primitives.toOwnedSlice(), &ordered_prims_offset, &ordered_primitives, primitives, split_method);
         }
+        const post_build_t = std.time.microTimestamp();
+        std.debug.print("BVH built in {d}us\n", .{post_build_t - pre_build_t});
+        printTree(root);
 
         // TODO Not sure of this
         // primitives.swap(ordered_primitives);
@@ -154,7 +159,11 @@ pub const BVHAggregate = struct {
         var linear_nodes = try std.ArrayList(Aabb_GPU).initCapacity(allocator, total_nodes);
         linear_nodes.expandToCapacity();
         var offset: usize = 0;
+        const pre_flatten_t = std.time.microTimestamp();
         _ = try flattenBVH(root, &offset, &linear_nodes);
+        const post_flatten_t = std.time.microTimestamp();
+        std.debug.print("BVH flattened in {d}us\n", .{post_flatten_t - pre_flatten_t});
+        printLinearNodes(linear_nodes.items);
 
         return BVHAggregate{
             .arena = arena,
@@ -550,3 +559,33 @@ pub const BVHAggregate = struct {
         return node_offset;
     }
 };
+
+fn printLinearNodes(linear_nodes: []Aabb_GPU) void {
+    std.debug.print("LINEAR NODES:\n", .{});
+    for (linear_nodes, 0..) |node, i| {
+        if (node.primitive_offset == -1) {
+            std.debug.print("NODE {d}, AXIS {d}, RIGHT {d}\n", .{ i, node.axis, node.second_child_offset });
+        } else {
+            std.debug.print("LEAF {d}, PRIM OFF {d}, PRIM COUNT {d}\n", .{ i, node.primitive_offset, node.n_primitives });
+        }
+    }
+}
+
+fn printTree(node: *BVHBuildNode) void {
+    if (node.n_primitives == 0) {
+        std.debug.print("\nTREE NODE\n", .{});
+        if (node.left) |left| {
+            printTree(left);
+        } else {
+            std.debug.print("LEFT NULL\n", .{});
+        }
+        if (node.right) |right| {
+            printTree(right);
+        } else {
+            std.debug.print("RIGHT NULL\n", .{});
+        }
+    } else {
+        std.debug.print("\nTREE LEAF\n", .{});
+        std.debug.print("PRIM OFFSET {d}, PRIM COUNT {d}\n", .{ node.first_prim_offset, node.n_primitives });
+    }
+}

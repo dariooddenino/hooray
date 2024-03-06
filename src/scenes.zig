@@ -55,8 +55,11 @@ pub const Scene = struct {
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -100.5, 0, 0 }, 100, ground_id);
         try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
-        try self.addSphere(Vec{ 0, 0, 1, 0 }, 0.5, red_id);
-        try self.addSphere(Vec{ 0, 0, -1, 0 }, 0.5, red_id);
+        const n_sphere = 2;
+        for (0..n_sphere) |n| {
+            try self.addSphere(Vec{ 0, 0, @floatFromInt(n + 1), 0 }, 0.5, red_id);
+            try self.addSphere(Vec{ 0, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, red_id);
+        }
         try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
