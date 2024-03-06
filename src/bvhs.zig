@@ -112,7 +112,7 @@ pub const BVHAggregate = struct {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
         const allocator = arena.allocator();
 
-        const max_prims_in_node = 4;
+        const max_prims_in_node = 1;
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
@@ -133,7 +133,7 @@ pub const BVHAggregate = struct {
         var total_nodes: u32 = 0;
 
         std.debug.print("BUILDING BVH FOR {d} OBJECTS\n", .{primitives.*.len});
-        const pre_build_t = std.time.microTimestamp();
+        const pre_build_t = std.time.nanoTimestamp();
         if (split_method == SplitMethod.HLBVH) {
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
@@ -141,9 +141,9 @@ pub const BVHAggregate = struct {
             root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives.*, split_method, max_prims_in_node);
             // root = try buildRecursive(allocator, try bvh_primitives.toOwnedSlice(), &ordered_prims_offset, &ordered_primitives, primitives, split_method);
         }
-        const post_build_t = std.time.microTimestamp();
-        std.debug.print("BVH built in {d}us\n", .{post_build_t - pre_build_t});
-        printTree(root);
+        const post_build_t = std.time.nanoTimestamp();
+        std.debug.print("BVH built in {d}ns\n", .{post_build_t - pre_build_t});
+        // printTree(root);
 
         // TODO Not sure of this
         // primitives.swap(ordered_primitives);
@@ -159,10 +159,10 @@ pub const BVHAggregate = struct {
         var linear_nodes = try std.ArrayList(Aabb_GPU).initCapacity(allocator, total_nodes);
         linear_nodes.expandToCapacity();
         var offset: usize = 0;
-        const pre_flatten_t = std.time.microTimestamp();
+        const pre_flatten_t = std.time.nanoTimestamp();
         _ = try flattenBVH(root, &offset, &linear_nodes);
-        const post_flatten_t = std.time.microTimestamp();
-        std.debug.print("BVH flattened in {d}us\n", .{post_flatten_t - pre_flatten_t});
+        const post_flatten_t = std.time.nanoTimestamp();
+        std.debug.print("BVH flattened in {d}ns\n", .{post_flatten_t - pre_flatten_t});
         printLinearNodes(linear_nodes.items);
 
         return BVHAggregate{
@@ -560,13 +560,33 @@ pub const BVHAggregate = struct {
     }
 };
 
-fn printLinearNodes(linear_nodes: []Aabb_GPU) void {
-    std.debug.print("LINEAR NODES:\n", .{});
+pub fn printLinearNodes(linear_nodes: []Aabb_GPU) void {
+    std.debug.print("{d} LINEAR NODES:\n", .{linear_nodes.len});
     for (linear_nodes, 0..) |node, i| {
         if (node.primitive_offset == -1) {
-            std.debug.print("NODE {d}, AXIS {d}, RIGHT {d}\n", .{ i, node.axis, node.second_child_offset });
+            std.debug.print("NODE {d}, AXIS {d}, RIGHT {d} - [{d} {d} {d}] [{d} {d} {d}]\n", .{
+                i,
+                node.axis,
+                node.second_child_offset,
+                node.min[0],
+                node.min[1],
+                node.min[2],
+                node.max[0],
+                node.max[1],
+                node.max[2],
+            });
         } else {
-            std.debug.print("LEAF {d}, PRIM OFF {d}, PRIM COUNT {d}\n", .{ i, node.primitive_offset, node.n_primitives });
+            std.debug.print("LEAF {d}, PRIM OFF {d}, PRIM COUNT {d} - [{d} {d} {d}] [{d} {d} {d}]\n", .{
+                i,
+                node.primitive_offset,
+                node.n_primitives,
+                node.min[0],
+                node.min[1],
+                node.min[2],
+                node.max[0],
+                node.max[1],
+                node.max[2],
+            });
         }
     }
 }

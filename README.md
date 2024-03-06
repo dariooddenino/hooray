@@ -12,6 +12,12 @@ Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU
 
 
 ## TODO
+It seems that the linear tree is sent correctly up to the point where it's loaded in the buffer.
+I've tested the length on the gpu side, and it should be correct. But I have to investigate more.
+If all this is correct, then the problem could be in the tree generation or traversal.
+The tree generation, in particualr, has a lot of parts that I'm not sure of.
+
+
 splitMiddle partition I could avoid sorting?
 nthElement? But for now it doesn't even get called
 SAH partition? I'm not sure of whats' going on in the book code. Looking at 
