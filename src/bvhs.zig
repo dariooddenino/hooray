@@ -112,7 +112,7 @@ pub const BVHAggregate = struct {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
         const allocator = arena.allocator();
 
-        const max_prims_in_node = 4;
+        const max_prims_in_node = 1;
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
@@ -145,16 +145,12 @@ pub const BVHAggregate = struct {
         std.debug.print("BVH built in {d}ns\n", .{post_build_t - pre_build_t});
         // printTree(root);
 
-        std.debug.print("primitives: {any}\n", .{primitives.*});
-
         // TODO Not sure of this
         // primitives.swap(ordered_primitives);
         const ordered_slice = try ordered_primitives.toOwnedSlice();
         defer allocator.free(ordered_slice);
         primitives.* = ordered_slice;
         // std.mem.swap([]Object, primitives, &ordered_slice);
-
-        std.debug.print("primitives: {any}\n", .{primitives.*});
 
         // Convert BVH into compact representation in nodes array
         // Release bvh_primitives
@@ -167,7 +163,7 @@ pub const BVHAggregate = struct {
         _ = try flattenBVH(root, &offset, &linear_nodes);
         const post_flatten_t = std.time.nanoTimestamp();
         std.debug.print("BVH flattened in {d}ns\n", .{post_flatten_t - pre_flatten_t});
-        printLinearNodes(linear_nodes.items);
+        // printLinearNodes(linear_nodes.items);
 
         return BVHAggregate{
             .arena = arena,
@@ -362,6 +358,8 @@ pub const BVHAggregate = struct {
                 defer allocator.free(right_slice);
                 var right_primitives = std.ArrayList(BVHPrimitive).fromOwnedSlice(allocator, right_slice[mid..]);
                 defer right_primitives.deinit();
+
+                // std.debug.print("LEFT {d} RIGHT {d}\n", .{ left_primitives.items.len, right_primitives.items.len });
 
                 // Recursively build BVHs for children
                 // TODO I could go for a parallel approach here, it's illustrated in the book
