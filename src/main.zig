@@ -138,3 +138,7 @@ pub fn update(app: *App) !bool {
 
     return false;
 }
+
+test {
+    std.testing.refAllDecls(@This());
+}

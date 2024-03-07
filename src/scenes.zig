@@ -5,6 +5,7 @@ const bvhs = @import("bvhs.zig");
 const vec = @import("vec.zig");
 
 const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
+const BVHAggregate = @import("bvhs.zig").BVHAggregate;
 const Material = @import("materials.zig").Material;
 const Object = @import("objects.zig").Object;
 const Sphere = @import("objects.zig").Sphere;
@@ -19,6 +20,7 @@ pub const Scene = struct {
     sphere_id: u32 = 0,
     materials: std.ArrayList(Material),
     material_id: u32 = 0,
+    bvh: BVHAggregate = undefined,
     bvh_array: std.ArrayList(Aabb_GPU),
 
     pub fn init(allocator: std.mem.Allocator) Scene {
@@ -39,7 +41,39 @@ pub const Scene = struct {
         defer self.materials.deinit();
         defer self.spheres.deinit();
         defer self.objects.deinit();
+        defer self.bvh.deinit();
         defer self.bvh_array.deinit();
+    }
+
+    pub fn loadTestScene(self: *Scene, n_sphere: usize) !void {
+        const red = Material.lambertian(.{ 1, 0, 0, 1 });
+        const red_id = try self.addMaterial("red", red);
+        // const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
+        // const glass_id = try self.addMaterial("glass", glass);
+        // const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
+        // const b_glass_id = try self.addMaterial("glass", b_glass);
+        // const metal = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
+        // const metal_id = try self.addMaterial("metal", metal);
+        // const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 });
+        // const ground_id = try self.addMaterial("ground", ground);
+        // try self.addSphere(Vec{ 0, -100.5, 0, 0 }, 100, ground_id);
+        // try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
+        // try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
+        // try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
+        // try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
+        // const n_sphere = 2;
+        for (0..n_sphere) |n| {
+            try self.addSphere(Vec{ 0, 0, @floatFromInt(n + 1), 0 }, 0.5, red_id);
+            // try self.addSphere(Vec{ 0, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, red_id);
+            // try self.addSphere(Vec{ -1, 0, @floatFromInt(n + 1), 0 }, 0.5, metal_id);
+            // try self.addSphere(Vec{ -1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, metal_id);
+            // try self.addSphere(Vec{ 1, 0, @floatFromInt(n + 1), 0 }, 0.5, glass_id);
+            // try self.addSphere(Vec{ 1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, glass_id);
+            // try self.addSphere(Vec{ 1, 0, @floatFromInt(n + 1), 0 }, 0.25, b_glass_id);
+            // try self.addSphere(Vec{ 1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.25, b_glass_id);
+        }
+
+        try self.createBVH();
     }
 
     pub fn loadBasicScene(self: *Scene) !void {
@@ -133,10 +167,13 @@ pub const Scene = struct {
         try self.createBVH();
     }
 
+    // TODO I have to study how clone() works, because I'm leaking here.
+    // Maybe carry objects slice around and defer it.
     pub fn createBVH(self: *Scene) !void {
         var objects_clone = try self.objects.clone();
         var objects_slice = try objects_clone.toOwnedSlice();
         const bvh = try bvhs.BVHAggregate.init(self.allocator, &objects_slice, bvhs.SplitMethod.SAH);
+        self.bvh = bvh;
         self.bvh_array = bvh.linear_nodes;
     }
 

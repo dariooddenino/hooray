@@ -100,7 +100,6 @@ pub const BVHAggregate = struct {
     split_method: SplitMethod,
 
     pub fn deinit(self: BVHAggregate) void {
-        self.nodes.deinit();
         self.arena.deinit();
     }
 
@@ -348,12 +347,14 @@ pub const BVHAggregate = struct {
 
                 // It's a tentative...
                 var left_clone = try bvh_primitives.clone();
+                defer left_clone.deinit();
                 var left_slice = try left_clone.toOwnedSlice();
                 defer allocator.free(left_slice);
                 var left_primitives = std.ArrayList(BVHPrimitive).fromOwnedSlice(allocator, left_slice[0..mid]);
                 defer left_primitives.deinit();
 
                 var right_clone = try bvh_primitives.clone();
+                defer right_clone.deinit();
                 var right_slice = try right_clone.toOwnedSlice();
                 defer allocator.free(right_slice);
                 var right_primitives = std.ArrayList(BVHPrimitive).fromOwnedSlice(allocator, right_slice[mid..]);
@@ -612,4 +613,16 @@ fn printTree(node: *BVHBuildNode) void {
         std.debug.print("\nTREE LEAF\n", .{});
         std.debug.print("PRIM OFFSET {d}, PRIM COUNT {d}\n", .{ node.first_prim_offset, node.n_primitives });
     }
+}
+
+test "bvh" {
+    const Scene = @import("scenes.zig").Scene;
+    const allocator = std.testing.allocator;
+
+    var scene = Scene.init(allocator);
+    try scene.loadTestScene(100);
+    // _ = &scene;
+    defer scene.deinit();
+
+    try std.testing.expect(true);
 }
