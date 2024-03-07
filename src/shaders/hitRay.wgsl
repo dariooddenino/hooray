@@ -34,9 +34,6 @@ fn hitScene(ray: Ray) -> bool {
                         hit_anything = true;
                         closest_so_far = hit_rec.t;
                     }
-        if (current_node_index == 28 || current_node_index == 29) {
-            hit_anything = true;
-        }
                 }
                 if (to_visit_offset == 0) {
                     break;

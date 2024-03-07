@@ -112,7 +112,7 @@ pub const BVHAggregate = struct {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
         const allocator = arena.allocator();
 
-        const max_prims_in_node = 1;
+        const max_prims_in_node = 4;
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
@@ -145,12 +145,16 @@ pub const BVHAggregate = struct {
         std.debug.print("BVH built in {d}ns\n", .{post_build_t - pre_build_t});
         // printTree(root);
 
+        std.debug.print("primitives: {any}\n", .{primitives.*});
+
         // TODO Not sure of this
         // primitives.swap(ordered_primitives);
-        // const ordered_slice = try ordered_primitives.toOwnedSlice();
-        // defer allocator.free(ordered_slice);
-        // primitives.* = ordered_slice;
+        const ordered_slice = try ordered_primitives.toOwnedSlice();
+        defer allocator.free(ordered_slice);
+        primitives.* = ordered_slice;
         // std.mem.swap([]Object, primitives, &ordered_slice);
+
+        std.debug.print("primitives: {any}\n", .{primitives.*});
 
         // Convert BVH into compact representation in nodes array
         // Release bvh_primitives
@@ -260,7 +264,9 @@ pub const BVHAggregate = struct {
                         if (bvh_primitives.items.len <= 2) {
                             // Partition primitives into equally sized subsets
                             mid = bvh_primitives.items.len / 2;
-                            nthElement(bvh_primitives);
+                            // TODO this breaks my tree, but it was needed in the original source.
+                            // My implementation is wrong, but do I really need it?
+                            // nthElement(bvh_primitives);
                         } else {
                             // Allocate _BVHSplitBucket_ for SAH partition buckets
                             const n_buckets = 12;
@@ -268,7 +274,7 @@ pub const BVHAggregate = struct {
 
                             // Initialize buckets for SAH partition
                             for (bvh_primitives.items) |prim| {
-                                var b: usize = n_buckets * @as(usize, @intFromFloat(centroid_bounds.offset(prim.centroid)[dim]));
+                                var b: usize = @intFromFloat(@as(f32, @floatFromInt(n_buckets)) * centroid_bounds.offset(prim.centroid)[dim]);
                                 if (b == n_buckets) {
                                     b = n_buckets - 1;
                                 }
