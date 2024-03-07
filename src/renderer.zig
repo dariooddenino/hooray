@@ -1,5 +1,5 @@
 const std = @import("std");
-const core = @import("mach-core");
+const core = @import("mach").core;
 const gpu_resources = @import("gpu_resources.zig");
 const gpu = core.gpu;
 const main = @import("main.zig");

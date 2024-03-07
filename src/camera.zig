@@ -1,5 +1,5 @@
 const std = @import("std");
-const core = @import("mach-core");
+const core = @import("mach").core;
 const zm = @import("zmath");
 const utils = @import("utils.zig");
 const main = @import("main.zig");
