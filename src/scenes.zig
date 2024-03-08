@@ -47,29 +47,9 @@ pub const Scene = struct {
     pub fn loadTestScene(self: *Scene, n_sphere: usize) !void {
         const red = Material.lambertian(.{ 1, 0, 0, 1 });
         const red_id = try self.addMaterial("red", red);
-        // const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
-        // const glass_id = try self.addMaterial("glass", glass);
-        // const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
-        // const b_glass_id = try self.addMaterial("glass", b_glass);
-        // const metal = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
-        // const metal_id = try self.addMaterial("metal", metal);
-        // const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 });
-        // const ground_id = try self.addMaterial("ground", ground);
-        // try self.addSphere(Vec{ 0, -100.5, 0, 0 }, 100, ground_id);
-        // try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
-        // try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
-        // try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
-        // try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
-        // const n_sphere = 2;
         for (0..n_sphere) |n| {
-            try self.addSphere(Vec{ 0, 0, @floatFromInt(n + 1), 0 }, 0.5, red_id);
-            // try self.addSphere(Vec{ 0, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, red_id);
-            // try self.addSphere(Vec{ -1, 0, @floatFromInt(n + 1), 0 }, 0.5, metal_id);
-            // try self.addSphere(Vec{ -1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, metal_id);
-            // try self.addSphere(Vec{ 1, 0, @floatFromInt(n + 1), 0 }, 0.5, glass_id);
-            // try self.addSphere(Vec{ 1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, glass_id);
-            // try self.addSphere(Vec{ 1, 0, @floatFromInt(n + 1), 0 }, 0.25, b_glass_id);
-            // try self.addSphere(Vec{ 1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.25, b_glass_id);
+            const center = Vec{ @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(), -0.8, @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(), 0 };
+            try self.addSphere(center, 0.5 * utils.randomDouble(), red_id);
         }
 
         try self.createBVH();
@@ -91,25 +71,14 @@ pub const Scene = struct {
         try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
-        const n_sphere = 2;
-        for (0..n_sphere) |n| {
-            try self.addSphere(Vec{ 0, 0, @floatFromInt(n + 1), 0 }, 0.5, red_id);
-            try self.addSphere(Vec{ 0, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, red_id);
-            try self.addSphere(Vec{ -1, 0, @floatFromInt(n + 1), 0 }, 0.5, metal_id);
-            try self.addSphere(Vec{ -1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, metal_id);
-            try self.addSphere(Vec{ 1, 0, @floatFromInt(n + 1), 0 }, 0.5, glass_id);
-            try self.addSphere(Vec{ 1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.5, glass_id);
-            try self.addSphere(Vec{ 1, 0, @floatFromInt(n + 1), 0 }, 0.25, b_glass_id);
-            try self.addSphere(Vec{ 1, 0, -(@as(f32, @floatFromInt(n + 1))), 0 }, 0.25, b_glass_id);
-        }
 
         try self.createBVH();
     }
 
     pub fn loadWeekOneScene(self: *Scene) !void {
-        // const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
-        // const ground_id = try self.addMaterial("ground", ground);
-        // try self.addSphere(Vec{ 0, -201, 0, 0 }, 200, ground_id);
+        const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
+        const ground_id = try self.addMaterial("ground", ground);
+        try self.addSphere(Vec{ 0, -201, 0, 0 }, 200, ground_id);
 
         const num_spheres = 2;
 
@@ -149,19 +118,19 @@ pub const Scene = struct {
             }
         }
 
-        // const red = Material.lambertian(.{ 0.4, 0.2, 0.1, 1 });
-        // const red_id = try self.addMaterial("red", red);
-        // const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
-        // const glass_id = try self.addMaterial("glass", glass);
-        // const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
-        // const b_glass_id = try self.addMaterial("glass", b_glass);
-        // const metal = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
-        // const metal_id = try self.addMaterial("metal", metal);
+        const red = Material.lambertian(.{ 0.4, 0.2, 0.1, 1 });
+        const red_id = try self.addMaterial("red", red);
+        const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
+        const glass_id = try self.addMaterial("glass", glass);
+        const b_glass = Material.dielectric(.{ 0.5, 0.5, 1, 1 }, 1.6);
+        const b_glass_id = try self.addMaterial("glass", b_glass);
+        const metal = Material.metal(.{ 0.2, 0.2, 0.2, 1 }, 0.8, 0.5);
+        const metal_id = try self.addMaterial("metal", metal);
 
-        // try self.addSphere(Vec{ 0, 0, 0, 0 }, 1, red_id);
-        // try self.addSphere(Vec{ -4, 0, 0, 0 }, 1, metal_id);
-        // try self.addSphere(Vec{ 4, 0, 0, 0 }, 1, glass_id);
-        // try self.addSphere(Vec{ 4, 0, 0, 0 }, 0.25, b_glass_id);
+        try self.addSphere(Vec{ 0, 0, 0, 0 }, 1, red_id);
+        try self.addSphere(Vec{ -4, 0, 0, 0 }, 1, metal_id);
+        try self.addSphere(Vec{ 4, 0, 0, 0 }, 1, glass_id);
+        try self.addSphere(Vec{ 4, 0, 0, 0 }, 0.25, b_glass_id);
 
         try self.createBVH();
     }

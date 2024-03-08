@@ -14,7 +14,7 @@ const Renderer = @import("renderer.zig").Renderer;
 pub const App = @This();
 
 var gpa = switch (builtin.mode) {
-    .Debug => std.heap.GeneralPurposeAllocator(.{ .verbose_log = true, .retain_metadata = true }){},
+    .Debug => std.heap.GeneralPurposeAllocator(.{ .verbose_log = false, .retain_metadata = false }){},
     else => std.heap.GeneralPurposeAllocator(.{}){},
 };
 const allocator = gpa.allocator();
