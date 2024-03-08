@@ -261,7 +261,7 @@ pub const BVHAggregate = struct {
                             mid = bvh_primitives.items.len / 2;
                             // TODO this breaks my tree, but it was needed in the original source.
                             // My implementation is wrong, but do I really need it?
-                            // nthElement(bvh_primitives);
+                            // nthElement(bvh_primitives, mid, dim);
                         } else {
                             // Allocate _BVHSplitBucket_ for SAH partition buckets
                             const n_buckets = 12;
@@ -432,7 +432,8 @@ pub const BVHAggregate = struct {
         // nth defines the sort partition point
         // policy execution policy
         // comp true if a < b
-        nthElement(bvh_primitives);
+        // TODO
+        // nthElement(bvh_primitives);
 
         return mid;
     }
@@ -440,99 +441,39 @@ pub const BVHAggregate = struct {
     // TODO this might be a problem source
     // I' must sorting it normally, I hope it's good enough  instead of nth_elment
     // Also dim is random...
-    fn nthElement(bvh_primitives: *std.ArrayList(BVHPrimitive)) void {
-        const dim: usize = 0;
+    // Tried a different impl, but it's not helping with the recursion problem. Check later
+    fn nthElement(bvh_primitives: *std.ArrayList(BVHPrimitive), n: usize, dim: usize) void {
+        _ = n;
         std.sort.heap(BVHPrimitive, bvh_primitives.items, dim, boxCompare);
+        // var left: usize = 0;
+        // var right: usize = bvh_primitives.items.len - 1;
+
+        // while (true) {
+        //     if (left == right) return;
+
+        //     const pivot_index: usize = partition(bvh_primitives.items, left, right, dim);
+        //     if (n == pivot_index) {
+        //         return;
+        //     } else if (n < pivot_index) {
+        //         right = pivot_index - 1;
+        //     } else {
+        //         left = pivot_index + 1;
+        //     }
+        // }
     }
 
-    /// Build the BVH tree recursively.
-    // pub fn buildRecursives(
-    //     allocator: std.mem.Allocator,
-    //     bvh_primitives: []BVHPrimitive, // Pre-prepared array of primitives
-    //     ordered_prims_offset: *u16,
-    //     ordered_prims: *std.ArrayList(Object), // Array of primitives reordered NOTE: should be empty, maybe not pass it from outside?
-    //     primitives: []Object,
-    //     split_method: SplitMethod,
-    // ) !*BVHBuildNode {
-    //     // Compute bounds of all primitives in BVH node
-    //     var bounds = Aabb{};
-    //     for (bvh_primitives) |p| {
-    //         bounds.merge(p.bounds);
-    //     }
-
-    //     var node = try allocator.create(BVHBuildNode);
-    //     node.* = BVHBuildNode{};
-    //     const surface_area = bounds.surfaceArea();
-    //     // TODO inconsitency btw book and code
-    //     // var axis: u32 = 0;
-    //     // if (extent[1] > extent[0]) axis = 1;
-    //     // if (extent[2] > extent[axis]) axis = 2;
-    //     if (surface_area == 0 or bvh_primitives.len == 1) {
-    //         // Create leaf
-    //         const first_prim_offset = ordered_prims_offset.*;
-    //         ordered_prims_offset.* += @intCast(bvh_primitives.len);
-
-    //         for (0..bvh_primitives.len) |i| {
-    //             const index = bvh_primitives[i].primitive_index;
-    //             ordered_prims.items[first_prim_offset + i] = primitives[index];
-    //         }
-    //         node.initLeaf(first_prim_offset, bvh_primitives.len, bounds);
-    //         return node;
-    //     } else {
-    //         // Compute bound of primitive centroids and choose split dimension _dim_
-    //         var centroid_bounds = Aabb{};
-    //         for (bvh_primitives) |p| {
-    //             centroid_bounds.merge(p.bounds);
-    //         }
-    //         // TODO extend or centroid? Who knows
-    //         const extent = centroid_bounds.extent();
-    //         var dim: usize = 0;
-    //         if (extent[1] > extent[0]) dim = 1;
-    //         if (extent[2] > extent[dim]) dim = 2;
-
-    //         // Partition primitives into two sets and build children
-    //         if (centroid_bounds.max[dim] == centroid_bounds.min[dim]) {
-    //             // Create leaf _BVHBuildNode_
-    //             const first_prim_offset = ordered_prims_offset.*;
-    //             ordered_prims_offset.* += @intCast(bvh_primitives.len);
-    //             for (0..bvh_primitives.len) |i| {
-    //                 const index = bvh_primitives[i].primitive_index;
-    //                 ordered_prims.items[first_prim_offset + i] = primitives[index];
-    //             }
-    //             node.initLeaf(first_prim_offset, bvh_primitives.len, bounds);
-    //             return node;
-    //         } else {
-    //             var mid = bvh_primitives.len / 2;
-    //             // Partition primtives based on _splitMethod_
-    //             switch (split_method) {
-    //                 SplitMethod.Middle => {
-    //                     // Partition primitives through node's midpoint
-    //                     const p_mid = (centroid_bounds.min[dim] + centroid_bounds.max[dim]) / 2.0;
-    //                     std.sort.heap(BVHPrimitive, bvh_primitives[0..], dim, boxCompare);
-    //                     var turn_point: usize = 0;
-    //                     for (bvh_primitives, 0..) |p, i| {
-    //                         if (p.centroid()[dim] >= p_mid) {
-    //                             turn_point = i;
-    //                         }
-    //                     }
-    //                     // TODO this was mid_iter - bvh_primitives.begin()
-    //                     // No idea of how c++ iterators work
-    //                     mid = turn_point;
-    //                     // TODO here there was a check to escape to EqualCounts in case of bad partitioning
-    //                 },
-    //                 SplitMethod.EqualCounts => {},
-    //                 SplitMethod.SAH, SplitMethod.HLBVH => {},
-    //             }
-
-    //             // Recursively build BVHs for _children_
-    //             const left = try buildRecursive(allocator, bvh_primitives[0..mid], ordered_prims_offset, ordered_prims, primitives, split_method);
-    //             const right = try buildRecursive(allocator, bvh_primitives[mid..], ordered_prims_offset, ordered_prims, primitives, split_method);
-    //             node.initInterior(dim, left, right);
-    //         }
-    //     }
-
-    //     return node;
-    // }
+    fn partition(items: []BVHPrimitive, left: usize, right: usize, dim: usize) usize {
+        const pivot: BVHPrimitive = items[left];
+        var i: usize = left;
+        for (items[left + 1 .. right], 0..) |item, j| {
+            if (boxCompare(dim, item, pivot)) {
+                i += 1;
+                std.mem.swap(BVHPrimitive, &items[i], &items[left + 1 + j]);
+            }
+        }
+        std.mem.swap(BVHPrimitive, &items[left], &items[i]);
+        return i;
+    }
 
     fn boxCompare(dim: usize, a: BVHPrimitive, b: BVHPrimitive) bool {
         return a.centroid[dim] < b.centroid[dim];
