@@ -88,7 +88,8 @@ pub const Renderer = struct {
 
         // Build scene
         var scene = Scene.init(allocator);
-        try scene.loadBasicScene();
+        try scene.loadTestScene(5);
+        // try scene.loadBasicScene();
         // try scene.loadWeekOneScene();
 
         const camera = try allocator.create(Camera);

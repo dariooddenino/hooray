@@ -229,7 +229,7 @@ pub const BVHAggregate = struct {
                 return node;
             } else {
                 var mid = bvh_primitives.items.len / 2;
-                std.debug.print("tentative split at {d} - ", .{mid});
+                std.debug.print("tentative split at {d}\n", .{mid});
                 // Partition primtives based on split_method
                 switch (split_method) {
                     SplitMethod.Middle => {
@@ -265,6 +265,8 @@ pub const BVHAggregate = struct {
                                 buckets[b].count += 1;
                                 buckets[b].bounds.merge(prim.bounds);
                             }
+
+                            std.debug.print("BUCKETS: {any}\n", .{buckets});
 
                             // Compute costs for splitting after each bucket
                             const n_splits = n_buckets - 1;

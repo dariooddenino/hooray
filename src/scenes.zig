@@ -48,8 +48,16 @@ pub const Scene = struct {
         const red = Material.lambertian(.{ 1, 0, 0, 1 });
         const red_id = try self.addMaterial("red", red);
         for (0..n_sphere) |n| {
-            const center = Vec{ @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(), -0.8, @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(), 0 };
-            try self.addSphere(center, 0.5 * utils.randomDouble(), red_id);
+            const center = Vec{
+                // @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(),
+                // -0.8,
+                // @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(),
+                0,
+                0,
+                @as(f32, @floatFromInt(n)),
+                0,
+            };
+            try self.addSphere(center, 0.5, red_id);
         }
 
         try self.createBVH();
