@@ -7,7 +7,15 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
 
     var bbox_color = vec3<f32>(1, 1, 1);
 
-    for (var i = 0; i < uniforms.max_bounces; i++) {
+    var max_bounces = uniforms.max_bounces;
+    // Reduce max bounces while moving.
+    // It doesn't look very effective, I need more complex scenes.
+    if (uniforms.frame_num < 15) {
+        max_bounces /= 2;
+    }
+
+
+    for (var i = 0; i < max_bounces; i++) {
         if !hitScene(curr_ray) {
             let unit_direction = normalize(incident_ray.direction);
             let a = 0.5 * (unit_direction.y + 1);

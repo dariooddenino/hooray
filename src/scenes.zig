@@ -81,7 +81,7 @@ pub const Scene = struct {
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -201, 0, 0 }, 200, ground_id);
 
-        const num_spheres = 11;
+        const num_spheres = 20;
 
         var a: f32 = -num_spheres;
         while (a < num_spheres) : (a += 1) {

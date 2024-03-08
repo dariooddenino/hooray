@@ -123,7 +123,7 @@ pub const BVHAggregate = struct {
             root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives, split_method, max_prims_in_node);
         }
         const post_build_t = std.time.milliTimestamp();
-        std.debug.print("BVH built in {d}ms\n", .{post_build_t - pre_build_t});
+        std.debug.print("BVH of {d} primitives built in {d}ms\n", .{ primitives.len, post_build_t - pre_build_t });
         // printTree(root);
 
         const ordered_slice = try ordered_primitives.toOwnedSlice();
@@ -141,7 +141,7 @@ pub const BVHAggregate = struct {
         _ = try flattenBVH(root, &offset, &linear_nodes);
         const post_flatten_t = std.time.milliTimestamp();
         std.debug.print("BVH flattened in {d}ms\n", .{post_flatten_t - pre_flatten_t});
-        printLinearNodes(linear_nodes.items);
+        // printLinearNodes(linear_nodes.items);
 
         return BVHAggregate{
             .arena = arena,
@@ -512,7 +512,7 @@ pub fn comparePrimToBuckets(
 ) bool {
     const min_cost: f32 = @floatFromInt(context.min_cost_split_bucket);
     const b = context.n_buckets * context.centroid_bounds.offset(prim.centroid)[context.dim];
-    std.debug.print("n {d} b_off {d} b {d}\n", .{ context.n_buckets, context.centroid_bounds.offset(prim.centroid)[context.dim], b });
+    // std.debug.print("n {d} b_off {d} b {d}\n", .{ context.n_buckets, context.centroid_bounds.offset(prim.centroid)[context.dim], b });
     return b <= min_cost;
 }
 
