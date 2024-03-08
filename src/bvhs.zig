@@ -95,7 +95,7 @@ pub const BVHAggregate = struct {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
         const allocator = arena.allocator();
 
-        const max_prims_in_node = 1;
+        const max_prims_in_node = 4;
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
@@ -115,19 +115,17 @@ pub const BVHAggregate = struct {
         ordered_primitives.expandToCapacity();
         var total_nodes: u32 = 0;
 
-        // std.debug.print("BUILDING BVH FOR {d} OBJECTS\n", .{primitives.len});
-        const pre_build_t = std.time.nanoTimestamp();
+        const pre_build_t = std.time.milliTimestamp();
         if (split_method == SplitMethod.HLBVH) {
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
             var ordered_prims_offset: u32 = 0;
             root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives, split_method, max_prims_in_node);
         }
-        const post_build_t = std.time.nanoTimestamp();
-        std.debug.print("BVH built in {d}ns\n", .{post_build_t - pre_build_t});
+        const post_build_t = std.time.milliTimestamp();
+        std.debug.print("BVH built in {d}ms\n", .{post_build_t - pre_build_t});
         // printTree(root);
 
-        // TODO Not sure of this
         const ordered_slice = try ordered_primitives.toOwnedSlice();
         const own_primitives = try allocator.create([]Object);
         own_primitives.* = ordered_slice;
@@ -139,10 +137,10 @@ pub const BVHAggregate = struct {
         var linear_nodes = try std.ArrayList(Aabb_GPU).initCapacity(allocator, total_nodes);
         linear_nodes.expandToCapacity();
         var offset: usize = 0;
-        const pre_flatten_t = std.time.nanoTimestamp();
+        const pre_flatten_t = std.time.milliTimestamp();
         _ = try flattenBVH(root, &offset, &linear_nodes);
-        const post_flatten_t = std.time.nanoTimestamp();
-        std.debug.print("BVH flattened in {d}ns\n", .{post_flatten_t - pre_flatten_t});
+        const post_flatten_t = std.time.milliTimestamp();
+        std.debug.print("BVH flattened in {d}ms\n", .{post_flatten_t - pre_flatten_t});
         printLinearNodes(linear_nodes.items);
 
         return BVHAggregate{
@@ -178,15 +176,11 @@ pub const BVHAggregate = struct {
         split_method: SplitMethod,
         max_prims_in_node: u32,
     ) !*BVHBuildNode {
-        std.debug.print("\nRECURSIVE STEP (n.prim {d}): ", .{bvh_primitives.items.len});
+        // std.debug.print("\nRECURSIVE STEP (n.prim {d}): ", .{bvh_primitives.items.len});
         // Initialize the node
         var node = try allocator.create(BVHBuildNode);
         node.* = BVHBuildNode{};
         total_nodes.* += 1;
-
-        if (bvh_primitives.items.len == 0) {
-            unreachable;
-        }
 
         // Compute bounds of all primitives in BVH node
         var bounds = Aabb{};
@@ -196,7 +190,7 @@ pub const BVHAggregate = struct {
 
         const surface_area = bounds.surfaceArea();
         if (surface_area == 0 or bvh_primitives.items.len == 1) {
-            std.debug.print("no surface or one item\n", .{});
+            // std.debug.print("no surface or one item\n", .{});
             // Create a leaf
             // NOTE: not sure about that fetch_add here
             const first_prim_offset = ordered_prims_offset.*;
@@ -214,10 +208,11 @@ pub const BVHAggregate = struct {
                 centroid_bounds.mergePoint(p.centroid);
             }
             const dim = centroid_bounds.maxDimension();
+            // std.debug.print("DIM {d}\n", .{dim});
 
             // Partition primitives into two sets and build children
             if (centroid_bounds.max[dim] == centroid_bounds.min[dim]) {
-                std.debug.print("no bounds\n", .{});
+                // std.debug.print("no bounds\n", .{});
                 // Create leaf BVHBuildNode
                 const first_prim_offset = ordered_prims_offset.*;
                 ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
@@ -229,7 +224,7 @@ pub const BVHAggregate = struct {
                 return node;
             } else {
                 var mid = bvh_primitives.items.len / 2;
-                std.debug.print("tentative split at {d}\n", .{mid});
+                // std.debug.print("tentative split at {d}\n", .{mid});
                 // Partition primtives based on split_method
                 switch (split_method) {
                     SplitMethod.Middle => {
@@ -246,11 +241,11 @@ pub const BVHAggregate = struct {
 
                         // Partition primitives using approximate SAH
                         if (bvh_primitives.items.len <= 2) {
-                            std.debug.print("less than 2 prims\n", .{});
+                            // std.debug.print("less than 2 prims\n", .{});
                             // Partition primitives into equally sized subsets
                             // TODO not sure
-                            try nthElementPrimitives(bvh_primitives, mid, dim);
-                            // nthElement(bvh_primitives, mid, dim);
+                            mid = bvh_primitives.items.len / 2;
+                            // try nthElementPrimitives(bvh_primitives, mid, dim);
                         } else {
                             // Allocate _BVHSplitBucket_ for SAH partition buckets
                             const n_buckets = 12;
@@ -266,7 +261,7 @@ pub const BVHAggregate = struct {
                                 buckets[b].bounds.merge(prim.bounds);
                             }
 
-                            std.debug.print("BUCKETS: {any}\n", .{buckets});
+                            // std.debug.print("BUCKETS: {any}\n", .{buckets});
 
                             // Compute costs for splitting after each bucket
                             const n_splits = n_buckets - 1;
@@ -308,7 +303,7 @@ pub const BVHAggregate = struct {
 
                             // Either create leaf or split primitives at selected SAH bucket
                             if (bvh_primitives.items.len > max_prims_in_node or min_cost < leaf_cost) {
-                                std.debug.print("min bucket cost: {d}\n", .{min_cost_split_bucket});
+                                // std.debug.print("min bucket cost: {d}\n", .{min_cost_split_bucket});
 
                                 mid = partitionArrayList(
                                     BVHPrimitive,
@@ -316,22 +311,9 @@ pub const BVHAggregate = struct {
                                     CompareBucketContext{ .n_buckets = n_buckets, .dim = dim, .min_cost_split_bucket = min_cost_split_bucket, .centroid_bounds = centroid_bounds },
                                     comparePrimToBuckets,
                                 );
-                                // var turn_point: u32 = 0;
-                                // for (bvh_primitives.items, 0..) |prim, j| {
-                                //     var b = n_buckets * centroid_bounds.offset(prim.centroid)[dim];
-                                //     if (b == n_buckets) {
-                                //         b = n_buckets - 1;
-                                //     }
-                                //     std.debug.print("b {d}\n", .{b});
-                                //     if (b > @as(f32, @floatFromInt(min_cost_split_bucket))) {
-                                //         turn_point = @intCast(j);
-                                //         break;
-                                //     }
-                                // }
-                                // mid = turn_point;
-                                std.debug.print("new mid point {d}\n", .{mid});
+                                // std.debug.print("new mid point {d}\n", .{mid});
                             } else {
-                                std.debug.print("SAH leaf\n", .{});
+                                // std.debug.print("SAH leaf\n", .{});
                                 // Create leaf _BVHBuildNode_
                                 const first_prim_offset = ordered_prims_offset.*;
                                 ordered_prims_offset.* += @intCast(bvh_primitives.items.len);
@@ -349,14 +331,14 @@ pub const BVHAggregate = struct {
 
                 // It's a tentative...
                 var left_clone = try bvh_primitives.clone();
-                defer left_clone.deinit();
+                // defer left_clone.deinit();
                 var left_slice = try left_clone.toOwnedSlice();
                 defer allocator.free(left_slice);
                 var left_primitives = std.ArrayList(BVHPrimitive).fromOwnedSlice(allocator, left_slice[0..mid]);
                 defer left_primitives.deinit();
 
                 var right_clone = try bvh_primitives.clone();
-                defer right_clone.deinit();
+                // defer right_clone.deinit();
                 var right_slice = try right_clone.toOwnedSlice();
                 defer allocator.free(right_slice);
                 var right_primitives = std.ArrayList(BVHPrimitive).fromOwnedSlice(allocator, right_slice[mid..]);
@@ -442,7 +424,6 @@ pub const BVHAggregate = struct {
 
     pub fn flattenBVH(node: *BVHBuildNode, offset: *usize, linear_nodes: *std.ArrayList(Aabb_GPU)) !usize {
         var linear_node = &linear_nodes.items[offset.*];
-        // TODO this was a tentative to see if it would help, probably useless.
         linear_node.* = Aabb_GPU{};
         linear_node.min = zm.vecToArr3(node.bounds.min);
         linear_node.max = zm.vecToArr3(node.bounds.max);
@@ -531,7 +512,7 @@ pub fn comparePrimToBuckets(
 ) bool {
     const min_cost: f32 = @floatFromInt(context.min_cost_split_bucket);
     const b = context.n_buckets * context.centroid_bounds.offset(prim.centroid)[context.dim];
-    std.debug.print("b {d}\n", .{b});
+    std.debug.print("n {d} b_off {d} b {d}\n", .{ context.n_buckets, context.centroid_bounds.offset(prim.centroid)[context.dim], b });
     return b <= min_cost;
 }
 
@@ -554,7 +535,8 @@ pub fn partitionArrayList(
             j -= 1;
         }
         if (i < j) {
-            std.mem.swap(T, &array.items[i], &array.items[j - 1]);
+            // TODO with this, it doesn't work. But it should be here, RIGHT?
+            // std.mem.swap(T, &array.items[i], &array.items[j - 1]);
             i += 1;
             j -= 1;
         }
@@ -588,49 +570,8 @@ pub fn nthElementPrimitives(
     _ = partitionArrayList(BVHPrimitive, array, context, nthCompare);
 }
 
-// NOTE: another more specific implementation, I'm not sure whether they're equivalent.
-fn partition(items: []BVHPrimitive, left: usize, right: usize, dim: usize) usize {
-    const pivot: BVHPrimitive = items[left];
-    var i: usize = left;
-    for (items[left + 1 .. right], 0..) |item, j| {
-        if (boxCompare(dim, item, pivot)) {
-            i += 1;
-            std.mem.swap(BVHPrimitive, &items[i], &items[left + 1 + j]);
-        }
-    }
-    // std.mem.swap(BVHPrimitive, &items[left], &items[i]);
-    return i;
-}
-
 fn boxCompare(dim: usize, a: BVHPrimitive, b: BVHPrimitive) bool {
     return a.centroid[dim] < b.centroid[dim];
-}
-
-// TODO this might be a problem source
-// I' must sorting it normally, I hope it's good enough  instead of nth_elment
-// Also dim is random...
-// Tried a different impl, but it's not helping with the recursion problem. Check later
-fn nthElement(bvh_primitives: *std.ArrayList(BVHPrimitive), n: usize, dim: usize) void {
-    // _ = n;
-    // std.sort.heap(BVHPrimitive, bvh_primitives.items, dim, boxCompare);
-
-    var left: usize = 0;
-    var right: usize = bvh_primitives.items.len - 1;
-
-    while (true) {
-        if (left == right) return;
-
-        // const pivot_index = partitionArrayList(BVHPrimitive, bvh_primitives, dim, boxCompare);
-        const pivot_index: usize = partition(bvh_primitives.items, left, right, dim);
-        // const pivot_index = 0;
-        if (n == pivot_index) {
-            return;
-        } else if (n < pivot_index) {
-            right = pivot_index - 1;
-        } else {
-            left = pivot_index + 1;
-        }
-    }
 }
 
 // test "bvh" {

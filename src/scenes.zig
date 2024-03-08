@@ -47,17 +47,10 @@ pub const Scene = struct {
     pub fn loadTestScene(self: *Scene, n_sphere: usize) !void {
         const red = Material.lambertian(.{ 1, 0, 0, 1 });
         const red_id = try self.addMaterial("red", red);
+        try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
+        const deg: f32 = std.math.degreesToRadians(f32, @floatFromInt(360 / n_sphere));
         for (0..n_sphere) |n| {
-            const center = Vec{
-                // @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(),
-                // -0.8,
-                // @as(f32, @floatFromInt(n)) + 0.9 * utils.randomDouble(),
-                0,
-                0,
-                @as(f32, @floatFromInt(n)),
-                0,
-            };
-            try self.addSphere(center, 0.5, red_id);
+            try self.addSphere(Vec{ 3 * @cos(@as(f32, @floatFromInt(n)) * deg), 0, 3 * @sin(@as(f32, @floatFromInt(n)) * deg), 0 }, 0.5, red_id);
         }
 
         try self.createBVH();
@@ -88,7 +81,7 @@ pub const Scene = struct {
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -201, 0, 0 }, 200, ground_id);
 
-        const num_spheres = 2;
+        const num_spheres = 11;
 
         var a: f32 = -num_spheres;
         while (a < num_spheres) : (a += 1) {
