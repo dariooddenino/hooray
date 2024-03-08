@@ -37,17 +37,10 @@ pub const BVHPrimitive = struct {
 
 // Each represent a single node of the BVH tree
 pub const BVHBuildNode = struct {
-    // was bbox
     bounds: Aabb = Aabb{},
-    // was axis
     split_axis: usize = 0,
     left: ?*BVHBuildNode = null,
     right: ?*BVHBuildNode = null,
-    // linear_node: Aabb_GPU = Aabb_GPU{}, // Part of the data is collected during tree building.
-    // hit_node: i32 = -1,
-    // miss_node: i32 = -1,
-    // prim_type: i32 = -1,
-    // prim_id: i32 = -1,
     first_prim_offset: u32 = 0,
     n_primitives: u32 = 0,
 
@@ -57,16 +50,12 @@ pub const BVHBuildNode = struct {
         first: u32,
         n: usize,
         b: Aabb,
-        // prim_type: i32,
-        // prim_id: i32,
     ) void {
         self.first_prim_offset = first;
         self.n_primitives = @intCast(n);
         self.bounds = b;
         self.left = null;
         self.right = null;
-        // self.prim_type = prim_type;
-        // self.prim_id = prim_id;
     }
 
     // Build an interior node, assumes the two nodes have already been created.
@@ -82,11 +71,6 @@ pub const BVHBuildNode = struct {
         self.split_axis = axis;
         self.n_primitives = 0;
     }
-
-    // pub fn getOffset(node: ?*BVHBuildNode) i32 {
-    //     if (node == null) return -1;
-    //     return node.?.first_prim_offset;
-    // }
 };
 
 pub const SplitMethod = enum { SAH, HLBVH, Middle, EqualCounts };
@@ -105,7 +89,7 @@ pub const BVHAggregate = struct {
 
     pub fn init(
         in_allocator: std.mem.Allocator,
-        primitives: *[]Object,
+        primitives: []Object,
         split_method: SplitMethod,
     ) !BVHAggregate {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
@@ -115,41 +99,38 @@ pub const BVHAggregate = struct {
 
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
-        for (0..primitives.*.len) |i| {
+        for (0..primitives.len) |i| {
             try bvh_primitives.append(BVHPrimitive.init(
                 i,
-                primitives.*[i].getType(),
-                primitives.*[i].getLocalId(),
-                primitives.*[i].getBbox(),
+                primitives[i].getType(),
+                primitives[i].getLocalId(),
+                primitives[i].getBbox(),
             ));
         }
 
         // Root node
         var root: *BVHBuildNode = undefined;
         // Primitives reordered for the BVH
-        var ordered_primitives = try std.ArrayList(Object).initCapacity(allocator, primitives.*.len);
+        var ordered_primitives = try std.ArrayList(Object).initCapacity(allocator, primitives.len);
         ordered_primitives.expandToCapacity();
         var total_nodes: u32 = 0;
 
-        std.debug.print("BUILDING BVH FOR {d} OBJECTS\n", .{primitives.*.len});
+        std.debug.print("BUILDING BVH FOR {d} OBJECTS\n", .{primitives.len});
         const pre_build_t = std.time.nanoTimestamp();
         if (split_method == SplitMethod.HLBVH) {
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
             var ordered_prims_offset: u32 = 0;
-            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives.*, split_method, max_prims_in_node);
-            // root = try buildRecursive(allocator, try bvh_primitives.toOwnedSlice(), &ordered_prims_offset, &ordered_primitives, primitives, split_method);
+            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives, split_method, max_prims_in_node);
         }
         const post_build_t = std.time.nanoTimestamp();
         std.debug.print("BVH built in {d}ns\n", .{post_build_t - pre_build_t});
         // printTree(root);
 
         // TODO Not sure of this
-        // primitives.swap(ordered_primitives);
         const ordered_slice = try ordered_primitives.toOwnedSlice();
-        defer allocator.free(ordered_slice);
-        primitives.* = ordered_slice;
-        // std.mem.swap([]Object, primitives, &ordered_slice);
+        const own_primitives = try allocator.create([]Object);
+        own_primitives.* = ordered_slice;
 
         // Convert BVH into compact representation in nodes array
         // Release bvh_primitives
@@ -168,7 +149,7 @@ pub const BVHAggregate = struct {
             .arena = arena,
             .allocator = allocator,
             .max_prims_in_node = max_prims_in_node,
-            .primitives = primitives,
+            .primitives = own_primitives,
             .linear_nodes = linear_nodes,
             .split_method = split_method,
         };

@@ -42,7 +42,6 @@ pub const Scene = struct {
         defer self.spheres.deinit();
         defer self.objects.deinit();
         defer self.bvh.deinit();
-        defer self.bvh_array.deinit();
     }
 
     pub fn loadTestScene(self: *Scene, n_sphere: usize) !void {
@@ -171,8 +170,9 @@ pub const Scene = struct {
     // Maybe carry objects slice around and defer it.
     pub fn createBVH(self: *Scene) !void {
         var objects_clone = try self.objects.clone();
-        var objects_slice = try objects_clone.toOwnedSlice();
-        const bvh = try bvhs.BVHAggregate.init(self.allocator, &objects_slice, bvhs.SplitMethod.SAH);
+        const objects_slice = try objects_clone.toOwnedSlice();
+        defer self.allocator.free(objects_slice);
+        const bvh = try bvhs.BVHAggregate.init(self.allocator, objects_slice, bvhs.SplitMethod.SAH);
         self.bvh = bvh;
         self.bvh_array = bvh.linear_nodes;
     }
