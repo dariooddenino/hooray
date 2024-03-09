@@ -94,9 +94,9 @@ pub const Scene = struct {
     }
 
     pub fn loadWeekOneScene(self: *Scene) !void {
-        // const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
-        // const ground_id = try self.addMaterial("ground", ground);
-        // try self.addSphere(Vec{ 0, -501, 0, 0 }, 500, ground_id);
+        const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
+        const ground_id = try self.addMaterial("ground", ground);
+        try self.addSphere(Vec{ 0, -301, 0, 0 }, 300, ground_id);
 
         const num_spheres = 13;
 
