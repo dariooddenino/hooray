@@ -7,16 +7,27 @@ const Aabb = @import("aabbs.zig").Aabb;
 
 pub const ObjectType = enum {
     sphere,
+    quad,
 
     pub fn toType(self: ObjectType) i32 {
         switch (self) {
             .sphere => return 0,
+            .quad => return 1,
         }
     }
 };
 
 pub const Object = union(enum) {
     sphere: Sphere,
+    quad: Quad,
+
+    pub inline fn label() ?[*:0]const u8 {
+        return "Object";
+    }
+
+    pub inline fn GpuType() type {
+        return Object_GPU;
+    }
 
     pub const Object_GPU = extern struct {
         primitive_type: i32,
@@ -62,6 +73,14 @@ pub const Sphere = struct {
     local_id: u32, // Id in its own resource ArrayList
     bbox: Aabb,
 
+    pub inline fn label() ?[*:0]const u8 {
+        return "Sphere";
+    }
+
+    pub inline fn GpuType() type {
+        return Sphere_GPU;
+    }
+
     pub fn init(center: Vec, radius: f32, material_id: u32, local_id: u32) Sphere {
         const bbox = Aabb.init(center - zm.splat(Vec, radius), center + zm.splat(Vec, radius));
         return Sphere{
@@ -91,5 +110,57 @@ pub const Sphere = struct {
             try spheres_gpu.append(sphere_gpu);
         }
         return spheres_gpu;
+    }
+};
+
+pub const Quad = struct {
+    object_type: ObjectType = .quad,
+    q: Vec,
+    u: Vec,
+    v: Vec,
+    material_id: u32,
+    local_id: u32, // Id in its own resource ArrayList
+    bbox: Aabb,
+
+    pub inline fn label() ?[*:0]const u8 {
+        return "Quad";
+    }
+
+    pub inline fn GpuType() type {
+        return Quad_GPU;
+    }
+
+    pub fn init(q: Vec, u: Vec, v: Vec, material_id: u32, local_id: u32) Quad {
+        const bbox = Aabb{ .min = q, .max = q + u + v };
+        return Quad{
+            .q = q,
+            .u = u,
+            .v = v,
+            .material_id = material_id,
+            .local_id = local_id,
+            .bbox = bbox,
+        };
+    }
+
+    pub const Quad_GPU = extern struct {
+        q: [3]f32,
+        u: [3]f32,
+        v: [3]f32,
+        material_id: f32,
+        // padding: [2]f32 = .{ 0 },
+    };
+
+    pub fn toGPU(allocator: std.mem.Allocator, quads: std.ArrayList(Quad)) !std.ArrayList(Quad_GPU) {
+        var quads_gpu = std.ArrayList(Quad_GPU).init(allocator);
+        for (quads.items) |quad| {
+            const quad_gpu = Quad_GPU{
+                .q = zm.vecToArr3(quad.q),
+                .u = zm.vecToArr3(quad.u),
+                .v = zm.vecToArr3(quad.v),
+                .material_id = @floatFromInt(quad.material_id),
+            };
+            try quads_gpu.append(quad_gpu);
+        }
+        return quads_gpu;
     }
 };

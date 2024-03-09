@@ -12,6 +12,7 @@ const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
 const BVHAggregate = @import("bvhs.zig").BVHAggregate;
 const Material = @import("materials.zig").Material;
 const Object = @import("objects.zig").Object;
+const Quad = @import("objects.zig").Quad;
 const Sphere = @import("objects.zig").Sphere;
 const Vec = zm.Vec;
 
@@ -22,6 +23,8 @@ pub const Scene = struct {
     objects: std.ArrayList(Object),
     spheres: std.ArrayList(Sphere),
     sphere_id: u32 = 0,
+    quads: std.ArrayList(Quad),
+    quad_id: u32 = 0,
     materials: std.ArrayList(Material),
     material_id: u32 = 0,
     bvh: BVHAggregate = undefined,
@@ -30,15 +33,18 @@ pub const Scene = struct {
 
     pub fn init(allocator: std.mem.Allocator) !Scene {
         const spheres = std.ArrayList(Sphere).init(allocator);
+        const quads = std.ArrayList(Quad).init(allocator);
         const objects = std.ArrayList(Object).init(allocator);
         const materials = std.ArrayList(Material).init(allocator);
         const bvh_array = std.ArrayList(Aabb_GPU).init(allocator);
         var skyboxes = std.ArrayList(zstbi.Image).init(allocator);
-        try loadSkyboxes(allocator, &skyboxes);
+        _ = &skyboxes;
+        // try loadSkyboxes(allocator, &skyboxes);
         return Scene{
             .allocator = allocator,
             .objects = objects,
             .spheres = spheres,
+            .quads = quads,
             .materials = materials,
             .bvh_array = bvh_array,
             .skyboxes = skyboxes,
@@ -49,6 +55,7 @@ pub const Scene = struct {
         defer zstbi.deinit();
         defer self.materials.deinit();
         defer self.spheres.deinit();
+        defer self.quads.deinit();
         defer self.objects.deinit();
         defer self.bvh.deinit();
         // for (self.skyboxes.items) |skybox| {
@@ -90,11 +97,11 @@ pub const Scene = struct {
     }
 
     pub fn loadWeekOneScene(self: *Scene) !void {
-        const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
-        const ground_id = try self.addMaterial("ground", ground);
-        try self.addSphere(Vec{ 0, -201, 0, 0 }, 200, ground_id);
+        // const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
+        // const ground_id = try self.addMaterial("ground", ground);
+        // try self.addSphere(Vec{ 0, -501, 0, 0 }, 500, ground_id);
 
-        const num_spheres = 20;
+        const num_spheres = 13;
 
         var a: f32 = -num_spheres;
         while (a < num_spheres) : (a += 1) {

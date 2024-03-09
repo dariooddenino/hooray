@@ -4,6 +4,7 @@
 @group(0) @binding(3) var<storage, read> bvh: array<AABB>;
 @group(0) @binding(4) var<storage, read> objects: array<Object>;
 @group(0) @binding(5) var<storage, read> sphere_objs : array<Sphere>;
+@group(1) @binding(6) var<storage, read> quad_objs : array<Quad>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
@@ -15,6 +16,7 @@ const ISOTROPIC = 3;
 const ANISOTROPIC = 4;
 const NO_OBJ = -1;
 const SPHERE = 0;
+const QUAD = 1;
 const STACK_SIZE = 64;
 
 struct Uniforms {
@@ -62,6 +64,13 @@ struct Object {
 struct Sphere {
   center: vec3<f32>,
   radius: f32,
+  material_id: f32,
+}
+
+struct Quad {
+  q: vec3<f32>,
+  u: vec3<f32>,
+  v: vec3<f32>,
   material_id: f32,
 }
 

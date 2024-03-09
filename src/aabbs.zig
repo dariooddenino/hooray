@@ -7,7 +7,6 @@ const Interval = intervals.Interval;
 const Vec = zm.Vec;
 const Vec3 = @Vector(3, f32);
 
-// A representation for the shaders.
 pub const Aabb_GPU = extern struct {
     min: [3]f32 = .{ 0, 0, 0 },
     primitive_offset: i32 = -1,
@@ -23,6 +22,14 @@ pub const Aabb_GPU = extern struct {
 pub const Aabb = struct {
     min: Vec = Vec{ utils.infinity, utils.infinity, utils.infinity, utils.infinity },
     max: Vec = Vec{ -utils.infinity, -utils.infinity, -utils.infinity, -utils.infinity },
+
+    pub inline fn label() ?[*:0]const u8 {
+        return "BVH";
+    }
+
+    pub inline fn GpuType() type {
+        return Aabb_GPU;
+    }
 
     pub fn init(a: Vec, b: Vec) Aabb {
         return Aabb{

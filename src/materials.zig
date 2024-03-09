@@ -31,6 +31,14 @@ pub const Material = extern struct {
     eta: f32,
     material_type: MaterialType,
 
+    pub inline fn label() ?[*:0]const u8 {
+        return "Material";
+    }
+
+    pub inline fn GpuType() type {
+        return Material_GPU;
+    }
+
     pub const Material_GPU = extern struct {
         color: [3]f32,
         material_type: u32,
