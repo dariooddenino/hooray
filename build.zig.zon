@@ -48,6 +48,7 @@
             .hash = "122038828e74ad3854361cefbceab0a1d7c2db80c9864772693b8b47ebc6c82d3ccb",
         },
         .zmath = .{ .path = "./deps/zig-gamedev/libs/zmath" },
+        .zstbi = .{ .path = "./deps/zig-gamedev/libs/zstbi" },
         .mach = .{
             .url = "https://pkg.machengine.org/mach/f25f43527556bfb7f9233bb820dea4a6a72b80d2.tar.gz",
             .hash = "1220d3ea68ae16ade5fab9ef5cdd245eb334e3d140fd07075abeef346ff0bd1ef002",

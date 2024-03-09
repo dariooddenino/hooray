@@ -3,6 +3,10 @@ const zm = @import("zmath");
 const utils = @import("utils.zig");
 const bvhs = @import("bvhs.zig");
 const vec = @import("vec.zig");
+const zstbi = @import("zstbi");
+
+// TODO can I take it from the build file?
+const content_dir = "skyboxes/";
 
 const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
 const BVHAggregate = @import("bvhs.zig").BVHAggregate;
@@ -22,26 +26,35 @@ pub const Scene = struct {
     material_id: u32 = 0,
     bvh: BVHAggregate = undefined,
     bvh_array: std.ArrayList(Aabb_GPU),
+    skyboxes: std.ArrayList(zstbi.Image),
 
-    pub fn init(allocator: std.mem.Allocator) Scene {
+    pub fn init(allocator: std.mem.Allocator) !Scene {
         const spheres = std.ArrayList(Sphere).init(allocator);
         const objects = std.ArrayList(Object).init(allocator);
         const materials = std.ArrayList(Material).init(allocator);
         const bvh_array = std.ArrayList(Aabb_GPU).init(allocator);
+        var skyboxes = std.ArrayList(zstbi.Image).init(allocator);
+        try loadSkyboxes(allocator, &skyboxes);
         return Scene{
             .allocator = allocator,
             .objects = objects,
             .spheres = spheres,
             .materials = materials,
             .bvh_array = bvh_array,
+            .skyboxes = skyboxes,
         };
     }
 
     pub fn deinit(self: *Scene) void {
+        defer zstbi.deinit();
         defer self.materials.deinit();
         defer self.spheres.deinit();
         defer self.objects.deinit();
         defer self.bvh.deinit();
+        // for (self.skyboxes.items) |skybox| {
+        //     skybox.deinit();
+        // }
+        self.skyboxes.deinit();
     }
 
     pub fn loadTestScene(self: *Scene, n_sphere: usize) !void {
@@ -145,6 +158,23 @@ pub const Scene = struct {
         const bvh = try bvhs.BVHAggregate.init(self.allocator, objects_slice, bvhs.SplitMethod.SAH);
         self.bvh = bvh;
         self.bvh_array = bvh.linear_nodes;
+    }
+
+    inline fn loadSkyboxes(allocator: std.mem.Allocator, skyboxes: *std.ArrayList(zstbi.Image)) !void {
+        zstbi.init(allocator);
+        const files: [6][]const u8 = comptime .{
+            "alps_field_2k.hdr",
+            "autumn_park_2k.hdr",
+            "kiara_9_dusk_2k.hdr",
+            "rooitou_park_2k.hdr",
+            "studio_small_03_2k.hdr",
+            "studio_small_08_4k.hdr",
+        };
+
+        inline for (files) |file| {
+            const skybox = try zstbi.Image.loadFromFile(content_dir ++ file, 4);
+            try skyboxes.append(skybox);
+        }
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {

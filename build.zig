@@ -1,6 +1,8 @@
 const std = @import("std");
 const mach = @import("mach");
 
+const content_dir = "skyboxes/";
+
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
@@ -24,6 +26,7 @@ pub fn build(b: *std.Build) !void {
     });
 
     const zmath_pkg = @import("zmath").package(b, target, optimize, .{});
+    const zstbi_pkg = @import("zstbi").package(b, target, optimize, .{});
 
     const app = try mach.CoreApp.init(b, mach_dep.builder, .{
         .name = "hooray",
@@ -38,16 +41,30 @@ pub fn build(b: *std.Build) !void {
             //         .optimize = optimize,
             //     }).module("mach-model3d"),
             // }, .{
-            .{
-                .name = "assets",
-                .module = b.dependency("mach_core_example_assets", .{
-                    .target = target,
-                    .optimize = optimize,
-                }).module("mach-core-example-assets"),
-            },
+            // .{
+            //     .name = "assets",
+            //     .module = b.dependency("mach_core_example_assets", .{
+            //         .target = target,
+            //         .optimize = optimize,
+            //     }).module("mach-core-example-assets"),
+            // },
             .{ .name = "zmath", .module = zmath_pkg.zmath },
+            .{ .name = "zstbi", .module = zstbi_pkg.zstbi },
         },
     });
+
+    app.compile.root_module.addImport("zstbi", zstbi_pkg.zstbi);
+    app.compile.root_module.addImport("zmath", zmath_pkg.zmath);
+
+    zstbi_pkg.link(app.compile);
+
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = .{ .path = thisDir() ++ "/" ++ content_dir },
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+    app.compile.step.dependOn(&install_content_step.step);
+
     if (b.args) |args| app.run.addArgs(args);
 
     // This *creates* a Run step in the build graph, to be executed when another
@@ -99,9 +116,14 @@ pub fn build(b: *std.Build) !void {
     });
 
     unit_tests.root_module.addImport("zmath", zmath_pkg.zmath);
+    unit_tests.root_module.addImport("zstbi", zstbi_pkg.zstbi);
     unit_tests.root_module.addImport("mach", mach_dep.module("mach"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
+}
+
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

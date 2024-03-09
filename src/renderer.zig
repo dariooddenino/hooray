@@ -87,7 +87,7 @@ pub const Renderer = struct {
         const resources = GPUResources.init(allocator);
 
         // Build scene
-        var scene = Scene.init(allocator);
+        var scene = try Scene.init(allocator);
         // try scene.loadTestScene(12);
         // try scene.loadBasicScene();
         try scene.loadWeekOneScene();
