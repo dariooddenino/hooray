@@ -141,7 +141,7 @@ pub const BVHAggregate = struct {
         _ = try flattenBVH(root, &offset, &linear_nodes);
         const post_flatten_t = std.time.milliTimestamp();
         std.debug.print("BVH flattened in {d}ms\n", .{post_flatten_t - pre_flatten_t});
-        // printLinearNodes(linear_nodes.items);
+        printLinearNodes(linear_nodes.items);
 
         return BVHAggregate{
             .arena = arena,

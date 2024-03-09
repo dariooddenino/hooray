@@ -134,7 +134,8 @@ pub const Quad = struct {
     }
 
     pub fn init(Q: Vec, u: Vec, v: Vec, material_id: u32, local_id: u32) Quad {
-        const bbox = Aabb{ .min = Q, .max = Q + u + v };
+        var bbox = Aabb{ .min = Q, .max = Q + u + v };
+        bbox.pad();
         const n = zm.cross3(u, v);
         const normal = zm.normalize3(n);
         const D = zm.dot3(normal, Q);
@@ -147,20 +148,24 @@ pub const Quad = struct {
             .local_id = local_id,
             .bbox = bbox,
             .normal = normal,
-            .D = D,
+            .D = D[0],
             .w = w,
         };
     }
 
     pub const Quad_GPU = extern struct {
         Q: [3]f32,
-        u: [3]f32,
-        v: [3]f32,
         material_id: f32,
-        normal: [3]f32,
+        u: [3]f32,
         D: f32,
+        normal: [3]f32,
+        padding0: f32 = 0,
+        v: [3]f32,
+        padding1: f32 = 0,
         w: [3]f32,
-        // padding: [2]f32 = .{ 0 },
+        padding2: f32 = 0,
+        // padding1: f32 = 0,
+        // padding: [3]f32 = .{ 0, 0, 0 },
     };
 
     pub fn toGPU(allocator: std.mem.Allocator, quads: std.ArrayList(Quad)) !std.ArrayList(Quad_GPU) {

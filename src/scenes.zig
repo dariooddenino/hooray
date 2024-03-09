@@ -10,6 +10,7 @@ const content_dir = "skyboxes/";
 
 const Aabb_GPU = @import("aabbs.zig").Aabb_GPU;
 const BVHAggregate = @import("bvhs.zig").BVHAggregate;
+const Camera = @import("camera.zig").Camera;
 const Material = @import("materials.zig").Material;
 const Object = @import("objects.zig").Object;
 const Quad = @import("objects.zig").Quad;
@@ -73,7 +74,7 @@ pub const Scene = struct {
         try self.createBVH();
     }
 
-    pub fn loadBasicScene(self: *Scene) !void {
+    pub fn loadBasicScene(self: *Scene, camera: *Camera) !void {
         const red = Material.lambertian(.{ 1, 0, 0, 1 });
         const red_id = try self.addMaterial("red", red);
         const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
@@ -84,21 +85,26 @@ pub const Scene = struct {
         const metal_id = try self.addMaterial("metal", metal);
         const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 });
         const ground_id = try self.addMaterial("ground", ground);
-        try self.addSphere(Vec{ 0, -100.5, 0, 0 }, 100, ground_id);
+        try self.addQuad(Vec{ 20, -1, -20, 0 }, Vec{ -40, 0, 0, 0 }, Vec{ 0, 0, 40, 0 }, ground_id);
+        // try self.addQuad(Vec{ -30, -0.5, -30, 0 }, Vec{ 60, 0, 0, 0 }, Vec{ 0, 0, 60, 0 }, ground_id);
+        // try self.addQuad(Vec{ -30, -3, -30, 0 }, Vec{ 60, 0, 0, 0 }, Vec{ 0, 0, 60, 0 }, ground_id);
+        // try self.addSphere(Vec{ 0, -100.5, 0, 0 }, 100, ground_id);
         try self.addSphere(Vec{ 0, 0, 0, 0 }, 0.5, red_id);
         try self.addSphere(Vec{ -1, 0, 0, 0 }, 0.5, metal_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.5, glass_id);
         try self.addSphere(Vec{ 1, 0, 0, 0 }, 0.25, b_glass_id);
 
         try self.createBVH();
+
+        camera.setPosition(.{ -4, 4, 2, 0 });
     }
 
-    pub fn loadWeekOneScene(self: *Scene) !void {
+    pub fn loadWeekOneScene(self: *Scene, camera: *Camera) !void {
         const ground = Material.lambertian(.{ 0.5, 0.5, 0.5, 1 });
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -301, 0, 0 }, 300, ground_id);
 
-        const num_spheres = 50;
+        const num_spheres = 11;
 
         var a: f32 = -num_spheres;
         while (a < num_spheres) : (a += 1) {
@@ -151,23 +157,32 @@ pub const Scene = struct {
         try self.addSphere(Vec{ 4, 0, 0, 0 }, 0.25, b_glass_id);
 
         try self.createBVH();
+
+        camera.setPosition(.{ -4, 4, 2, 0 });
     }
 
-    pub fn loadQuadsScene(self: *Scene) !void {
+    pub fn loadQuadsScene(self: *Scene, camera: *Camera) !void {
         const red = Material.lambertian(.{ 1, 0.2, 0.2, 0 });
         const red_id = try self.addMaterial("red", red);
-        // const green = Material.lambertian(.{0.2, 1, 0.2, 0});
-        // const green_id = try self.addMaterial("green", green);
-        // const blue = Material.lambertian(.{0.2, 0.2, 1, 0});
-        // const blue_id = try self.addMaterial("blue", blue);
-        // const orange = Material.lambertian(.{1, 0.5, 0, 0});
-        // const orange_id = try self.addMaterial("orange", orange);
-        // const teal = Material.lambertian(.{0.2, 0.8, 0.8});
-        // const teal_id = try self.addMaterial("teal", teal);
+        const green = Material.lambertian(.{ 0.2, 1, 0.2, 0 });
+        const green_id = try self.addMaterial("green", green);
+        const blue = Material.lambertian(.{ 0.2, 0.2, 1, 0 });
+        const blue_id = try self.addMaterial("blue", blue);
+        const orange = Material.lambertian(.{ 1, 0.5, 0, 0 });
+        const orange_id = try self.addMaterial("orange", orange);
+        const teal = Material.lambertian(.{ 0.2, 0.8, 0.8, 0 });
+        const teal_id = try self.addMaterial("teal", teal);
 
-        try self.addQuad(Vec{ -3, -2, -5, 0 }, Vec{ 0, 0, -4, 0 }, Vec{ 0, 4, 0, 0 }, red_id);
+        try self.addQuad(Vec{ -3, -2, 5, 0 }, Vec{ 0, 0, -4, 0 }, Vec{ 0, 4, 0, 0 }, red_id);
+        try self.addQuad(Vec{ -2, -2, 0, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 4, 0, 0 }, green_id);
+        try self.addQuad(Vec{ 3, -2, 1, 0 }, Vec{ 0, 0, 4, 0 }, Vec{ 0, 4, 0, 0 }, blue_id);
+        try self.addQuad(Vec{ -2, 3, 1, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, 4, 0 }, orange_id);
+        try self.addQuad(Vec{ -2, -3, 5, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, -4, 0 }, teal_id);
+        try self.addSphere(Vec{ 0, 5, 0, 0 }, 1, red_id);
 
         try self.createBVH();
+
+        camera.setPosition(.{ 0, 0, 9, 0 });
     }
 
     // TODO I have to study how clone() works, because I'm leaking here.

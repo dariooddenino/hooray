@@ -108,14 +108,15 @@ pub const Renderer = struct {
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
 
+        const camera = try allocator.create(Camera);
+        camera.* = Camera.init(.{ 0, 0, 0, 0 });
+
         // Build scene
         var scene = try Scene.init(allocator);
         // try scene.loadTestScene(12);
-        // try scene.loadBasicScene();
-        try scene.loadWeekOneScene();
-
-        const camera = try allocator.create(Camera);
-        camera.* = Camera.init(.{ -4, 4, 2, 0 });
+        // try scene.loadBasicScene(camera);
+        // try scene.loadWeekOneScene(camera);
+        try scene.loadQuadsScene(camera);
 
         const uniforms = Uniforms{
             .target_dims = .{ screen_width, screen_height },
@@ -203,10 +204,10 @@ pub const Renderer = struct {
         try entries.append(gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0));
         try entries.append(gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
 
-        inline for (optional_resources) |l_map| {
-            const objs = @field(self.scene, l_map.label);
+        inline for (optional_resources) |op_res| {
+            const objs = @field(self.scene, op_res.label);
             if (objs.items.len > 0) {
-                try entries.append(gpu.BindGroupLayout.Entry.buffer(l_map.position, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
+                try entries.append(gpu.BindGroupLayout.Entry.buffer(op_res.position, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
             }
         }
 
@@ -239,6 +240,7 @@ pub const Renderer = struct {
         if (!has_elements) {
             return null;
         }
+        std.debug.print("\n{any}:\n{any}\n", .{ T, array.items });
         const buffer = core.device.createBuffer(&.{
             .label = T.label(),
             .usage = .{ .storage = true, .copy_dst = true },
@@ -301,11 +303,11 @@ pub const Renderer = struct {
 
         try entries.append(BufferAdd{ .name = "bvh", .buffer = bvh_buffer });
 
-        inline for (optional_resources) |l_map| {
-            const objs = @field(scene, l_map.label);
-            const buffer = try initResourcesBuffer(l_map.res_type, allocator, objs);
+        inline for (optional_resources) |op_res| {
+            const objs = @field(scene, op_res.label);
+            const buffer = try initResourcesBuffer(op_res.res_type, allocator, objs);
             if (buffer) |b| {
-                try entries.append(BufferAdd{ .name = l_map.label, .buffer = b });
+                try entries.append(BufferAdd{ .name = op_res.label, .buffer = b });
             }
         }
 

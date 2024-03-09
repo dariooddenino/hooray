@@ -36,6 +36,12 @@ pub const Camera = struct {
         };
     }
 
+    pub fn setPosition(self: *Camera, eye: Vec) void {
+        const view_matrix = zm.lookAtRh(eye, self.center, self.up);
+        self.eye = eye;
+        self.view_matrix = view_matrix;
+    }
+
     pub fn setCamera(self: *Camera, eye: Vec, center: Vec, up: Vec) void {
         self.eye = eye;
         self.center = center;

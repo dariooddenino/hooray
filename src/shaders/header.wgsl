@@ -4,7 +4,7 @@
 @group(0) @binding(3) var<storage, read> bvh: array<AABB>;
 @group(0) @binding(4) var<storage, read> objects: array<Object>;
 @group(0) @binding(5) var<storage, read> sphere_objs : array<Sphere>;
-@group(1) @binding(6) var<storage, read> quad_objs : array<Quad>;
+@group(0) @binding(6) var<storage, read> quad_objs : array<Quad>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
@@ -70,11 +70,11 @@ struct Sphere {
 
 struct Quad {
   Q: vec3<f32>,
-  u: vec3<f32>,
-  v: vec3<f32>,
   material_id: f32,
-  normal: vec3<f32>,
+  u: vec3<f32>,
   D: f32,
+  normal: vec3<f32>,
+  v: vec3<f32>,
   w: vec3<f32>,
 }
 
@@ -94,6 +94,7 @@ struct ScatterRecord {
 }
 
 var<private> NUM_SPHERES : i32;
+var<private> NUM_QUADS : i32;
 var<private> rand_state : u32 = 0u;
 var<private> pixel_coords : vec3<f32>;
 var<private> fov_factor : f32;

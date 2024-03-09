@@ -15,6 +15,7 @@ fn computeFrameBuffer(
         cam_origin = uniforms.eye;
 
         NUM_SPHERES = i32(arrayLength(&sphere_objs));
+        NUM_QUADS = i32(arrayLength(&quad_objs));
 
         rand_state = pixel_index + u32(uniforms.frame_num) * 719393;
 

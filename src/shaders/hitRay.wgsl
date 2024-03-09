@@ -10,7 +10,15 @@ fn hitScene(ray: Ray) -> bool {
     //     }
     // }
 
+    // for (var i = 0; i < NUM_QUADS; i++) {
+    //     if(hitQuad(quad_objs[i], ray_tmin, closest_so_far, ray)) {
+    //         hit_anything = true;
+    //         closest_so_far = hit_rec.t;
+    //     }
+    // }
+
     // return hit_anything;
+
 
     var inv_dir = 1 / ray.direction;
 
@@ -29,6 +37,10 @@ fn hitScene(ray: Ray) -> bool {
                     if (object.primitive_type == SPHERE) {
                         let sphere = sphere_objs[object.primitive_id];
                         hit = hitSphere(sphere, ray_tmin, closest_so_far, ray);
+                    }
+                    if (object.primitive_type == QUAD) {
+                        let quad = quad_objs[object.primitive_id];
+                        hit = hitQuad(quad, ray_tmin, closest_so_far, ray);
                     }
                     if (hit) {
                         hit_anything = true;
