@@ -99,8 +99,9 @@ pub const Renderer = struct {
     total_samples: i32 = 0,
 
     // NOTE this would make more sense in gpu_resources maybe?
-    bindGroupLayouts: std.ArrayList(gpu.BindGroupLayout.Entry),
+    bind_group_layouts: std.ArrayList(gpu.BindGroupLayout.Entry),
     buffer_adds: std.ArrayList(GPUResources.BufferAdd),
+    bind_groups: std.ArrayList(gpu.BindGroup.Entry),
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
@@ -123,18 +124,11 @@ pub const Renderer = struct {
             .defocus_angle = 1,
         };
 
-        const bindGroupLayouts = std.ArrayList(gpu.BindGroupLayout.Entry).init(allocator);
+        const bind_group_layouts = std.ArrayList(gpu.BindGroupLayout.Entry).init(allocator);
         const buffer_adds = std.ArrayList(GPUResources.BufferAdd).init(allocator);
+        const bind_groups = std.ArrayList(gpu.BindGroup.Entry).init(allocator);
 
-        var self = Renderer{
-            .allocator = allocator,
-            .resources = resources,
-            .scene = scene,
-            .uniforms = uniforms,
-            .camera = camera,
-            .bindGroupLayouts = bindGroupLayouts,
-            .buffer_adds = buffer_adds,
-        };
+        var self = Renderer{ .allocator = allocator, .resources = resources, .scene = scene, .uniforms = uniforms, .camera = camera, .bind_group_layouts = bind_group_layouts, .buffer_adds = buffer_adds, .bind_groups = bind_groups };
 
         // Load shaders
         const shader_module = try loadShaders(allocator);
@@ -161,8 +155,9 @@ pub const Renderer = struct {
     pub fn deinit(self: *Renderer) void {
         defer self.resources.deinit();
         defer self.scene.deinit();
-        defer self.bindGroupLayouts.deinit();
+        defer self.bind_group_layouts.deinit();
         defer self.buffer_adds.deinit();
+        defer self.bind_groups.deinit();
         // if (self.bindGroupLayouts) |bgl| {
         //     defer bgl.deinit();
         // }
@@ -188,7 +183,7 @@ pub const Renderer = struct {
     }
 
     fn initBindGroupLayouts(self: *Renderer) !void {
-        var entries = &self.bindGroupLayouts;
+        var entries = &self.bind_group_layouts;
 
         // We always have these
         try entries.append(gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, 0));
@@ -301,47 +296,35 @@ pub const Renderer = struct {
             }
         }
 
-        // const materials_buffer = try initResourcesBuffer(Material, allocator, scene.materials);
-        // const objects_buffer = try initResourcesBuffer(Object, allocator, scene.objects);
-        // const spheres_buffer = try initResourcesBuffer(Sphere, allocator, scene.spheres);
-        // const quads_buffer = initResourcesBuffer(Quad, allocator, scene.quads);
-
-        // var buffers: [7]GPUResources.BufferAdd = .{
-        //     .{ .name = "vertex", .buffer = vertex_buffer },
-        //     .{ .name = "frame", .buffer = frame_buffer },
-        //     .{ .name = "uniforms", .buffer = uniforms_buffer },
-        //     .{ .name = "materials", .buffer = materials_buffer },
-        //     .{ .name = "bvh", .buffer = bvh_buffer },
-        //     .{ .name = "objects", .buffer = objects_buffer },
-        //     .{ .name = "spheres", .buffer = spheres_buffer },
-        //     // .{ .name = "quads", .buffer = quads_buffer },
-        // };
         try self.resources.addBuffers(entries.items);
     }
 
     fn initBindGroups(self: *Renderer) !void {
         const scene = self.scene;
+        var entries = &self.bind_groups;
         const layout = self.resources.getBindGroupLayout("layout");
+
         const frame_buffer = self.resources.getBuffer("frame");
+        try entries.append(gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size * @sizeOf(f32)));
+
         const uniforms_buffer = self.resources.getBuffer("uniforms");
-        const materials_buffer = self.resources.getBuffer("materials");
+        try entries.append(gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1 * @sizeOf(Uniforms)));
+
         const bvh_buffer = self.resources.getBuffer("bvh");
-        const objects_buffer = self.resources.getBuffer("objects");
-        const spheres_buffer = self.resources.getBuffer("spheres");
-        // const quads_buffer = self.resources.getBuffer("quads");
-        // NOTE here I'm using the lenght of the original arrays instead of the GPU versions.
+        try entries.append(gpu.BindGroup.Entry.buffer(3, bvh_buffer, 0, scene.bvh_array.items.len * @sizeOf(Aabb_GPU)));
+
+        inline for (optional_resources) |op_res| {
+            const objs = @field(scene, op_res.label);
+            if (objs.items.len > 0) {
+                const buffer = self.resources.getBuffer(op_res.label);
+                try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, objs.items.len * @sizeOf(op_res.res_type.GpuType())));
+            }
+        }
+
         const bind_group = core.device.createBindGroup(
             &gpu.BindGroup.Descriptor.init(.{
                 .layout = layout,
-                .entries = &.{
-                    gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size * @sizeOf(f32)),
-                    gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1 * @sizeOf(Uniforms)),
-                    gpu.BindGroup.Entry.buffer(2, materials_buffer, 0, self.scene.materials.items.len * @sizeOf(Material.Material_GPU)),
-                    gpu.BindGroup.Entry.buffer(3, bvh_buffer, 0, scene.bvh_array.items.len * @sizeOf(Aabb_GPU)),
-                    gpu.BindGroup.Entry.buffer(4, objects_buffer, 0, scene.objects.items.len * @sizeOf(Object.Object_GPU)),
-                    gpu.BindGroup.Entry.buffer(5, spheres_buffer, 0, scene.spheres.items.len * @sizeOf(Sphere.Sphere_GPU)),
-                    // gpu.BindGroup.Entry.buffer(6, quads_buffer, 0, scene.quads.items.len * @sizeOf(Quad.Quad_GPU)),
-                },
+                .entries = entries.items,
             }),
         );
         var bind_groups: [1]GPUResources.BindGroupAdd = .{.{ .name = "bind_group", .bind_group = bind_group }};
