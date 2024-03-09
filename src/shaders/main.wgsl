@@ -9,7 +9,7 @@ fn computeFrameBuffer(
     if (uniforms.rendering == 1) {
         let workgroup_index = workgroup_id.x + workgroup_id.y * num_workgroups.x + workgroup_id.z * num_workgroups.x * num_workgroups.y;
         let pixel_index = workgroup_index * 64 + local_invocation_index;		// global invocation index
-        pixel_coords = vec3<f32>(f32(pixel_index) % uniforms.screen_dims.x, f32(pixel_index) / uniforms.screen_dims.x, 1);
+        pixel_coords = vec3<f32>(f32(pixel_index) % f32(uniforms.target_dims.x), f32(pixel_index) / f32(uniforms.target_dims.x), 1);
 
         fov_factor = 1 / tan(60 * (PI / 180) / 2);
         cam_origin = uniforms.eye;
@@ -36,7 +36,7 @@ fn computeFrameBuffer(
 // Paint a flat texture from the framebuffer
 
 fn get1Dfrom2D(pos: vec2<f32>) -> u32 {
-    return (u32(pos.y) * u32(uniforms.screen_dims.x) + u32(pos.x));
+    return (u32(pos.y) * u32(uniforms.target_dims.x) + u32(pos.x));
 }
 
 @fragment

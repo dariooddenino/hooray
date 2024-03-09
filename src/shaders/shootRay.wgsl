@@ -24,7 +24,7 @@ fn getCameraRay() -> Ray {
     const theta: f32 = PI / 2;
     const h = tan(theta / 2);
     let viewport_height = 2.0 * h * focus_dist;
-    let viewport_width = viewport_height * uniforms.screen_dims.x / uniforms.screen_dims.y;
+    let viewport_width = viewport_height * f32(uniforms.screen_dims.x) / f32(uniforms.screen_dims.y);
 
     let u = vec3<f32>(uniforms.view_matrix[0][0], uniforms.view_matrix[1][0], uniforms.view_matrix[2][0]);
     let v = vec3<f32>(uniforms.view_matrix[0][1], uniforms.view_matrix[1][1], uniforms.view_matrix[2][1]);
@@ -33,8 +33,8 @@ fn getCameraRay() -> Ray {
     let viewport_u = vec3<f32>(viewport_width) * u;
     let viewport_v = vec3<f32>(viewport_height) * v * vec3<f32>(-1);
 
-    let pixel_delta_u = viewport_u / uniforms.screen_dims.x;
-    let pixel_delta_v = viewport_v / uniforms.screen_dims.y;
+    let pixel_delta_u = viewport_u / f32(uniforms.screen_dims.x);
+    let pixel_delta_v = viewport_v / f32(uniforms.screen_dims.y);
 
     let w_focus_dist = vec3<f32>(focus_dist) * w;
 

@@ -110,8 +110,15 @@ pub fn update(app: *App) !bool {
                     };
                     app.mouse_position = ev.pos;
                     // app.renderer.camera.rotate(delta);
-                    app.renderer.camera.rotate(screen_width, screen_height, delta);
+                    app.renderer.camera.rotate(
+                        app.renderer.uniforms.screen_dims[0],
+                        app.renderer.uniforms.screen_dims[1],
+                        delta,
+                    );
                 }
+            },
+            .framebuffer_resize => |ev| {
+                app.renderer.updateScreenDims(ev.width, ev.height);
             },
             .close => return true,
             else => {},

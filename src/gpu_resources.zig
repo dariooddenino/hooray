@@ -13,7 +13,8 @@ pub const Uniforms = extern struct {
     rendering: u32 = 0,
     view_matrix: zm.Mat,
     eye: zm.Vec,
-    screen_dims: [2]f32,
+    target_dims: [2]u32,
+    screen_dims: [2]u32,
 };
 
 pub const GPUResources = struct {

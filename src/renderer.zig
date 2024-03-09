@@ -116,6 +116,7 @@ pub const Renderer = struct {
         camera.* = Camera.init(.{ -4, 4, 2, 0 });
 
         const uniforms = Uniforms{
+            .target_dims = .{ screen_width, screen_height },
             .screen_dims = .{ screen_width, screen_height },
             .frame_num = 0,
             .reset_buffer = 0,
@@ -417,6 +418,11 @@ pub const Renderer = struct {
         encoder.release();
         queue.submit(&[_]*gpu.CommandBuffer{command});
         command.release();
+    }
+
+    pub fn updateScreenDims(self: *Renderer, width: usize, height: usize) void {
+        // const dims: [2]f32 = [_]f32{ @floatFromInt(width), @floatFromInt(height) };
+        self.uniforms.screen_dims = .{ @intCast(width), @intCast(height) };
     }
 
     pub fn render(self: *Renderer, app: *App) !void {

@@ -29,7 +29,8 @@ struct Uniforms {
   rendering: u32,
   view_matrix: mat4x4<f32>,
   eye: vec3<f32>,
-  screen_dims: vec2<f32>,
+  target_dims: vec2<u32>,
+  screen_dims: vec2<u32>,
 }
 
 struct Ray {
