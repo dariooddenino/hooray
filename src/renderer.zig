@@ -97,6 +97,8 @@ pub const Renderer = struct {
     camera: *Camera,
     frame_regulator: FrameRegulator = FrameRegulator.init(),
     total_samples: i32 = 0,
+    // What do we want to resize it to?
+    resize_dims: [2]u32,
 
     // NOTE this would make more sense in gpu_resources maybe?
     bind_group_layouts: std.ArrayList(gpu.BindGroupLayout.Entry),
@@ -129,7 +131,17 @@ pub const Renderer = struct {
         const buffer_adds = std.ArrayList(GPUResources.BufferAdd).init(allocator);
         const bind_groups = std.ArrayList(gpu.BindGroup.Entry).init(allocator);
 
-        var self = Renderer{ .allocator = allocator, .resources = resources, .scene = scene, .uniforms = uniforms, .camera = camera, .bind_group_layouts = bind_group_layouts, .buffer_adds = buffer_adds, .bind_groups = bind_groups };
+        var self = Renderer{
+            .allocator = allocator,
+            .resources = resources,
+            .scene = scene,
+            .uniforms = uniforms,
+            .camera = camera,
+            .bind_group_layouts = bind_group_layouts,
+            .buffer_adds = buffer_adds,
+            .bind_groups = bind_groups,
+            .resize_dims = .{ screen_width, screen_height },
+        };
 
         // Load shaders
         const shader_module = try loadShaders(allocator);
@@ -422,7 +434,7 @@ pub const Renderer = struct {
 
     pub fn updateScreenDims(self: *Renderer, width: usize, height: usize) void {
         // const dims: [2]f32 = [_]f32{ @floatFromInt(width), @floatFromInt(height) };
-        self.uniforms.screen_dims = .{ @intCast(width), @intCast(height) };
+        self.resize_dims = .{ @intCast(width), @intCast(height) };
     }
 
     pub fn render(self: *Renderer, app: *App) !void {
@@ -444,14 +456,30 @@ pub const Renderer = struct {
                 uniforms.sample_rate = 1;
             }
         }
+
+        var reset_render = false;
+
         uniforms.frame_num = self.frame_num;
+        uniforms.reset_buffer = 0;
+
+        // TODO resize not working for now
+        if (uniforms.screen_dims[0] != self.resize_dims[0] or uniforms.screen_dims[1] != self.resize_dims[1]) {
+            uniforms.screen_dims = self.resize_dims;
+            // uniforms.target_dims = self.resize_dims;
+            // reset_render = true;
+        }
+
         uniforms.reset_buffer = if (camera.moving) 1 else 0;
 
         if (camera.moving) {
+            reset_render = true;
+            camera.moving = false;
+        }
+
+        if (reset_render) {
             uniforms.rendering = 1;
             self.total_samples = 0;
             self.frame_num = 1;
-            camera.moving = false;
         }
 
         uniforms.view_matrix = camera.view_matrix;
