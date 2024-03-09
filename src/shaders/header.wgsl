@@ -69,10 +69,13 @@ struct Sphere {
 }
 
 struct Quad {
-  q: vec3<f32>,
+  Q: vec3<f32>,
   u: vec3<f32>,
   v: vec3<f32>,
   material_id: f32,
+  normal: vec3<f32>,
+  D: f32,
+  w: vec3<f32>,
 }
 
 struct HitRecord {

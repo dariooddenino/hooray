@@ -98,7 +98,7 @@ pub const Scene = struct {
         const ground_id = try self.addMaterial("ground", ground);
         try self.addSphere(Vec{ 0, -301, 0, 0 }, 300, ground_id);
 
-        const num_spheres = 13;
+        const num_spheres = 50;
 
         var a: f32 = -num_spheres;
         while (a < num_spheres) : (a += 1) {
@@ -153,6 +153,23 @@ pub const Scene = struct {
         try self.createBVH();
     }
 
+    pub fn loadQuadsScene(self: *Scene) !void {
+        const red = Material.lambertian(.{ 1, 0.2, 0.2, 0 });
+        const red_id = try self.addMaterial("red", red);
+        // const green = Material.lambertian(.{0.2, 1, 0.2, 0});
+        // const green_id = try self.addMaterial("green", green);
+        // const blue = Material.lambertian(.{0.2, 0.2, 1, 0});
+        // const blue_id = try self.addMaterial("blue", blue);
+        // const orange = Material.lambertian(.{1, 0.5, 0, 0});
+        // const orange_id = try self.addMaterial("orange", orange);
+        // const teal = Material.lambertian(.{0.2, 0.8, 0.8});
+        // const teal_id = try self.addMaterial("teal", teal);
+
+        try self.addQuad(Vec{ -3, -2, -5, 0 }, Vec{ 0, 0, -4, 0 }, Vec{ 0, 4, 0, 0 }, red_id);
+
+        try self.createBVH();
+    }
+
     // TODO I have to study how clone() works, because I'm leaking here.
     // Maybe carry objects slice around and defer it.
     pub fn createBVH(self: *Scene) !void {
@@ -191,7 +208,16 @@ pub const Scene = struct {
 
         self.global_id += 1;
         self.sphere_id += 1;
+    }
+
+    fn addQuad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32) !void {
+        const quad = Quad.init(Q, u, v, material_id, self.quad_id);
+        try self.quads.append(quad);
+        const object = Object{ .quad = quad };
+        try self.objects.append(object);
+
         self.global_id += 1;
+        self.quad_id += 1;
     }
 
     fn addMaterial(self: *Scene, label: []const u8, material: Material) !u32 {

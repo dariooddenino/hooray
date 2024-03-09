@@ -115,12 +115,15 @@ pub const Sphere = struct {
 
 pub const Quad = struct {
     object_type: ObjectType = .quad,
-    q: Vec,
+    Q: Vec,
     u: Vec,
     v: Vec,
     material_id: u32,
     local_id: u32, // Id in its own resource ArrayList
     bbox: Aabb,
+    normal: Vec,
+    D: f32,
+    w: Vec,
 
     pub inline fn label() ?[*:0]const u8 {
         return "Quad";
@@ -130,23 +133,33 @@ pub const Quad = struct {
         return Quad_GPU;
     }
 
-    pub fn init(q: Vec, u: Vec, v: Vec, material_id: u32, local_id: u32) Quad {
-        const bbox = Aabb{ .min = q, .max = q + u + v };
+    pub fn init(Q: Vec, u: Vec, v: Vec, material_id: u32, local_id: u32) Quad {
+        const bbox = Aabb{ .min = Q, .max = Q + u + v };
+        const n = zm.cross3(u, v);
+        const normal = zm.normalize3(n);
+        const D = zm.dot3(normal, Q);
+        const w = n / zm.dot3(n, n);
         return Quad{
-            .q = q,
+            .Q = Q,
             .u = u,
             .v = v,
             .material_id = material_id,
             .local_id = local_id,
             .bbox = bbox,
+            .normal = normal,
+            .D = D,
+            .w = w,
         };
     }
 
     pub const Quad_GPU = extern struct {
-        q: [3]f32,
+        Q: [3]f32,
         u: [3]f32,
         v: [3]f32,
         material_id: f32,
+        normal: [3]f32,
+        D: f32,
+        w: [3]f32,
         // padding: [2]f32 = .{ 0 },
     };
 
@@ -154,10 +167,13 @@ pub const Quad = struct {
         var quads_gpu = std.ArrayList(Quad_GPU).init(allocator);
         for (quads.items) |quad| {
             const quad_gpu = Quad_GPU{
-                .q = zm.vecToArr3(quad.q),
+                .Q = zm.vecToArr3(quad.Q),
                 .u = zm.vecToArr3(quad.u),
                 .v = zm.vecToArr3(quad.v),
                 .material_id = @floatFromInt(quad.material_id),
+                .normal = zm.vecToArr3(quad.normal),
+                .D = quad.D,
+                .w = zm.vecToArr3(quad.w),
             };
             try quads_gpu.append(quad_gpu);
         }

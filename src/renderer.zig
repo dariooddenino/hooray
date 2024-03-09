@@ -124,7 +124,7 @@ pub const Renderer = struct {
             .reset_buffer = 0,
             .view_matrix = camera.view_matrix,
             .eye = camera.eye,
-            .defocus_angle = 1,
+            .defocus_angle = 0.5,
         };
 
         const bind_group_layouts = std.ArrayList(gpu.BindGroupLayout.Entry).init(allocator);
