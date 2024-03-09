@@ -14,6 +14,7 @@ const MIRROR = 1;
 const DIELECTRIC = 2;
 const ISOTROPIC = 3;
 const ANISOTROPIC = 4;
+const DIFFUSE_LIGHT = 5;
 const NO_OBJ = -1;
 const SPHERE = 0;
 const QUAD = 1;

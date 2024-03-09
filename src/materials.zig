@@ -10,6 +10,7 @@ pub const MaterialType = union(enum) {
     dielectric,
     // isotropic,
     // anisotropic,
+    diffuse_light,
 
     pub fn toType(self: MaterialType) u32 {
         switch (self) {
@@ -18,6 +19,7 @@ pub const MaterialType = union(enum) {
             .dielectric => return 2,
             // .isotropic => return 3,
             // .anisotropic => return 4,
+            .diffuse_light => return 5,
         }
     }
 };
@@ -95,6 +97,18 @@ pub const Material = extern struct {
             0,
             0,
             eta,
+        );
+    }
+
+    pub fn diffuse_light(emission: Color) Material {
+        return Material.init(
+            .diffuse_light,
+            .{ 0, 0, 0, 0 },
+            .{ 0, 0, 0, 0 },
+            emission,
+            0,
+            0,
+            0,
         );
     }
 

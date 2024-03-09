@@ -240,7 +240,7 @@ pub const Renderer = struct {
         if (!has_elements) {
             return null;
         }
-        std.debug.print("\n{any}:\n{any}\n", .{ T, array.items });
+        // std.debug.print("\n{any}:\n{any}\n", .{ T, array.items });
         const buffer = core.device.createBuffer(&.{
             .label = T.label(),
             .usage = .{ .storage = true, .copy_dst = true },

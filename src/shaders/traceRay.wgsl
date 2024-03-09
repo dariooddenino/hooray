@@ -21,7 +21,8 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
             let a = 0.5 * (unit_direction.y + 1);
             // Show hit boxes
             // bbox_color = vec3<f32>(1 - (f32(hit_rec.hit_bboxes) / 5), 1, 1 - (f32(hit_rec.hit_bboxes) / 5));
-            color += (((1 - a) * vec3<f32>(0.8, 0.8, 0.8) + a * vec3<f32>(0.1, 0.2, 0.5)) * throughput * bbox_color);
+            // color += (((1 - a) * vec3<f32>(0.8, 0.8, 0.8) + a * vec3<f32>(0.1, 0.2, 0.5)) * throughput * bbox_color);
+            color += vec3<f32>(0) * throughput * bbox_color;
             break;
         } else {
 
