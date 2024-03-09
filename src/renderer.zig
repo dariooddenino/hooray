@@ -74,6 +74,20 @@ const FrameRegulator = struct {
     }
 };
 
+// Idenfies label and buffer position of optional resources.
+const OptionalResource = struct {
+    label: []const u8,
+    position: usize,
+    res_type: type,
+};
+
+const optional_resources: [4]OptionalResource = .{
+    OptionalResource{ .label = "materials", .position = 2, .res_type = Material },
+    OptionalResource{ .label = "objects", .position = 4, .res_type = Object },
+    OptionalResource{ .label = "spheres", .position = 5, .res_type = Sphere },
+    OptionalResource{ .label = "quads", .position = 6, .res_type = Quad },
+};
+
 pub const Renderer = struct {
     allocator: std.mem.Allocator,
     resources: GPUResources,
@@ -83,6 +97,10 @@ pub const Renderer = struct {
     camera: *Camera,
     frame_regulator: FrameRegulator = FrameRegulator.init(),
     total_samples: i32 = 0,
+
+    // NOTE this would make more sense in gpu_resources maybe?
+    bindGroupLayouts: std.ArrayList(gpu.BindGroupLayout.Entry),
+    buffer_adds: std.ArrayList(GPUResources.BufferAdd),
 
     pub fn init(allocator: std.mem.Allocator) !Renderer {
         const resources = GPUResources.init(allocator);
@@ -105,12 +123,17 @@ pub const Renderer = struct {
             .defocus_angle = 1,
         };
 
+        const bindGroupLayouts = std.ArrayList(gpu.BindGroupLayout.Entry).init(allocator);
+        const buffer_adds = std.ArrayList(GPUResources.BufferAdd).init(allocator);
+
         var self = Renderer{
             .allocator = allocator,
             .resources = resources,
             .scene = scene,
             .uniforms = uniforms,
             .camera = camera,
+            .bindGroupLayouts = bindGroupLayouts,
+            .buffer_adds = buffer_adds,
         };
 
         // Load shaders
@@ -138,6 +161,11 @@ pub const Renderer = struct {
     pub fn deinit(self: *Renderer) void {
         defer self.resources.deinit();
         defer self.scene.deinit();
+        defer self.bindGroupLayouts.deinit();
+        defer self.buffer_adds.deinit();
+        // if (self.bindGroupLayouts) |bgl| {
+        //     defer bgl.deinit();
+        // }
         defer self.allocator.destroy(self.camera);
     }
 
@@ -160,24 +188,23 @@ pub const Renderer = struct {
     }
 
     fn initBindGroupLayouts(self: *Renderer) !void {
-        const bgl_framebuffer = gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, 0);
-        const bgl_uniforms = gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0);
-        const bgl_materials = gpu.BindGroupLayout.Entry.buffer(2, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
-        const bgl_bvh = gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
-        const bgl_objects = gpu.BindGroupLayout.Entry.buffer(4, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
-        const bgl_spheres = gpu.BindGroupLayout.Entry.buffer(5, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
-        // const bgl_quads = gpu.BindGroupLayout.Entry.buffer(6, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0);
+        var entries = &self.bindGroupLayouts;
+
+        // We always have these
+        try entries.append(gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, 0));
+        try entries.append(gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0));
+        try entries.append(gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
+
+        inline for (optional_resources) |l_map| {
+            const objs = @field(self.scene, l_map.label);
+            if (objs.items.len > 0) {
+                try entries.append(gpu.BindGroupLayout.Entry.buffer(l_map.position, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
+            }
+        }
+
         const bgl = core.device.createBindGroupLayout(
             &gpu.BindGroupLayout.Descriptor.init(.{
-                .entries = &.{
-                    bgl_framebuffer,
-                    bgl_uniforms,
-                    bgl_materials,
-                    bgl_bvh,
-                    bgl_objects,
-                    bgl_spheres,
-                    // bgl_quads,
-                },
+                .entries = entries.items,
             }),
         );
         var bind_group_layouts: [1]GPUResources.BindGroupLayoutAdd = .{.{ .name = "layout", .bind_group_layout = bgl }};
@@ -197,30 +224,36 @@ pub const Renderer = struct {
 
     // Initializes the buffer depending on whether there are resources or not.
     // TODO it doesn't work.
-    fn initResourcesBuffer(comptime T: type, allocator: std.mem.Allocator, resources: std.ArrayList(T)) !*gpu.Buffer {
+    fn initResourcesBuffer(comptime T: type, allocator: std.mem.Allocator, resources: std.ArrayList(T)) !?*gpu.Buffer {
         const array = try T.toGPU(allocator, resources);
         defer array.deinit();
         const has_elements = array.items.len > 0;
+        if (!has_elements) {
+            return null;
+        }
         const buffer = core.device.createBuffer(&.{
             .label = T.label(),
             .usage = .{ .storage = true, .copy_dst = true },
             .size = array.items.len * @sizeOf(T.GpuType()),
-            .mapped_at_creation = if (has_elements) .true else .false,
+            .mapped_at_creation = .true,
         });
-        if (has_elements) {
-            const mapped = buffer.getMappedRange(T.GpuType(), 0, array.items.len);
-            @memcpy(mapped.?, array.items[0..]);
-            buffer.unmap();
-        }
+        const mapped = buffer.getMappedRange(T.GpuType(), 0, array.items.len);
+        @memcpy(mapped.?, array.items[0..]);
+        buffer.unmap();
         return buffer;
     }
 
     fn initBuffers(self: *Renderer, allocator: std.mem.Allocator) !void {
+        const BufferAdd = GPUResources.BufferAdd;
+        var entries = &self.buffer_adds;
+
         const scene = self.scene;
-        const vertex_buffer = core.device.createBuffer(&.{ .label = "Vertex", .usage = .{ .vertex = true, .copy_dst = true }, .size = @sizeOf(Vertex) * vertex_data.len, .mapped_at_creation = .true });
+        var vertex_buffer = core.device.createBuffer(&.{ .label = "Vertex", .usage = .{ .vertex = true, .copy_dst = true }, .size = @sizeOf(Vertex) * vertex_data.len, .mapped_at_creation = .true });
         const vertex_mapped = vertex_buffer.getMappedRange(Vertex, 0, vertex_data.len);
         @memcpy(vertex_mapped.?, vertex_data[0..]);
         vertex_buffer.unmap();
+
+        try entries.append(BufferAdd{ .name = "vertex", .buffer = vertex_buffer });
 
         const frame_num: [screen_size]f32 = .{0} ** screen_size;
         const frame_buffer = core.device.createBuffer(&.{
@@ -233,6 +266,8 @@ pub const Renderer = struct {
         @memcpy(frame_mapped.?, frame_num[0..]);
         frame_buffer.unmap();
 
+        try entries.append(BufferAdd{ .name = "frame", .buffer = frame_buffer });
+
         const uniforms_buffer = core.device.createBuffer(&.{
             .label = "Uniforms",
             .usage = .{ .uniform = true, .copy_dst = true },
@@ -241,7 +276,7 @@ pub const Renderer = struct {
         });
         core.queue.writeBuffer(uniforms_buffer, 0, &[_]Uniforms{self.uniforms});
 
-        const materials_buffer = try initResourcesBuffer(Material, allocator, scene.materials);
+        try entries.append(BufferAdd{ .name = "uniforms", .buffer = uniforms_buffer });
 
         // NOTE: I can't use this with initResourcesBuffer.
         // It would need some heavy refactoring.
@@ -256,23 +291,32 @@ pub const Renderer = struct {
         @memcpy(bvh_mapped.?, scene.bvh_array.items[0..]);
         bvh_buffer.unmap();
 
-        const objects_buffer = try initResourcesBuffer(Object, allocator, scene.objects);
+        try entries.append(BufferAdd{ .name = "bvh", .buffer = bvh_buffer });
 
-        const spheres_buffer = try initResourcesBuffer(Sphere, allocator, scene.spheres);
+        inline for (optional_resources) |l_map| {
+            const objs = @field(scene, l_map.label);
+            const buffer = try initResourcesBuffer(l_map.res_type, allocator, objs);
+            if (buffer) |b| {
+                try entries.append(BufferAdd{ .name = l_map.label, .buffer = b });
+            }
+        }
 
+        // const materials_buffer = try initResourcesBuffer(Material, allocator, scene.materials);
+        // const objects_buffer = try initResourcesBuffer(Object, allocator, scene.objects);
+        // const spheres_buffer = try initResourcesBuffer(Sphere, allocator, scene.spheres);
         // const quads_buffer = initResourcesBuffer(Quad, allocator, scene.quads);
 
-        var buffers: [7]GPUResources.BufferAdd = .{
-            .{ .name = "vertex", .buffer = vertex_buffer },
-            .{ .name = "frame", .buffer = frame_buffer },
-            .{ .name = "uniforms", .buffer = uniforms_buffer },
-            .{ .name = "materials", .buffer = materials_buffer },
-            .{ .name = "bvh", .buffer = bvh_buffer },
-            .{ .name = "objects", .buffer = objects_buffer },
-            .{ .name = "spheres", .buffer = spheres_buffer },
-            // .{ .name = "quads", .buffer = quads_buffer },
-        };
-        try self.resources.addBuffers(&buffers);
+        // var buffers: [7]GPUResources.BufferAdd = .{
+        //     .{ .name = "vertex", .buffer = vertex_buffer },
+        //     .{ .name = "frame", .buffer = frame_buffer },
+        //     .{ .name = "uniforms", .buffer = uniforms_buffer },
+        //     .{ .name = "materials", .buffer = materials_buffer },
+        //     .{ .name = "bvh", .buffer = bvh_buffer },
+        //     .{ .name = "objects", .buffer = objects_buffer },
+        //     .{ .name = "spheres", .buffer = spheres_buffer },
+        //     // .{ .name = "quads", .buffer = quads_buffer },
+        // };
+        try self.resources.addBuffers(entries.items);
     }
 
     fn initBindGroups(self: *Renderer) !void {

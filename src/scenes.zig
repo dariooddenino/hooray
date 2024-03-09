@@ -52,15 +52,12 @@ pub const Scene = struct {
     }
 
     pub fn deinit(self: *Scene) void {
-        defer zstbi.deinit();
+        // defer zstbi.deinit();
         defer self.materials.deinit();
         defer self.spheres.deinit();
         defer self.quads.deinit();
         defer self.objects.deinit();
         defer self.bvh.deinit();
-        // for (self.skyboxes.items) |skybox| {
-        //     skybox.deinit();
-        // }
         self.skyboxes.deinit();
     }
 
@@ -168,20 +165,22 @@ pub const Scene = struct {
     }
 
     inline fn loadSkyboxes(allocator: std.mem.Allocator, skyboxes: *std.ArrayList(zstbi.Image)) !void {
-        zstbi.init(allocator);
-        const files: [6][]const u8 = comptime .{
-            "alps_field_2k.hdr",
-            "autumn_park_2k.hdr",
-            "kiara_9_dusk_2k.hdr",
-            "rooitou_park_2k.hdr",
-            "studio_small_03_2k.hdr",
-            "studio_small_08_4k.hdr",
-        };
+        _ = allocator;
+        _ = skyboxes;
+        // zstbi.init(allocator);
+        // const files: [6][]const u8 = comptime .{
+        //     "alps_field_2k.hdr",
+        //     "autumn_park_2k.hdr",
+        //     "kiara_9_dusk_2k.hdr",
+        //     "rooitou_park_2k.hdr",
+        //     "studio_small_03_2k.hdr",
+        //     "studio_small_08_4k.hdr",
+        // };
 
-        inline for (files) |file| {
-            const skybox = try zstbi.Image.loadFromFile(content_dir ++ file, 4);
-            try skyboxes.append(skybox);
-        }
+        // inline for (files) |file| {
+        //     const skybox = try zstbi.Image.loadFromFile(content_dir ++ file, 4);
+        //     try skyboxes.append(skybox);
+        // }
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {
