@@ -10,6 +10,22 @@ pub const Transform = struct {
     model_matrix: Mat,
     inv_model_matrix: Mat,
 
+    translateM: Mat,
+    translateV: Vec,
+    tx: f32,
+    ty: f32,
+    tz: f32,
+
+    scaleM: Mat,
+    scaleV: Vec,
+    sx: f32,
+    sy: f32,
+    sz: f32,
+
+    rotationM: Mat,
+    rotation_angle: f32,
+    rotation_axis: Vec,
+
     pub inline fn label() ?[*:0]const u8 {
         return "Transform";
     }
@@ -22,6 +38,60 @@ pub const Transform = struct {
         model_matrix: [16]f32,
         inv_model_matrix: [16]f32,
     };
+
+    pub fn init() Transform {
+        return Transform{
+            .model_matrix = zm.identity(),
+            .inv_model_matrix = zm.identity(),
+            .translateM = zm.splat(Mat, 0),
+            .translateV = zm.splat(Vec, 0),
+            .tx = 0,
+            .ty = 0,
+            .tz = 0,
+            .scaleM = zm.splat(Mat, 0),
+            .scaleV = zm.splat(Vec, 0),
+            .sx = 0,
+            .sy = 0,
+            .sz = 0,
+            .rotationM = zm.splat(Mat, 0),
+            .rotation_angle = 0,
+            .rotation_axis = Vec{ 1, 0, 0, 0 },
+        };
+    }
+
+    // TODO missing an update function, need to check what it does first.
+
+    pub fn translate(self: *Transform, x: f32, y: f32, z: f32) void {
+        self.tx = x;
+        self.ty = y;
+        self.tz = z;
+        self.translateV = Vec{ self.tx, self.ty, self.tz };
+        self.translateM = self.translateM.translationV(self.translateV);
+    }
+
+    pub fn scale(self: *Transform, sx: f32, sy: f32, sz: f32) void {
+        self.sx = sx;
+        self.sy = sy;
+        self.sz = sz;
+        self.scaleV = Vec{ sx, sy, sz, 0 };
+        self.scaleM = self.scaleM.scalingV(self.scaleV);
+    }
+
+    // NOTE I think this works only for one axis at a time
+    pub fn rotate(self: *Transform, theta: f32, axis: Vec) void {
+        self.rotation_angle = theta;
+        self.rotation_axis = axis;
+        // NOTE: this makes unbased assumptions on how this will be used.
+        if (axis[0] == 1) {
+            self.rotationM = self.rotationM.rotateX(theta);
+        }
+        if (axis[1] == 1) {
+            self.rotationM = self.rotationM.rotateY(theta);
+        }
+        if (axis[2] == 2) {
+            self.rotationM = self.rotationM.rotateZ(theta);
+        }
+    }
 };
 
 pub const ObjectType = enum {
