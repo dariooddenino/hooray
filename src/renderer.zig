@@ -113,10 +113,14 @@ pub const Renderer = struct {
 
         // Build scene
         var scene = try Scene.init(allocator);
-        // try scene.loadTestScene(12);
-        // try scene.loadBasicScene(camera);
-        // try scene.loadWeekOneScene(camera);
-        try scene.loadQuadsScene(camera);
+        switch (4) {
+            0 => try scene.loadTestScene(12),
+            1 => try scene.loadBasicScene(camera),
+            2 => try scene.loadWeekOneScene(camera),
+            3 => try scene.loadQuadsScene(camera),
+            4 => try scene.loadCornellScene(camera),
+            else => unreachable,
+        }
 
         const uniforms = Uniforms{
             .target_dims = .{ screen_width, screen_height },
@@ -125,7 +129,7 @@ pub const Renderer = struct {
             .reset_buffer = 0,
             .view_matrix = camera.view_matrix,
             .eye = camera.eye,
-            .defocus_angle = 0.5,
+            .defocus_angle = 0.2,
         };
 
         const bind_group_layouts = std.ArrayList(gpu.BindGroupLayout.Entry).init(allocator);

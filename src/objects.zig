@@ -154,16 +154,17 @@ pub const Quad = struct {
     }
 
     pub const Quad_GPU = extern struct {
-        Q: [3]f32,
-        material_id: f32,
-        u: [3]f32,
+        Q: [4]f32,
+        u: [4]f32,
+        v: [4]f32,
+        w: [4]f32,
+        normal: [4]f32,
         D: f32,
-        normal: [3]f32,
-        padding0: f32 = 0,
-        v: [3]f32,
-        padding1: f32 = 0,
-        w: [3]f32,
-        padding2: f32 = 0,
+        material_id: f32,
+        padding: [2]f32 = .{ 0, 0 },
+        // padding0: f32 = 0,
+        // padding1: f32 = 0,
+        // padding2: f32 = 0,
         // padding1: f32 = 0,
         // padding: [3]f32 = .{ 0, 0, 0 },
     };
@@ -172,13 +173,13 @@ pub const Quad = struct {
         var quads_gpu = std.ArrayList(Quad_GPU).init(allocator);
         for (quads.items) |quad| {
             const quad_gpu = Quad_GPU{
-                .Q = zm.vecToArr3(quad.Q),
-                .u = zm.vecToArr3(quad.u),
-                .v = zm.vecToArr3(quad.v),
+                .Q = zm.vecToArr4(quad.Q),
+                .u = zm.vecToArr4(quad.u),
+                .v = zm.vecToArr4(quad.v),
                 .material_id = @floatFromInt(quad.material_id),
-                .normal = zm.vecToArr3(quad.normal),
+                .normal = zm.vecToArr4(quad.normal),
                 .D = quad.D,
-                .w = zm.vecToArr3(quad.w),
+                .w = zm.vecToArr4(quad.w),
             };
             try quads_gpu.append(quad_gpu);
         }

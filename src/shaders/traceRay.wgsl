@@ -10,6 +10,7 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
     var max_bounces = uniforms.max_bounces;
     // Reduce max bounces while moving.
     // It doesn't look very effective, I need more complex scenes.
+    // It helps fps, but the noise actually increases.
     if (uniforms.frame_num < 15) {
         max_bounces /= 2;
     }

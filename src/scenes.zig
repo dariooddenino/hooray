@@ -178,11 +178,43 @@ pub const Scene = struct {
         try self.addQuad(Vec{ 3, -2, 1, 0 }, Vec{ 0, 0, 4, 0 }, Vec{ 0, 4, 0, 0 }, blue_id);
         try self.addQuad(Vec{ -2, 3, 1, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, 4, 0 }, orange_id);
         try self.addQuad(Vec{ -2, -3, 5, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, -4, 0 }, teal_id);
-        try self.addSphere(Vec{ 0, 5, 0, 0 }, 1, red_id);
+        try self.addSphere(Vec{ 0, 0, 3, 0 }, 1, red_id);
 
         try self.createBVH();
 
         camera.setPosition(.{ 0, 0, 9, 0 });
+    }
+
+    pub fn loadCornellScene(self: *Scene, camera: *Camera) !void {
+        const red = Material.lambertian(.{ 0.65, 0.05, 0.05, 0 });
+        const red_id = try self.addMaterial("red", red);
+        const white = Material.lambertian(.{ 0.73, 0.73, 0.73, 0 });
+        const white_id = try self.addMaterial("white", white);
+        const green = Material.lambertian(.{ 0.12, 0.45, 0.15, 0 });
+        const green_id = try self.addMaterial("green", green);
+        const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
+        const light_id = try self.addMaterial("light", light);
+        const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
+        const glass_id = try self.addMaterial("glass", glass);
+
+        // left -200
+        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 0, -400, 0 }, Vec{ 0, 400, 0, 0 }, green_id);
+        // right 200
+        try self.addQuad(Vec{ 200, 0, -200, 0 }, Vec{ 0, 0, 400, 0 }, Vec{ 0, 400, 0, 0 }, red_id);
+        // light
+        try self.addQuad(Vec{ -50, 398, -50, 0 }, Vec{ 100, 0, 0, 0 }, Vec{ 0, 0, 100, 0 }, light_id);
+        // top
+        try self.addQuad(Vec{ -200, 400, -200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, 400, 0 }, white_id);
+        // bottom teal
+        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, -400, 0 }, white_id);
+        // back green
+        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id);
+        try self.addSphere(Vec{ 0, 80, 0, 0 }, 80, glass_id);
+
+        try self.createBVH();
+
+        // camera.setPosition(.{ 0, 278, -600, 0 });
+        camera.setCamera(.{ 0, 278, -400, 0 }, .{ 0, 200, 0, 0 }, .{ 0, 1, 0, 0 });
     }
 
     // TODO I have to study how clone() works, because I'm leaking here.

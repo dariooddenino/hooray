@@ -1,27 +1,23 @@
 # HOORAY!
 
-A Zig port of the "Ray tracing in one weekend" series.
+A Zig port of the "Ray tracing in one weekend" series with additions from the pbr-book too.
 
 Built using mach-core and zig-gamedev libraries.
 
-Current shaders are heavily inspired from https://github.com/Shridhar2602/WebGPU-Path-Tracer
+Some inspiration taken from https://github.com/Shridhar2602/WebGPU-Path-Tracer
 
 ## Setup
 - Clone `zig-gamdev` to /deps
-- Clone `mach-core` to /deps and switch to the `sysgpu` branch
-
 
 ## TODO
-It seems that the linear tree is sent correctly up to the point where it's loaded in the buffer.
-I've tested the length on the gpu side, and it should be correct. But I have to investigate more.
-If all this is correct, then the problem could be in the tree generation or traversal.
-The tree generation, in particualr, has a lot of parts that I'm not sure of.
-
-
-splitMiddle partition I could avoid sorting?
-nthElement? But for now it doesn't even get called
-SAH partition? I'm not sure of whats' going on in the book code. Looking at 
-the example project might be a better idea.
+### Things I've skipped for now
+- [ ] Textures
+- [ ] Skyboxes
+- [ ] Noise
+### Next on the book
+- [ ] Instances
+- [ ] Volumes
+- [ ] Final week 2 scene
 
 ## Delta time
 ```zig

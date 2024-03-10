@@ -90,7 +90,7 @@ pub const Camera = struct {
     pub fn calculateMovement(self: *Camera, pressed_keys: PressedKeys) void {
         std.debug.assert(pressed_keys.areKeysPressed());
         self.moving = true;
-        const w = zm.normalize3(self.center - self.eye);
+        const w = self.center - self.eye;
         if (pressed_keys.up) {
             self.eye = self.eye + w * zm.splat(Vec, self.movement_speed);
         }

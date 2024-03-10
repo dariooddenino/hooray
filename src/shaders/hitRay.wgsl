@@ -130,18 +130,19 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
 }
 
 fn hitQuad(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
-	if(dot(ray.direction, quad.normal) > 0) {
+    let normal = quad.normal.xyz;
+	if(dot(ray.direction, normal) > 0) {
 		return false;
 	}
 
-	let denom = dot(quad.normal, ray.direction);
+	let denom = dot(normal, ray.direction);
 
 	// No hit if the ray is paraller to the plane
 	if(abs(denom) < 1e-8) {
 		return false;
 	}
 
-	let t = (quad.D - dot(quad.normal, ray.origin)) / denom;
+	let t = (quad.D - dot(normal, ray.origin)) / denom;
 	if(t <= tmin || t >= tmax) {
 		return false;
 	}
@@ -149,9 +150,9 @@ fn hitQuad(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
 	// determine if hit point lies within quarilateral
 	let intersection = at(ray, t);
 
-	let planar_hitpt_vector = intersection - quad.Q;
-	let alpha = dot(quad.w, cross(planar_hitpt_vector, quad.v));
-	let beta = dot(quad.w, cross(quad.u, planar_hitpt_vector));
+	let planar_hitpt_vector = intersection - quad.Q.xyz;
+	let alpha = dot(quad.w.xyz, cross(planar_hitpt_vector, quad.v.xyz));
+	let beta = dot(quad.w.xyz, cross(quad.u.xyz, planar_hitpt_vector));
 
 	if(alpha < 0 || 1 < alpha || beta < 0 || 1 < beta) {
 		return false;
@@ -159,7 +160,7 @@ fn hitQuad(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
 
 	hit_rec.t = t;
 	hit_rec.p = intersection;
-	hit_rec.normal = normalize(quad.normal);
+	hit_rec.normal = normalize(normal);
 	hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
 	if(hit_rec.front_face == false)
 	{

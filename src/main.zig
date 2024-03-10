@@ -26,7 +26,7 @@ pub const screen_height = 720;
 pub const screen_size = screen_width * screen_height;
 pub const target_frame_rate = 60;
 // Stop after a while
-pub const max_samples = 500;
+pub const max_samples = 4000;
 
 pub const PressedKeys = packed struct(u16) {
     right: bool = false,
