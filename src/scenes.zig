@@ -185,6 +185,7 @@ pub const Scene = struct {
         camera.setPosition(.{ 0, 0, 9, 0 });
     }
 
+    // This scene is flipped backwards
     pub fn loadCornellScene(self: *Scene, camera: *Camera) !void {
         const red = Material.lambertian(.{ 0.65, 0.05, 0.05, 0 });
         const red_id = try self.addMaterial("red", red);
@@ -196,6 +197,8 @@ pub const Scene = struct {
         const light_id = try self.addMaterial("light", light);
         const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
         const glass_id = try self.addMaterial("glass", glass);
+        const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 0.4, 0.8);
+        const metal_id = try self.addMaterial("metal", metal);
 
         // left -200
         try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 0, -400, 0 }, Vec{ 0, 400, 0, 0 }, green_id);
@@ -205,11 +208,14 @@ pub const Scene = struct {
         try self.addQuad(Vec{ -50, 398, -50, 0 }, Vec{ 100, 0, 0, 0 }, Vec{ 0, 0, 100, 0 }, light_id);
         // top
         try self.addQuad(Vec{ -200, 400, -200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, 400, 0 }, white_id);
-        // bottom teal
+        // bottom
         try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, -400, 0 }, white_id);
-        // back green
+        // back
         try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id);
-        try self.addSphere(Vec{ 0, 80, 0, 0 }, 80, glass_id);
+        try self.addSphere(Vec{ 80, 80, -70, 0 }, 60, glass_id);
+
+        try self.addBox(Vec{ -50, 0, -80, 0 }, Vec{ -140, 90, -170, 0 }, white_id);
+        try self.addBox(Vec{ 30, 0, 20, 0 }, Vec{ -80, 250, 150, 0 }, metal_id);
 
         try self.createBVH();
 
@@ -265,6 +271,22 @@ pub const Scene = struct {
 
         self.global_id += 1;
         self.quad_id += 1;
+    }
+
+    fn addBox(scene: *Scene, a: Vec, b: Vec, material_id: u32) !void {
+        const min = Vec{ @min(a[0], b[0]), @min(a[1], b[1]), @min(a[2], b[2]), 0 };
+        const max = Vec{ @max(a[0], b[0]), @max(a[1], b[1]), @max(a[2], b[2]), 0 };
+
+        const dx = Vec{ max[0] - min[0], 0, 0, 0 };
+        const dy = Vec{ 0, max[1] - min[1], 0, 0 };
+        const dz = Vec{ 0, 0, max[2] - min[2], 0 };
+
+        try scene.addQuad(Vec{ min[0], min[1], max[2], 0 }, dx, dy, material_id); // front
+        try scene.addQuad(Vec{ max[0], min[1], max[2], 0 }, -dz, dy, material_id); // right
+        try scene.addQuad(Vec{ min[0], max[1], min[2], 0 }, dx, -dy, material_id); // back
+        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dz, dy, material_id); // left
+        try scene.addQuad(Vec{ min[0], max[1], max[2], 0 }, dx, -dz, material_id); // top
+        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dx, dz, material_id); // bottom
     }
 
     fn addMaterial(self: *Scene, label: []const u8, material: Material) !u32 {

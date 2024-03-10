@@ -2,8 +2,27 @@ const std = @import("std");
 const zm = @import("zmath");
 const vec = @import("vec.zig");
 
+const Mat = zm.Mat;
 const Vec = vec.Vec;
 const Aabb = @import("aabbs.zig").Aabb;
+
+pub const Transform = struct {
+    model_matrix: Mat,
+    inv_model_matrix: Mat,
+
+    pub inline fn label() ?[*:0]const u8 {
+        return "Transform";
+    }
+
+    pub inline fn GpuType() type {
+        return Transform_GPU();
+    }
+
+    pub const Transform_GPU = struct {
+        model_matrix: [16]f32,
+        inv_model_matrix: [16]f32,
+    };
+};
 
 pub const ObjectType = enum {
     sphere,

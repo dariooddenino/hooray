@@ -5,6 +5,9 @@
 @group(0) @binding(4) var<storage, read> objects: array<Object>;
 @group(0) @binding(5) var<storage, read> sphere_objs : array<Sphere>;
 @group(0) @binding(6) var<storage, read> quad_objs : array<Quad>;
+// Triangle
+// Meshes
+// @group(0) @binding(9) var<storage, read> tranforms: array<Transform>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
@@ -77,6 +80,11 @@ struct Quad {
   normal: vec4<f32>,
   D: f32,
   material_id: f32,
+}
+
+struct Transform {
+  model_matrix: mat4x4f,
+  inv_model_matrix: mat4x4f,
 }
 
 struct HitRecord {
