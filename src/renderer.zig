@@ -17,6 +17,7 @@ const Quad = objects.Quad;
 const Sphere = objects.Sphere;
 const Uniforms = gpu_resources.Uniforms;
 const Scene = scenes.Scene;
+const SimpleTransform = objects.SimpleTransform;
 
 const screen_width = main.screen_width;
 const screen_height = main.screen_height;

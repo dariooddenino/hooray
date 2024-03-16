@@ -97,6 +97,13 @@ pub const Aabb = struct {
         }
     }
 
+    pub fn add(self: Aabb, p: Vec) Aabb {
+        return Aabb{
+            .min = self.min + p,
+            .max = self.max + p,
+        };
+    }
+
     pub fn offset(self: Aabb, p: Vec) Vec {
         var o: Vec = p - self.min;
         if (self.max[0] > self.min[0]) {

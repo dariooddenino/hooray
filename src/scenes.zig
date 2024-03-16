@@ -14,6 +14,7 @@ const Camera = @import("camera.zig").Camera;
 const Material = @import("materials.zig").Material;
 const Object = @import("objects.zig").Object;
 const Quad = @import("objects.zig").Quad;
+const SimpleTransform = @import("objects.zig").SimpleTransform;
 const Sphere = @import("objects.zig").Sphere;
 const Vec = zm.Vec;
 
@@ -28,6 +29,8 @@ pub const Scene = struct {
     quad_id: u32 = 0,
     materials: std.ArrayList(Material),
     material_id: u32 = 0,
+    transforms: std.ArrayList(SimpleTransform),
+    transform_id: u32 = 0,
     bvh: BVHAggregate = undefined,
     bvh_array: std.ArrayList(Aabb_GPU),
     skyboxes: std.ArrayList(zstbi.Image),
@@ -37,6 +40,7 @@ pub const Scene = struct {
         const quads = std.ArrayList(Quad).init(allocator);
         const objects = std.ArrayList(Object).init(allocator);
         const materials = std.ArrayList(Material).init(allocator);
+        const transforms = std.ArrayList(SimpleTransform).init(allocator);
         const bvh_array = std.ArrayList(Aabb_GPU).init(allocator);
         var skyboxes = std.ArrayList(zstbi.Image).init(allocator);
         _ = &skyboxes;
@@ -47,6 +51,7 @@ pub const Scene = struct {
             .spheres = spheres,
             .quads = quads,
             .materials = materials,
+            .transforms = transforms,
             .bvh_array = bvh_array,
             .skyboxes = skyboxes,
         };
@@ -58,6 +63,7 @@ pub const Scene = struct {
         defer self.spheres.deinit();
         defer self.quads.deinit();
         defer self.objects.deinit();
+        defer self.transforms.deinit();
         defer self.bvh.deinit();
         self.skyboxes.deinit();
     }
@@ -251,6 +257,12 @@ pub const Scene = struct {
         //     const skybox = try zstbi.Image.loadFromFile(content_dir ++ file, 4);
         //     try skyboxes.append(skybox);
         // }
+    }
+
+    fn addTransform(self: *Scene, transform: SimpleTransform) !u32 {
+        try self.transforms.append(transform);
+        self.transform_id += 1;
+        return self.transform_id;
     }
 
     fn addSphere(self: *Scene, center: Vec, radius: f32, material_id: u32) !void {

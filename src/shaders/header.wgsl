@@ -70,6 +70,7 @@ struct Sphere {
   center: vec3<f32>,
   radius: f32,
   material_id: f32,
+  transform_id: f32,
 }
 
 struct Quad {
@@ -80,12 +81,13 @@ struct Quad {
   normal: vec4<f32>,
   D: f32,
   material_id: f32,
+  transform_id: f32,
 }
 
-struct Transform {
-  model_matrix: mat4x4f,
-  inv_model_matrix: mat4x4f,
-}
+// struct Transform {
+//   model_matrix: mat4x4f,
+//   inv_model_matrix: mat4x4f,
+// }
 
 struct HitRecord {
   p: vec3<f32>,
