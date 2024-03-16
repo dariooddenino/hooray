@@ -94,7 +94,12 @@ fn hitAabb(box: AABB, tmin: f32, tmax: f32, ray: Ray, inv_dir: vec3<f32>) -> boo
     return t_max > t_min;
 }
 
-fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
+fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
+    var ray = in_ray;
+    if (sphere.transform_id > -1) {
+        let transform = transforms[i32(sphere.transform_id)];
+        ray = Ray(in_ray.origin - transform.offset, in_ray.direction);
+    }
     let center = sphere.center;
     let oc = ray.origin - center;
     let a = dot(ray.direction, ray.direction);
@@ -129,7 +134,47 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> bool {
     return true;
 }
 
-fn hitQuad(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
+fn hitQuad(quad: Quad, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
+    var ray = in_ray;
+    if (quad.transform_id > -1) {
+        let transform = transforms[i32(quad.transform_id)];
+        var origin = in_ray.origin;
+        var direction = in_ray.direction;
+        // Translate
+        origin -= transform.offset;
+        // Rotate
+        origin.x = transform.cos_theta * in_ray.origin.x - transform.sin_theta * in_ray.origin.z;
+        origin.z = transform.sin_theta * in_ray.origin.x + transform.cos_theta * in_ray.origin.z;
+        direction.x = transform.cos_theta * in_ray.direction.x - transform.sin_theta * in_ray.direction.z;
+        direction.z = transform.sin_theta * in_ray.direction.x + transform.cos_theta * in_ray.direction.z;
+
+        ray = Ray(origin, direction);
+
+        if (!hitQuadInner(quad, tmin, tmax, ray)) {
+            return false;
+        }
+
+        // Change the intersection point from object space to world space
+        // TODO should I do the same for the translation offset?
+        var p = hit_rec.p;
+        p.x = transform.cos_theta * hit_rec.p.x + transform.sin_theta * hit_rec.p.z;
+        p.z = -transform.sin_theta * hit_rec.p.x + transform.cos_theta * hit_rec.p.z;
+
+        // Change the normal from object space to world space
+        var normal = hit_rec.normal;
+        normal.x = transform.cos_theta * hit_rec.normal.x + transform.sin_theta * hit_rec.normal.z;
+        normal.z = -transform.sin_theta * hit_rec.normal.x + transform.cos_theta * hit_rec.normal.z;
+
+        hit_rec.p = p;
+        hit_rec.normal = normal;
+
+        return true;
+    }
+
+    return hitQuadInner(quad, tmin, tmax, ray);
+}
+
+fn hitQuadInner(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
     let normal = quad.normal.xyz;
 	if(dot(ray.direction, normal) > 0) {
 		return false;

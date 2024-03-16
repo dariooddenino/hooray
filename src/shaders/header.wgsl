@@ -7,7 +7,7 @@
 @group(0) @binding(6) var<storage, read> quad_objs : array<Quad>;
 // Triangle
 // Meshes
-@group(0) @binding(9) var<storage, read> tranforms: array<SimpleTransform>;
+@group(0) @binding(9) var<storage, read> transforms: array<SimpleTransform>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;

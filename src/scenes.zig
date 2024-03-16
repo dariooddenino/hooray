@@ -238,7 +238,7 @@ pub const Scene = struct {
         var objects_clone = try self.objects.clone();
         const objects_slice = try objects_clone.toOwnedSlice();
         defer self.allocator.free(objects_slice);
-        const bvh = try bvhs.BVHAggregate.init(self.allocator, objects_slice, bvhs.SplitMethod.SAH);
+        const bvh = try bvhs.BVHAggregate.init(self.allocator, objects_slice, &self.transforms, bvhs.SplitMethod.SAH);
         self.bvh = bvh;
         self.bvh_array = bvh.linear_nodes;
     }
@@ -264,7 +264,7 @@ pub const Scene = struct {
 
     fn addTransform(self: *Scene, transform: SimpleTransform) !u32 {
         try self.transforms.append(transform);
-        self.transform_id += 1;
+        defer self.transform_id += 1;
         return self.transform_id;
     }
 

@@ -8,6 +8,7 @@ const Aabb = aabbs.Aabb;
 const Aabb_GPU = aabbs.Aabb_GPU;
 const Object = @import("objects.zig").Object;
 const ObjectType = @import("objects.zig").ObjectType;
+const SimpleTransform = @import("objects.zig").SimpleTransform;
 const Vec = zm.Vec;
 
 const BVHSplitBucket = struct {
@@ -81,6 +82,7 @@ pub const BVHAggregate = struct {
     max_prims_in_node: u32 = 1,
     primitives: *[]Object,
     linear_nodes: std.ArrayList(Aabb_GPU),
+    transforms: *std.ArrayList(SimpleTransform),
     split_method: SplitMethod,
 
     pub fn deinit(self: BVHAggregate) void {
@@ -90,6 +92,7 @@ pub const BVHAggregate = struct {
     pub fn init(
         in_allocator: std.mem.Allocator,
         primitives: []Object,
+        transforms: *std.ArrayList(SimpleTransform),
         split_method: SplitMethod,
     ) !BVHAggregate {
         var arena = std.heap.ArenaAllocator.init(in_allocator);
@@ -100,11 +103,19 @@ pub const BVHAggregate = struct {
         // Build the array of BVHPrimitive
         var bvh_primitives = std.ArrayList(BVHPrimitive).init(allocator);
         for (0..primitives.len) |i| {
+            var bbox = primitives[i].getBbox();
+            const n_transform_id = primitives[i].getTransformId();
+            if (n_transform_id) |t_id| {
+                const transform = transforms.items[t_id];
+                bbox = transform.applyToBbox(bbox);
+            }
+
             try bvh_primitives.append(BVHPrimitive.init(
                 i,
                 primitives[i].getType(),
                 primitives[i].getLocalId(),
-                primitives[i].getBbox(),
+                // primitives[i].getBbox(),
+                bbox,
             ));
         }
 
@@ -117,10 +128,11 @@ pub const BVHAggregate = struct {
 
         const pre_build_t = std.time.milliTimestamp();
         if (split_method == SplitMethod.HLBVH) {
+            // Not yet done
             root = try buildHLBVH(allocator, bvh_primitives, &total_nodes, &ordered_primitives);
         } else {
             var ordered_prims_offset: u32 = 0;
-            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives, split_method, max_prims_in_node);
+            root = try buildRecursive(allocator, &bvh_primitives, &total_nodes, &ordered_prims_offset, &ordered_primitives, primitives, split_method, max_prims_in_node, transforms);
         }
         const post_build_t = std.time.milliTimestamp();
         std.debug.print("BVH of {d} primitives built in {d}ms\n", .{ primitives.len, post_build_t - pre_build_t });
@@ -149,6 +161,7 @@ pub const BVHAggregate = struct {
             .max_prims_in_node = max_prims_in_node,
             .primitives = own_primitives,
             .linear_nodes = linear_nodes,
+            .transforms = transforms,
             .split_method = split_method,
         };
     }
@@ -175,6 +188,7 @@ pub const BVHAggregate = struct {
         primitives: []Object,
         split_method: SplitMethod,
         max_prims_in_node: u32,
+        transforms: *std.ArrayList(SimpleTransform),
     ) !*BVHBuildNode {
         // std.debug.print("\nRECURSIVE STEP (n.prim {d}): ", .{bvh_primitives.items.len});
         // Initialize the node
@@ -357,6 +371,7 @@ pub const BVHAggregate = struct {
                     primitives,
                     split_method,
                     max_prims_in_node,
+                    transforms,
                 );
                 const right = try buildRecursive(
                     allocator,
@@ -367,6 +382,7 @@ pub const BVHAggregate = struct {
                     primitives,
                     split_method,
                     max_prims_in_node,
+                    transforms,
                 );
 
                 node.initInterior(dim, left, right);

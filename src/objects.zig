@@ -36,8 +36,8 @@ pub const SimpleTransform = struct {
     }
 
     pub fn applyToBbox(self: SimpleTransform, in_bbox: Aabb) Aabb {
-        var min: Vec = zm.splat(utils.infinity);
-        var max: Vec = zm.splat(-utils.infinity);
+        var min: Vec = zm.splat(Vec, utils.infinity);
+        var max: Vec = zm.splat(Vec, -utils.infinity);
         const bbox = in_bbox.add(self.offset);
 
         for (0..2) |i| {
@@ -219,6 +219,12 @@ pub const Object = union(enum) {
     pub fn getLocalId(self: Object) u32 {
         switch (self) {
             inline else => |o| return o.local_id,
+        }
+    }
+
+    pub fn getTransformId(self: Object) ?u32 {
+        switch (self) {
+            inline else => |o| return o.transform_id,
         }
     }
 
