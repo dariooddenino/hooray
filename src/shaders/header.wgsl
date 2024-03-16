@@ -7,7 +7,7 @@
 @group(0) @binding(6) var<storage, read> quad_objs : array<Quad>;
 // Triangle
 // Meshes
-// @group(0) @binding(9) var<storage, read> tranforms: array<Transform>;
+@group(0) @binding(9) var<storage, read> tranforms: array<SimpleTransform>;
 
 const PI = 3.1415926535897932385;
 const MIN_FLOAT = 0.0001;
@@ -82,6 +82,12 @@ struct Quad {
   D: f32,
   material_id: f32,
   transform_id: f32,
+}
+
+struct SimpleTransform {
+  offset: vec3<f32>,
+  sin_theta: f32,
+  cos_theta: f32,
 }
 
 // struct Transform {

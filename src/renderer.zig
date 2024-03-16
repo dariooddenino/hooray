@@ -29,7 +29,14 @@ const Vertex = struct {
 };
 
 // Screen size quad.
-const vertex_data = [_]Vertex{ Vertex{ .pos = .{ -1, -1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ -1, 1 } }, Vertex{ .pos = .{ 1, -1 } }, Vertex{ .pos = .{ 1, 1 } } };
+const vertex_data = [_]Vertex{
+    Vertex{ .pos = .{ -1, -1 } },
+    Vertex{ .pos = .{ 1, -1 } },
+    Vertex{ .pos = .{ -1, 1 } },
+    Vertex{ .pos = .{ -1, 1 } },
+    Vertex{ .pos = .{ 1, -1 } },
+    Vertex{ .pos = .{ 1, 1 } },
+};
 
 const FrameRegulator = struct {
     initialized: bool,
@@ -82,11 +89,12 @@ const OptionalResource = struct {
     res_type: type,
 };
 
-const optional_resources: [4]OptionalResource = .{
+const optional_resources: [5]OptionalResource = .{
     OptionalResource{ .label = "materials", .position = 2, .res_type = Material },
     OptionalResource{ .label = "objects", .position = 4, .res_type = Object },
     OptionalResource{ .label = "spheres", .position = 5, .res_type = Sphere },
     OptionalResource{ .label = "quads", .position = 6, .res_type = Quad },
+    OptionalResource{ .label = "transforms", .position = 9, .res_type = SimpleTransform },
 };
 
 pub const Renderer = struct {

@@ -11,9 +11,17 @@ const Aabb = @import("aabbs.zig").Aabb;
 /// I will have to solve the "problem" that aabb are transformed for tree generation,
 /// while the shapes maybe should be transformed in shaders.
 pub const SimpleTransform = struct {
-    offset: Vec = zm.splat(0),
+    offset: Vec = zm.splat(Vec, 0),
     sin_theta: f32 = 0,
     cos_theta: f32 = 1,
+
+    pub inline fn label() ?[*:0]const u8 {
+        return "SimpleTransform";
+    }
+
+    pub inline fn GpuType() type {
+        return SimpleTransform_GPU;
+    }
 
     pub fn init(offset: ?Vec, theta: ?f32) SimpleTransform {
         var self = SimpleTransform{};
@@ -56,6 +64,26 @@ pub const SimpleTransform = struct {
         }
 
         return Aabb{ .min = min, .max = max };
+    }
+
+    pub const SimpleTransform_GPU = extern struct {
+        offset: [3]f32,
+        sin_theta: f32,
+        cos_theta: f32,
+        padding: [3]f32 = .{ 0, 0, 0 },
+    };
+
+    pub fn toGPU(allocator: std.mem.Allocator, transforms: std.ArrayList(SimpleTransform)) !std.ArrayList(SimpleTransform_GPU) {
+        var transforms_gpu = std.ArrayList(SimpleTransform_GPU).init(allocator);
+        for (transforms.items) |transform| {
+            const transform_gpu = SimpleTransform_GPU{
+                .offset = zm.vecToArr3(transform.offset),
+                .sin_theta = transform.sin_theta,
+                .cos_theta = transform.cos_theta,
+            };
+            try transforms_gpu.append(transform_gpu);
+        }
+        return transforms_gpu;
     }
 };
 

@@ -91,7 +91,7 @@ pub const Scene = struct {
         const metal_id = try self.addMaterial("metal", metal);
         const ground = Material.lambertian(.{ 0.1, 0.1, 0.1, 1 });
         const ground_id = try self.addMaterial("ground", ground);
-        try self.addQuad(Vec{ 20, -1, -20, 0 }, Vec{ -40, 0, 0, 0 }, Vec{ 0, 0, 40, 0 }, ground_id);
+        try self.addQuad(Vec{ 20, -1, -20, 0 }, Vec{ -40, 0, 0, 0 }, Vec{ 0, 0, 40, 0 }, ground_id, null);
         // try self.addQuad(Vec{ -30, -0.5, -30, 0 }, Vec{ 60, 0, 0, 0 }, Vec{ 0, 0, 60, 0 }, ground_id);
         // try self.addQuad(Vec{ -30, -3, -30, 0 }, Vec{ 60, 0, 0, 0 }, Vec{ 0, 0, 60, 0 }, ground_id);
         // try self.addSphere(Vec{ 0, -100.5, 0, 0 }, 100, ground_id);
@@ -179,11 +179,11 @@ pub const Scene = struct {
         const teal = Material.lambertian(.{ 0.2, 0.8, 0.8, 0 });
         const teal_id = try self.addMaterial("teal", teal);
 
-        try self.addQuad(Vec{ -3, -2, 5, 0 }, Vec{ 0, 0, -4, 0 }, Vec{ 0, 4, 0, 0 }, red_id);
-        try self.addQuad(Vec{ -2, -2, 0, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 4, 0, 0 }, green_id);
-        try self.addQuad(Vec{ 3, -2, 1, 0 }, Vec{ 0, 0, 4, 0 }, Vec{ 0, 4, 0, 0 }, blue_id);
-        try self.addQuad(Vec{ -2, 3, 1, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, 4, 0 }, orange_id);
-        try self.addQuad(Vec{ -2, -3, 5, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, -4, 0 }, teal_id);
+        try self.addQuad(Vec{ -3, -2, 5, 0 }, Vec{ 0, 0, -4, 0 }, Vec{ 0, 4, 0, 0 }, red_id, null);
+        try self.addQuad(Vec{ -2, -2, 0, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 4, 0, 0 }, green_id, null);
+        try self.addQuad(Vec{ 3, -2, 1, 0 }, Vec{ 0, 0, 4, 0 }, Vec{ 0, 4, 0, 0 }, blue_id, null);
+        try self.addQuad(Vec{ -2, 3, 1, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, 4, 0 }, orange_id, null);
+        try self.addQuad(Vec{ -2, -3, 5, 0 }, Vec{ 4, 0, 0, 0 }, Vec{ 0, 0, -4, 0 }, teal_id, null);
         try self.addSphere(Vec{ 0, 0, 3, 0 }, 1, red_id);
 
         try self.createBVH();
@@ -207,21 +207,24 @@ pub const Scene = struct {
         const metal_id = try self.addMaterial("metal", metal);
 
         // left -200
-        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 0, -400, 0 }, Vec{ 0, 400, 0, 0 }, green_id);
+        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 0, -400, 0 }, Vec{ 0, 400, 0, 0 }, green_id, null);
         // right 200
-        try self.addQuad(Vec{ 200, 0, -200, 0 }, Vec{ 0, 0, 400, 0 }, Vec{ 0, 400, 0, 0 }, red_id);
+        try self.addQuad(Vec{ 200, 0, -200, 0 }, Vec{ 0, 0, 400, 0 }, Vec{ 0, 400, 0, 0 }, red_id, null);
         // light
-        try self.addQuad(Vec{ -50, 398, -50, 0 }, Vec{ 100, 0, 0, 0 }, Vec{ 0, 0, 100, 0 }, light_id);
+        try self.addQuad(Vec{ -50, 398, -50, 0 }, Vec{ 100, 0, 0, 0 }, Vec{ 0, 0, 100, 0 }, light_id, null);
         // top
-        try self.addQuad(Vec{ -200, 400, -200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, 400, 0 }, white_id);
+        try self.addQuad(Vec{ -200, 400, -200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, 400, 0 }, white_id, null);
         // bottom
-        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, -400, 0 }, white_id);
+        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, -400, 0 }, white_id, null);
         // back
-        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id);
+        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id, null);
         try self.addSphere(Vec{ 80, 80, -70, 0 }, 60, glass_id);
 
-        try self.addBox(Vec{ -50, 0, -80, 0 }, Vec{ -140, 90, -170, 0 }, white_id);
-        try self.addBox(Vec{ 30, 0, 20, 0 }, Vec{ -80, 250, 150, 0 }, metal_id);
+        const rotation1_id = try self.addTransform(SimpleTransform.init(null, 15));
+        const rotation2_id = try self.addTransform(SimpleTransform.init(null, -18));
+
+        try self.addBox(Vec{ -50, 0, -80, 0 }, Vec{ -140, 90, -170, 0 }, white_id, rotation2_id);
+        try self.addBox(Vec{ 30, 0, 20, 0 }, Vec{ -80, 250, 150, 0 }, metal_id, rotation1_id);
 
         try self.createBVH();
 
@@ -275,8 +278,11 @@ pub const Scene = struct {
         self.sphere_id += 1;
     }
 
-    fn addQuad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32) !void {
-        const quad = Quad.init(Q, u, v, material_id, self.quad_id);
+    fn addQuad(self: *Scene, Q: Vec, u: Vec, v: Vec, material_id: u32, transform_id: ?u32) !void {
+        var quad = Quad.init(Q, u, v, material_id, self.quad_id);
+        if (transform_id) |t_id| {
+            quad.addTransform(t_id);
+        }
         try self.quads.append(quad);
         const object = Object{ .quad = quad };
         try self.objects.append(object);
@@ -285,7 +291,7 @@ pub const Scene = struct {
         self.quad_id += 1;
     }
 
-    fn addBox(scene: *Scene, a: Vec, b: Vec, material_id: u32) !void {
+    fn addBox(scene: *Scene, a: Vec, b: Vec, material_id: u32, transform_id: ?u32) !void {
         const min = Vec{ @min(a[0], b[0]), @min(a[1], b[1]), @min(a[2], b[2]), 0 };
         const max = Vec{ @max(a[0], b[0]), @max(a[1], b[1]), @max(a[2], b[2]), 0 };
 
@@ -293,12 +299,12 @@ pub const Scene = struct {
         const dy = Vec{ 0, max[1] - min[1], 0, 0 };
         const dz = Vec{ 0, 0, max[2] - min[2], 0 };
 
-        try scene.addQuad(Vec{ min[0], min[1], max[2], 0 }, dx, dy, material_id); // front
-        try scene.addQuad(Vec{ max[0], min[1], max[2], 0 }, -dz, dy, material_id); // right
-        try scene.addQuad(Vec{ min[0], max[1], min[2], 0 }, dx, -dy, material_id); // back
-        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dz, dy, material_id); // left
-        try scene.addQuad(Vec{ min[0], max[1], max[2], 0 }, dx, -dz, material_id); // top
-        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dx, dz, material_id); // bottom
+        try scene.addQuad(Vec{ min[0], min[1], max[2], 0 }, dx, dy, material_id, transform_id); // front
+        try scene.addQuad(Vec{ max[0], min[1], max[2], 0 }, -dz, dy, material_id, transform_id); // right
+        try scene.addQuad(Vec{ min[0], max[1], min[2], 0 }, dx, -dy, material_id, transform_id); // back
+        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dz, dy, material_id, transform_id); // left
+        try scene.addQuad(Vec{ min[0], max[1], max[2], 0 }, dx, -dz, material_id, transform_id); // top
+        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dx, dz, material_id, transform_id); // bottom
     }
 
     fn addMaterial(self: *Scene, label: []const u8, material: Material) !u32 {
