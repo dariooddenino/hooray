@@ -48,6 +48,21 @@ fn materialScatter(ray_in: Ray) -> Ray {
         scatter_rec.skip_pdf_ray = scattered;
     }
 
+    else if (hit_rec.material.material_type == ISOTROPIC) {
+		let g = hit_rec.material.specular_strength;
+		let cos_hg = (1 + g*g - pow(((1 - g*g) / (1 - g + 2*g*rand2D())), 2)) / (2 * g);
+		let sin_hg = sqrt(1 - cos_hg * cos_hg);
+		let phi = 2 * PI * rand2D();
+
+		let hg_dir = vec3f(sin_hg * cos(phi), sin_hg * sin(phi), cos_hg);
+
+		let uvw = onbBuildFromW(ray_in.direction);
+		scattered = Ray(hit_rec.p, normalize(onbGetLocal(hg_dir)));
+
+		scatter_rec.skip_pdf = true;
+		scatter_rec.skip_pdf_ray = scattered;
+    }
+
     return scattered;
 }
 

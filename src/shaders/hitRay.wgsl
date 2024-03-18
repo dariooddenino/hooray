@@ -100,6 +100,70 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
         let transform = transforms[i32(sphere.transform_id)];
         ray = Ray(in_ray.origin - transform.offset, in_ray.direction);
     }
+    let material = materials[i32(sphere.material_id)];
+
+    if (material.material_type == ISOTROPIC) {
+        var rec1 = hitSphereLocal(sphere, -MAX_FLOAT, MAX_FLOAT, ray);
+        if (rec1 == MAX_FLOAT + 1) {
+            return false;
+        }
+        var rec2 = hitSphereLocal(sphere, rec1 + 0.0001, MAX_FLOAT, ray);
+        if (rec2 == MAX_FLOAT + 1) {
+            return false;
+        }
+        if (rec1 < tmin) {
+            rec1 = tmin;
+        }
+        if (rec2 > tmax) {
+            rec2 = tmax;
+        }
+        if (rec1 >= rec2) {
+            return false;
+        }
+        if (rec1 < 0) {
+            rec1 = 0;
+        }
+        hit_rec.material = materials[i32(sphere.material_id)];
+
+        let ray_length = length(ray.direction);
+        let dist_inside = (rec2 - rec1) * ray_length;
+        let hit_dist = hit_rec.material.roughness * log(rand2D());
+
+        if (hit_dist > dist_inside) {
+            return false;
+        }
+
+        hit_rec.t = rec1 + (hit_dist / ray_length);
+        hit_rec.p = at(ray, hit_rec.t);
+        hit_rec.normal = normalize(hit_rec.p - sphere.center);
+        hit_rec.front_face = true;
+
+        return true;
+
+    } else {
+        let center = sphere.center;
+        var root = hitSphereLocal(sphere, tmin, tmax, ray);
+        if (root == MAX_FLOAT + 1) {
+            return false;
+        }
+
+        hit_rec.t = root;
+        hit_rec.p = at(ray, root);
+
+        hit_rec.normal = normalize((hit_rec.p - center) / sphere.radius);
+
+        hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
+        if !hit_rec.front_face {
+            hit_rec.normal = -1 * hit_rec.normal;
+        }
+
+        hit_rec.material = materials[i32(sphere.material_id)];
+        return true;
+    }
+}
+
+// TODO aren't there better things than MAX_FLOAT?
+fn hitSphereLocal(sphere: Sphere, tmin: f32, tmax: f32, ray: Ray) -> f32 {
     let center = sphere.center;
     let oc = ray.origin - center;
     let a = dot(ray.direction, ray.direction);
@@ -107,8 +171,8 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
     let c = dot(oc, oc) - sphere.radius * sphere.radius;
     let discriminant = half_b * half_b - a * c;
 
-    if discriminant < 0 {
-        return false;
+    if (discriminant < 0) {
+        return MAX_FLOAT + 1;
     }
 
     let sqrtd = sqrt(discriminant);
@@ -116,22 +180,11 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
     if root <= tmin || root >= tmax {
         root = (-half_b + sqrtd) / a;
         if root <= tmin || root >= tmax {
-            return false;
+            return MAX_FLOAT + 1;
         }
     }
 
-    hit_rec.t = root;
-    hit_rec.p = at(ray, root);
-
-    hit_rec.normal = normalize((hit_rec.p - center) / sphere.radius);
-
-    hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
-    if !hit_rec.front_face {
-        hit_rec.normal = -1 * hit_rec.normal;
-    }
-
-    hit_rec.material = materials[i32(sphere.material_id)];
-    return true;
+    return root;
 }
 
 fn hitQuad(quad: Quad, tmin: f32, tmax: f32, in_ray: Ray) -> bool {

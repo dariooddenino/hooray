@@ -201,8 +201,8 @@ pub const Scene = struct {
         const green_id = try self.addMaterial("green", green);
         const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
         const light_id = try self.addMaterial("light", light);
-        const glass = Material.dielectric(.{ 1, 1, 1, 1 }, 1.6);
-        const glass_id = try self.addMaterial("glass", glass);
+        const fog = Material.isotropic(.{ 1, 1, 1, 1 }, 0.001, -0.01, 0);
+        const fog_id = try self.addMaterial("glass", fog);
         const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 0.4, 0.8);
         const metal_id = try self.addMaterial("metal", metal);
 
@@ -218,7 +218,7 @@ pub const Scene = struct {
         try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, -400, 0 }, white_id, null);
         // back
         try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id, null);
-        try self.addSphere(Vec{ 80, 80, -70, 0 }, 60, glass_id);
+        try self.addSphere(Vec{ 80, 80, -70, 0 }, 60, fog_id);
 
         const rotation1_id = try self.addTransform(SimpleTransform.init(null, 15));
         const rotation2_id = try self.addTransform(SimpleTransform.init(null, -18));

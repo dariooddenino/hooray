@@ -14,18 +14,14 @@ Some inspiration taken from https://github.com/Shridhar2602/WebGPU-Path-Tracer
 - [x] Shaders
 - [x] Real-time progressive rendering
 - [ ] Skyboxes
-### Things I've skipped for now
+### Next on the book
+- [x] Instances
+- [ ] Volumes
+  - [ ] Add isotropic material
+  - [ ] Adapt hit functions to use the variant needed depending on material
+  - [ ] Add scatter function
 - [ ] Textures
 - [ ] Noise
-### Next on the book
-- [ ] Instances
-  I have to change my addPrimitive functions to return the instance created.
-  At that point I can add a transformation, which will be carried by the primitive.
-  The problem is that it should be possible to apply multiple transformations. I will have to commit
-  the transaction only once. Maybe I can enforce this with some type of pub restriction, and having
-  a `commit` function that goes from one type to another.
-  Am I over-complicating this?
-- [ ] Volumes
 - [ ] Final week 2 scene
 
 ## Delta time

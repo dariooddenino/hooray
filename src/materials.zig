@@ -8,7 +8,7 @@ pub const MaterialType = union(enum) {
     lambertian,
     // mirror,
     dielectric,
-    // isotropic,
+    isotropic,
     // anisotropic,
     diffuse_light,
 
@@ -17,7 +17,7 @@ pub const MaterialType = union(enum) {
             .lambertian => return 0,
             // .mirror => return 1,
             .dielectric => return 2,
-            // .isotropic => return 3,
+            .isotropic => return 3,
             // .anisotropic => return 4,
             .diffuse_light => return 5,
         }
@@ -98,6 +98,10 @@ pub const Material = extern struct {
             0,
             eta,
         );
+    }
+
+    pub fn isotropic(color: Color, specular_strength: f32, roughness: f32, eta: f32) Material {
+        return Material.init(.isotropic, color, .{ 0, 0, 0, 0 }, .{ 0, 0, 0, 0 }, specular_strength, roughness, eta);
     }
 
     pub fn diffuse_light(emission: Color) Material {
