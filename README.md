@@ -17,9 +17,10 @@ Some inspiration taken from https://github.com/Shridhar2602/WebGPU-Path-Tracer
 ### Next on the book
 - [x] Instances
 - [ ] Volumes
-  - [ ] Add isotropic material
-  - [ ] Adapt hit functions to use the variant needed depending on material
-  - [ ] Add scatter function
+  I'm stuck here. Everything looks correct, and I've even fixed a sneaky bug and improved how things are rendered in general.
+  My suspicion is that the distances calculated in hitSphere are not correct.
+  How can I debug them?
+  Would it make sense to have a debug buffer to carry messages back to zig?
 - [ ] Textures
 - [ ] Noise
 - [ ] Final week 2 scene

@@ -201,7 +201,7 @@ pub const Scene = struct {
         const green_id = try self.addMaterial("green", green);
         const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
         const light_id = try self.addMaterial("light", light);
-        const fog = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, -0.25, 0);
+        const fog = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, 0.01, 0);
         const fog_id = try self.addMaterial("glass", fog);
         const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 1, 0.2);
         const metal_id = try self.addMaterial("metal", metal);
@@ -232,7 +232,6 @@ pub const Scene = struct {
         camera.setCamera(.{ 0, 278, -400, 0 }, .{ 0, 200, 0, 0 }, .{ 0, 1, 0, 0 });
     }
 
-    // TODO I have to study how clone() works, because I'm leaking here.
     // Maybe carry objects slice around and defer it.
     pub fn createBVH(self: *Scene) !void {
         var objects_clone = try self.objects.clone();
