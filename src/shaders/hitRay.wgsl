@@ -107,7 +107,7 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
         if (rec1 == MAX_FLOAT + 1) {
             return false;
         }
-        var rec2 = hitSphereLocal(sphere, rec1 + 0.0001, MAX_FLOAT, ray);
+        var rec2 = hitSphereLocal(sphere, rec1 + MIN_FLOAT, MAX_FLOAT, ray);
         if (rec2 == MAX_FLOAT + 1) {
             return false;
         }
@@ -126,6 +126,7 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
         hit_rec.material = materials[i32(sphere.material_id)];
 
         let ray_length = length(ray.direction);
+        // let ray_length: f32 = 1;
         let dist_inside = (rec2 - rec1) * ray_length;
         let hit_dist = hit_rec.material.roughness * log(rand2D());
 

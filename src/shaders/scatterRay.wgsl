@@ -58,31 +58,11 @@ fn materialScatter(ray_in: Ray) -> Ray {
 
 		let uvw = onbBuildFromW(ray_in.direction);
 		scattered = Ray(hit_rec.p, normalize(onbGetLocal(hg_dir)));
+        // scattered = Ray(hit_rec.p, uniformRandomInUnitSphere());
 
 		scatter_rec.skip_pdf = true;
 		scatter_rec.skip_pdf_ray = scattered;
     }
 
     return scattered;
-}
-
-// Two helper functions to mimic the book
-fn randomInUnitSphere() -> vec3<f32> {
-    let phi = rand2D() * 2.0 * PI;
-    let theta = acos(2.0 * rand2D() - 1.0);
-
-    let x = sin(theta) * cos(phi);
-    let y = sin(theta) * sin(phi);
-    let z = cos(theta);
-
-    return normalize(vec3<f32>(x, y, z));
-}
-
-fn randomOnHemisphere(normal: vec3<f32>) -> vec3<f32> {
-    let on_unit_sphere = randomInUnitSphere();
-    if dot(on_unit_sphere, normal) > 0.0 {
-        return on_unit_sphere;
-    } else {
-        return -on_unit_sphere;
-    }
 }

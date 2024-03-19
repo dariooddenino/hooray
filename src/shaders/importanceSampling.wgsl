@@ -21,6 +21,32 @@ fn randomInUnitDisk() -> vec3<f32> {
     return normalize(vec3<f32>(r * cos(theta), r * sin(theta), 0));
 }
 
+fn randomInUnitSphere() -> vec3<f32> {
+    let phi = rand2D() * 2.0 * PI;
+    let theta = acos(2.0 * rand2D() - 1.0);
+
+    let x = sin(theta) * cos(phi);
+    let y = sin(theta) * sin(phi);
+    let z = cos(theta);
+
+    return normalize(vec3<f32>(x, y, z));
+}
+
+fn randomOnHemisphere(normal: vec3<f32>) -> vec3<f32> {
+    let on_unit_sphere = randomInUnitSphere();
+    if dot(on_unit_sphere, normal) > 0.0 {
+        return on_unit_sphere;
+    } else {
+        return -on_unit_sphere;
+    }
+}
+
+fn randomUnitVector() -> vec3<f32> {
+    let p = randomInUnitSphere();
+
+    return p / vec3<f32>(length(p));
+}
+
 fn defocusDiskSample(center: vec3<f32>, defocus_disk_u: vec3<f32>, defocus_disk_v: vec3<f32>) -> vec3<f32> {
     // Returns a random point in the camera defocus disk.
     let p = randomInUnitDisk();

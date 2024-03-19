@@ -55,7 +55,7 @@ fn getCameraRay() -> Ray {
     if (defocus_angle > 0) {
         ray_origin = defocusDiskSample(cam_origin, defocus_disk_u, defocus_disk_v);
     }
-    let ray_direction = pixel_sample - ray_origin;
+    let ray_direction = normalize(pixel_sample - ray_origin);
     return Ray(ray_origin, ray_direction);
 }
 
