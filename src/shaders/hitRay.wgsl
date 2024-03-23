@@ -29,8 +29,8 @@ fn hitScene(ray: Ray) -> bool {
         let node = bvh[current_node_index];
 
         if hitAabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
-            hit_rec.hit_bboxes++;
             if (node.n_primitives > 0) {
+                hit_rec.hit_bboxes++;
                 for (var i = 0; i < i32(node.n_primitives); i++) {
                     var hit = false;
                     let object = objects[node.primitive_offset + i];
@@ -126,7 +126,6 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
         hit_rec.material = materials[i32(sphere.material_id)];
 
         let ray_length = length(ray.direction);
-        // let ray_length: f32 = 1;
         let dist_inside = (rec2 - rec1) * ray_length;
         let hit_dist = hit_rec.material.roughness * log(rand2D());
 

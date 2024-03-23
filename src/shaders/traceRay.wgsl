@@ -21,7 +21,7 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
     for (var i = 0; i < max_bounces; i++) {
         if !hitScene(curr_ray) {
             // Show hit boxes
-            // bbox_color = vec3<f32>(1 - (f32(hit_rec.hit_bboxes) / 5), 1, 1 - (f32(hit_rec.hit_bboxes) / 5));
+            // bbox_color = vec3<f32>(1 - (f32(hit_rec.hit_bboxes) / 5), 1 - (f32(hit_rec.hit_bboxes) / 5), 1 - (f32(hit_rec.hit_bboxes) / 5));
 
             // let unit_direction = normalize(incident_ray.direction);
             // let a = 0.5 * (unit_direction.y + 1);
@@ -39,6 +39,7 @@ fn rayColor(incident_ray: Ray) -> vec3<f32> {
 
         // Show hit boxes
         // bbox_color = vec3<f32>(1 - (f32(hit_rec.hit_bboxes) / 20), 1, 1 - (f32(hit_rec.hit_bboxes) / 20));
+        // bbox_color = vec3<f32>(1 - (f32(hit_rec.hit_bboxes) / 1), 1 - (f32(hit_rec.hit_bboxes) / 1), 1 - (f32(hit_rec.hit_bboxes) / 1));
 
         if(IMPORTANCE_SAMPLING) {
             // NOTE: this assumes that all lights are quads. It feels limiting, but it's something I will have to explore.
