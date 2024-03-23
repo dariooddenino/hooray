@@ -193,44 +193,50 @@ pub const Scene = struct {
 
     // This scene is flipped backwards
     pub fn loadCornellScene(self: *Scene, camera: *Camera) !void {
-        const red = Material.lambertian(.{ 0.65, 0.05, 0.05, 0 });
-        const red_id = try self.addMaterial("red", red);
+        // const red = Material.lambertian(.{ 0.65, 0.05, 0.05, 0 });
+        // const red_id = try self.addMaterial("red", red);
         const white = Material.lambertian(.{ 0.73, 0.73, 0.73, 0 });
         const white_id = try self.addMaterial("white", white);
-        const green = Material.lambertian(.{ 0.12, 0.45, 0.15, 0 });
-        const green_id = try self.addMaterial("green", green);
-        const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
-        const light_id = try self.addMaterial("light", light);
+        // const green = Material.lambertian(.{ 0.12, 0.45, 0.15, 0 });
+        // const green_id = try self.addMaterial("green", green);
+        // const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
+        // const light_id = try self.addMaterial("light", light);
         const fog = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, 0.01, 0);
         const fog_id = try self.addMaterial("glass", fog);
-        const fog2 = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, 5, 0);
-        const fog2_id = try self.addMaterial("glass", fog2);
-        const fog3 = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, -5, 0);
-        const fog3_id = try self.addMaterial("glass", fog3);
-        const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 1, 0.2);
-        const metal_id = try self.addMaterial("metal", metal);
+        // const fog2 = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, 5, 0);
+        // const fog2_id = try self.addMaterial("glass", fog2);
+        // const fog3 = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, -5, 0);
+        // const fog3_id = try self.addMaterial("glass", fog3);
+        // const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 1, 0.2);
+        // const metal_id = try self.addMaterial("metal", metal);
 
         // left -200
-        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 0, -400, 0 }, Vec{ 0, 400, 0, 0 }, green_id, null);
+        // try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 0, -400, 0 }, Vec{ 0, 400, 0, 0 }, green_id, null);
         // right 200
-        try self.addQuad(Vec{ 200, 0, -200, 0 }, Vec{ 0, 0, 400, 0 }, Vec{ 0, 400, 0, 0 }, red_id, null);
+        // try self.addQuad(Vec{ 200, 0, -200, 0 }, Vec{ 0, 0, 400, 0 }, Vec{ 0, 400, 0, 0 }, red_id, null);
         // light
-        try self.addQuad(Vec{ -50, 398, -50, 0 }, Vec{ 100, 0, 0, 0 }, Vec{ 0, 0, 100, 0 }, light_id, null);
+        // try self.addQuad(Vec{ -50, 398, -50, 0 }, Vec{ 100, 0, 0, 0 }, Vec{ 0, 0, 100, 0 }, light_id, null);
         // top
-        try self.addQuad(Vec{ -200, 400, -200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, 400, 0 }, white_id, null);
+        // try self.addQuad(Vec{ -200, 400, -200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, 400, 0 }, white_id, null);
         // bottom
         try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 400, 0, 0, 0 }, Vec{ 0, 0, -400, 0 }, white_id, null);
         // back
-        try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id, null);
+        // try self.addQuad(Vec{ -200, 0, 200, 0 }, Vec{ 0, 400, 0, 0 }, Vec{ 400, 0, 0, 0 }, white_id, null);
         try self.addSphere(Vec{ 80, 80, -70, 0 }, 60, fog_id);
-        try self.addSphere(Vec{ 80, 200, -70, 0 }, 60, fog2_id);
-        try self.addSphere(Vec{ 80, 320, -70, 0 }, 60, fog3_id);
+        // try self.addSphere(Vec{ 80, 200, -70, 0 }, 60, fog2_id);
+        // try self.addSphere(Vec{ 80, 320, -70, 0 }, 60, fog3_id);
 
-        const rotation1_id = try self.addTransform(SimpleTransform.init(null, 15));
+        // const rotation1_id = try self.addTransform(SimpleTransform.init(null, 15));
         const rotation2_id = try self.addTransform(SimpleTransform.init(null, -18));
+        // add box -200, 0, -200 | 200, 0, 200
+        // min -200 0 -200
+        // max 200 0 200
+        // dx = Vec(max0 - min0, 0, 0) = Vec(400, 0, 0)
+        // dy = Vec(0,0,max2 - min2) = Vec(0,0, 400)
+        // top: addQuad(min0, max1, max2,,dx,,dz) == addQuad(Vec(-200, 0, 200), Vec(400, 0, 0), Vec(0, 0, 400))
 
         try self.addBox(Vec{ -50, 0, -80, 0 }, Vec{ -140, 90, -170, 0 }, white_id, rotation2_id);
-        try self.addBox(Vec{ 30, 0, 20, 0 }, Vec{ -80, 250, 150, 0 }, metal_id, rotation1_id);
+        // try self.addBox(Vec{ 30, 0, 20, 0 }, Vec{ -80, 250, 150, 0 }, metal_id, rotation1_id);
 
         try self.createBVH();
 
@@ -302,14 +308,14 @@ pub const Scene = struct {
 
         const dx = Vec{ max[0] - min[0], 0, 0, 0 };
         const dy = Vec{ 0, max[1] - min[1], 0, 0 };
-        const dz = Vec{ 0, 0, max[2] - min[2], 0 };
+        // const dz = Vec{ 0, 0, max[2] - min[2], 0 };
 
-        try scene.addQuad(Vec{ min[0], min[1], max[2], 0 }, dx, dy, material_id, transform_id); // front
-        try scene.addQuad(Vec{ max[0], min[1], max[2], 0 }, -dz, dy, material_id, transform_id); // right
+        // try scene.addQuad(Vec{ min[0], min[1], max[2], 0 }, dx, dy, material_id, transform_id); // front
+        // try scene.addQuad(Vec{ max[0], min[1], max[2], 0 }, -dz, dy, material_id, transform_id); // right
         try scene.addQuad(Vec{ min[0], max[1], min[2], 0 }, dx, -dy, material_id, transform_id); // back
-        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dz, dy, material_id, transform_id); // left
-        try scene.addQuad(Vec{ min[0], max[1], max[2], 0 }, dx, -dz, material_id, transform_id); // top
-        try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dx, dz, material_id, transform_id); // bottom
+        // try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dz, dy, material_id, transform_id); // left
+        // try scene.addQuad(Vec{ min[0], max[1], max[2], 0 }, dx, -dz, material_id, transform_id); // top
+        // try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dx, dz, material_id, transform_id); // bottom
     }
 
     fn addMaterial(self: *Scene, label: []const u8, material: Material) !u32 {
