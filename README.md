@@ -11,8 +11,8 @@ Some inspiration taken from https://github.com/Shridhar2602/WebGPU-Path-Tracer
 
 ## TODO
 ### Trees, again
-This test scene shows that the floor bugs out in some situations. I need to see if I can replicate it with a simpler setup.
-I think my z axis is flipped, that's why bboxes act weirdly in some situations.
+Cornell box geometry starts to make more sense, but I have the x axis flipped. I have to check the signs for the camera
+and rays functions.
 ### Things I want to add
 - [x] Shaders
 - [x] Real-time progressive rendering
