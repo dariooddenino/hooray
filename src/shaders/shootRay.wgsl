@@ -56,15 +56,15 @@ fn getCameraRay() -> Ray {
         ray_origin = defocusDiskSample(cam_origin, defocus_disk_u, defocus_disk_v);
     }
     let ray_direction = normalize(pixel_sample - ray_origin);
-    // return Ray(ray_origin, ray_direction);
+    return Ray(ray_origin, ray_direction);
 
     // test
-    let s = (f32(uniforms.screen_dims.x) / f32(uniforms.screen_dims.y)) * (2 * (pixel_coords.x - 0.5 * rand2D()) / f32(uniforms.screen_dims.x)) - 1;
-    let t = - 1 * (2 * ((pixel_coords.y - 0.5 + rand2D()) / f32(uniforms.screen_dims.y)) - 1);
+    // let s = (f32(uniforms.screen_dims.x) / f32(uniforms.screen_dims.y)) * (2 * (pixel_coords.x - 0.5 * rand2D()) / f32(uniforms.screen_dims.x)) - 1;
+    // let t = - 1 * (2 * ((pixel_coords.y - 0.5 + rand2D()) / f32(uniforms.screen_dims.y)) - 1);
 
-    let fov_factor: f32 = 40;
-    let dir = normalize(uniforms.view_matrix * vec4<f32>(vec3<f32>(s, t, -fov_factor), 0)).xyz;
-    return Ray(ray_origin, dir);
+    // let fov_factor: f32 = 40;
+    // let dir = normalize(uniforms.view_matrix * vec4<f32>(vec3<f32>(s, t, -fov_factor), 0)).xyz;
+    // return Ray(ray_origin, dir);
 }
 
 // Antialiasing

@@ -1,5 +1,5 @@
 fn rayColor(incident_ray: Ray) -> vec3<f32> {
-    let background_color = vec3<f32>(0.2, 0.2, 0.2);
+    let background_color = vec3<f32>(0, 0, 0);
 
     var curr_ray = incident_ray;
     // Current ray color

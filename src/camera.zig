@@ -10,7 +10,7 @@ const Vec = zm.Vec;
 const Vec3 = [3]f32;
 const Mat = zm.Mat;
 
-const lookAt = zm.lookAtLh;
+const lookAt = zm.lookAtRh;
 
 // TODO there is some offset with the center, maybe that -1 I've seen in debug.
 // TODO x rotation looks good now, y is wonky.

@@ -62,7 +62,7 @@ pub const Aabb = struct {
     }
 
     pub fn pad(self: *Aabb) void {
-        const delta: f32 = 0.0001 / 2.0;
+        const delta: f32 = 0.0001 / 1.0;
         if (self.max[0] - self.min[0] < delta) {
             self.max[0] += delta;
             self.min[0] -= delta;
