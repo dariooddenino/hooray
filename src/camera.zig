@@ -10,6 +10,8 @@ const Vec = zm.Vec;
 const Vec3 = [3]f32;
 const Mat = zm.Mat;
 
+const lookAt = zm.lookAtLh;
+
 // TODO there is some offset with the center, maybe that -1 I've seen in debug.
 // TODO x rotation looks good now, y is wonky.
 pub const Camera = struct {
@@ -26,7 +28,7 @@ pub const Camera = struct {
         const center: Vec = .{ 0, 0, 0, 0 };
         const up: Vec = .{ 0, 1, 0, 0 };
 
-        const view_matrix = zm.lookAtRh(eye, center, up);
+        const view_matrix = lookAt(eye, center, up);
 
         return Camera{
             .view_matrix = view_matrix,
@@ -37,7 +39,7 @@ pub const Camera = struct {
     }
 
     pub fn setPosition(self: *Camera, eye: Vec) void {
-        const view_matrix = zm.lookAtRh(eye, self.center, self.up);
+        const view_matrix = lookAt(eye, self.center, self.up);
         self.eye = eye;
         self.view_matrix = view_matrix;
     }
@@ -46,7 +48,7 @@ pub const Camera = struct {
         self.eye = eye;
         self.center = center;
         self.up = up;
-        self.view_matrix = zm.lookAtRh(eye, center, up);
+        self.view_matrix = lookAt(eye, center, up);
     }
 
     /// Arcball rotation
@@ -81,7 +83,7 @@ pub const Camera = struct {
         const rotation_y = zm.rotationY(y_angle);
         const eye = zm.mul(rotation_y, (temp_eye - self.center)) + self.center;
 
-        const view_matrix = zm.lookAtRh(eye, self.center, self.up);
+        const view_matrix = lookAt(eye, self.center, self.up);
 
         self.eye = eye;
         self.view_matrix = view_matrix;

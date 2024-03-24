@@ -193,37 +193,37 @@ pub const Scene = struct {
 
     // This scene is flipped backwards
     pub fn loadCornellScene(self: *Scene, camera: *Camera) !void {
-        const red = Material.lambertian(.{ 0.65, 0.05, 0.05, 0 });
-        const red_id = try self.addMaterial("red", red);
+        // const red = Material.lambertian(.{ 0.65, 0.05, 0.05, 0 });
+        // const red_id = try self.addMaterial("red", red);
         const white = Material.lambertian(.{ 0.73, 0.73, 0.73, 0 });
         const white_id = try self.addMaterial("white", white);
-        const green = Material.lambertian(.{ 0.12, 0.45, 0.15, 0 });
-        const green_id = try self.addMaterial("green", green);
-        const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
-        const light_id = try self.addMaterial("light", light);
+        // const green = Material.lambertian(.{ 0.12, 0.45, 0.15, 0 });
+        // const green_id = try self.addMaterial("green", green);
+        // const light = Material.diffuse_light(.{ 15, 15, 15, 0 });
+        // const light_id = try self.addMaterial("light", light);
         const fog = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, 0.01, 0);
         const fog_id = try self.addMaterial("glass", fog);
         // const fog2 = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, 5, 0);
         // const fog2_id = try self.addMaterial("glass", fog2);
         // const fog3 = Material.isotropic(.{ 0.56, 0.29, 0.56, 1 }, 0.00001, -5, 0);
         // const fog3_id = try self.addMaterial("glass", fog3);
-        const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 1, 0.2);
-        const metal_id = try self.addMaterial("metal", metal);
+        // const metal = Material.metal(.{ 0.73, 0.73, 0.73, 1 }, 1, 0.2);
+        // const metal_id = try self.addMaterial("metal", metal);
 
         // left -200
-        try self.addQuad(Vec{ 0, 0, 0, 0 }, Vec{ 0, 555, 0, 0 }, Vec{ 0, 0, 555, 0 }, green_id, null);
+        // try self.addQuad(Vec{ 555, 555, 0, 0 }, Vec{ 0, -555, 0, 0 }, Vec{ 0, 0, 555, 0 }, green_id, null);
         // right 200
-        try self.addQuad(Vec{ 555, 555, 0, 0 }, Vec{ 0, -555, 0, 0 }, Vec{ 0, 0, 555, 0 }, red_id, null);
+        // try self.addQuad(Vec{ 0, 0, 0, 0 }, Vec{ 0, 555, 0, 0 }, Vec{ 0, 0, 555, 0 }, red_id, null);
         // light
-        try self.addQuad(Vec{ 213, 554, 227, 0 }, Vec{ 130, 0, 0, 0 }, Vec{ 0, 0, 105, 0 }, light_id, null);
-        // top
-        try self.addQuad(Vec{ 0, 555, 0, 0 }, Vec{ 555, 0, 0, 0 }, Vec{ 0, 0, 555, 0 }, white_id, null);
+        // try self.addQuad(Vec{ 213, 554, 227, 0 }, Vec{ 130, 0, 0, 0 }, Vec{ 0, 0, 105, 0 }, light_id, null);
         // bottom
-        try self.addQuad(Vec{ 555, 0, 0, 0 }, Vec{ -555, 0, 0, 0 }, Vec{ 0, 0, 555, 0 }, white_id, null);
+        try self.addQuad(Vec{ 0, 0, 0, 0 }, Vec{ 5, 0, 0, 0 }, Vec{ 0, 0, 5, 0 }, white_id, null);
+        // top
+        // try self.addQuad(Vec{ 0, 555, 0, 0 }, Vec{ 555, 0, 0, 0 }, Vec{ 0, 0, 555, 0 }, white_id, null);
         // back
-        try self.addQuad(Vec{ 0, 0, 555, 0 }, Vec{ 0, 555, 0, 0 }, Vec{ 555, 0, 0, 0 }, white_id, null);
+        // try self.addQuad(Vec{ 0, 0, 555, 0 }, Vec{ 0, 555, 0, 0 }, Vec{ 555, 0, 0, 0 }, white_id, null);
 
-        try self.addSphere(Vec{ 278, 278, 278, 0 }, 60, fog_id);
+        try self.addSphere(Vec{ 278, 278, 278, 0 }, 100, fog_id);
         // try self.addSphere(Vec{ 80, 200, -70, 0 }, 60, fog2_id);
         // try self.addSphere(Vec{ 80, 320, -70, 0 }, 60, fog3_id);
 
@@ -231,15 +231,15 @@ pub const Scene = struct {
         _ = rotation1_id;
         // const rotation2_id = try self.addTransform(SimpleTransform.init(null, -18));
 
-        try self.addBox(Vec{ 0, 0, 295, 0 }, Vec{ 285, 330, 460, 0 }, metal_id, null);
-        // try self.addBox(Vec{ 250, 0, 65, 0 }, Vec{ 415, 165, 230, 0 }, white_id, rotation2_id);
+        // try self.addBox(Vec{ 130, 0, 65, 0 }, Vec{ 295, 165, 230, 0 }, white_id, null);
+        // try self.addBox(Vec{ 265, 0, 295, 0 }, Vec{ 430, 330, 460, 0 }, metal_id, null);
         // try self.addBox(Vec{ -50, 0, -80, 0 }, Vec{ -140, 90, -170, 0 }, white_id, rotation2_id);
         // try self.addBox(Vec{ 30, 0, 20, 0 }, Vec{ -80, 250, 150, 0 }, metal_id, rotation1_id);
 
         try self.createBVH();
 
         // camera.setPosition(.{ 0, 278, -600, 0 });
-        camera.setCamera(.{ 278, 278, -300, 0 }, .{ 278, 278, 278, 0 }, .{ 0, 1, 0, 0 });
+        camera.setCamera(.{ 278, 278, -800, 0 }, .{ 278, 278, 278, 0 }, .{ 0, 1, 0, 0 });
     }
 
     // Maybe carry objects slice around and defer it.
