@@ -310,8 +310,7 @@ pub const Scene = struct {
 
         try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dy, dx, material_id, transform_id); // front
         try scene.addQuad(Vec{ min[0], max[1], min[2], 0 }, -dy, dz, material_id, transform_id); // right
-        TODO fix back
-        try scene.addQuad(Vec{ max[0], min[1], max[2], 0 }, dy, -dx, material_id, transform_id); // back
+        try scene.addQuad(Vec{ min[0], min[1], max[2], 0 }, dx, dy, material_id, transform_id); // back
         try scene.addQuad(Vec{ max[0], min[1], min[2], 0 }, dy, dz, material_id, transform_id); // left
         try scene.addQuad(Vec{ min[0], max[1], max[2], 0 }, dx, -dz, material_id, transform_id); // top
         try scene.addQuad(Vec{ min[0], min[1], min[2], 0 }, dx, dz, material_id, transform_id); // bottom
