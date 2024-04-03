@@ -100,8 +100,17 @@ pub const Material = extern struct {
         );
     }
 
+    // TODO: I'm not sure I'm using eta
     pub fn isotropic(color: Color, specular_strength: f32, roughness: f32, eta: f32) Material {
-        return Material.init(.isotropic, color, .{ 0, 0, 0, 0 }, .{ 0, 0, 0, 0 }, specular_strength, roughness, eta);
+        return Material.init(
+            .isotropic,
+            color,
+            .{ 0, 0, 0, 0 },
+            .{ 0, 0, 0, 0 },
+            specular_strength,
+            roughness,
+            eta,
+        );
     }
 
     pub fn diffuse_light(emission: Color) Material {

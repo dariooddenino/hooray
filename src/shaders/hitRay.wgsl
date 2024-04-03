@@ -133,6 +133,7 @@ fn hitSphere(sphere: Sphere, tmin: f32, tmax: f32, in_ray: Ray) -> bool {
             return false;
         }
 
+        // TODO: changing this has interesting effects, I need to explore
         hit_rec.t = rec1 + (hit_dist / ray_length);
         hit_rec.p = at(ray, hit_rec.t);
         hit_rec.normal = normalize(hit_rec.p - sphere.center);
