@@ -218,10 +218,7 @@ pub const Renderer = struct {
         try entries.append(gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
 
         inline for (optional_resources) |op_res| {
-            const objs = @field(self.scene, op_res.label);
-            if (objs.items.len > 0) {
-                try entries.append(gpu.BindGroupLayout.Entry.buffer(op_res.position, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
-            }
+            try entries.append(gpu.BindGroupLayout.Entry.buffer(op_res.position, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
         }
 
         const bgl = core.device.createBindGroupLayout(
@@ -245,24 +242,29 @@ pub const Renderer = struct {
     }
 
     // Initializes the buffer depending on whether there are resources or not.
-    // TODO it doesn't work.
-    fn initResourcesBuffer(comptime T: type, allocator: std.mem.Allocator, resources: std.ArrayList(T)) !?*gpu.Buffer {
+    fn initResourcesBuffer(comptime T: type, allocator: std.mem.Allocator, resources: std.ArrayList(T)) !*gpu.Buffer {
         const array = try T.toGPU(allocator, resources);
         defer array.deinit();
         const has_elements = array.items.len > 0;
-        if (!has_elements) {
-            return null;
-        }
-        // std.debug.print("\n{any}:\n{any}\n", .{ T, array.items });
-        const buffer = core.device.createBuffer(&.{
+        var size = array.items.len * @sizeOf(T.GpuType());
+        if (size == 0) size = 32;
+        var buffer = core.device.createBuffer(&.{
             .label = T.label(),
             .usage = .{ .storage = true, .copy_dst = true },
-            .size = array.items.len * @sizeOf(T.GpuType()),
-            .mapped_at_creation = .true,
+            .size = size,
+            .mapped_at_creation = .false,
         });
-        const mapped = buffer.getMappedRange(T.GpuType(), 0, array.items.len);
-        @memcpy(mapped.?, array.items[0..]);
-        buffer.unmap();
+        if (has_elements) {
+            buffer = core.device.createBuffer(&.{
+                .label = T.label(),
+                .usage = .{ .storage = true, .copy_dst = true },
+                .size = size,
+                .mapped_at_creation = .true,
+            });
+            const mapped = buffer.getMappedRange(T.GpuType(), 0, array.items.len);
+            @memcpy(mapped.?, array.items[0..]);
+            buffer.unmap();
+        }
         return buffer;
     }
 
@@ -319,9 +321,7 @@ pub const Renderer = struct {
         inline for (optional_resources) |op_res| {
             const objs = @field(scene, op_res.label);
             const buffer = try initResourcesBuffer(op_res.res_type, allocator, objs);
-            if (buffer) |b| {
-                try entries.append(BufferAdd{ .name = op_res.label, .buffer = b });
-            }
+            try entries.append(BufferAdd{ .name = op_res.label, .buffer = buffer });
         }
 
         try self.resources.addBuffers(entries.items);
@@ -343,10 +343,10 @@ pub const Renderer = struct {
 
         inline for (optional_resources) |op_res| {
             const objs = @field(scene, op_res.label);
-            if (objs.items.len > 0) {
-                const buffer = self.resources.getBuffer(op_res.label);
-                try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, objs.items.len * @sizeOf(op_res.res_type.GpuType())));
-            }
+            var size = objs.items.len * @sizeOf(op_res.res_type.GpuType());
+            if (size == 0) size = 32;
+            const buffer = self.resources.getBuffer(op_res.label);
+            try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, size));
         }
 
         const bind_group = core.device.createBindGroup(

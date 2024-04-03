@@ -10,9 +10,7 @@ Some inspiration taken from https://github.com/Shridhar2602/WebGPU-Path-Tracer
 - Clone `zig-gamdev` to /deps
 
 ## TODO
-### Trees, again
-Cornell box geometry starts to make more sense, but I have the x axis flipped. I have to check the signs for the camera
-and rays functions.
+- [ ] I have to add `has_spheres`, etc to uniforms, since I don't know what will happen otherwise
 ### Things I want to add
 - [x] Shaders
 - [x] Real-time progressive rendering
