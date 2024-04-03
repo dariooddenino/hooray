@@ -246,8 +246,8 @@ pub const Renderer = struct {
         const array = try T.toGPU(allocator, resources);
         defer array.deinit();
         const has_elements = array.items.len > 0;
-        var size = array.items.len * @sizeOf(T.GpuType());
-        if (size == 0) size = 32;
+        const n_items = @max(1, array.items.len);
+        const size = n_items * @sizeOf(T.GpuType());
         var buffer = core.device.createBuffer(&.{
             .label = T.label(),
             .usage = .{ .storage = true, .copy_dst = true },
@@ -343,8 +343,8 @@ pub const Renderer = struct {
 
         inline for (optional_resources) |op_res| {
             const objs = @field(scene, op_res.label);
-            var size = objs.items.len * @sizeOf(op_res.res_type.GpuType());
-            if (size == 0) size = 32;
+            const n_items = @max(1, objs.items.len);
+            const size = n_items * @sizeOf(op_res.res_type.GpuType());
             const buffer = self.resources.getBuffer(op_res.label);
             try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, size));
         }
