@@ -49,10 +49,11 @@
         },
         .zmath = .{ .path = "./deps/zig-gamedev/libs/zmath" },
         .zstbi = .{ .path = "./deps/zig-gamedev/libs/zstbi" },
-        .mach = .{
-            .url = "https://pkg.machengine.org/mach/f25f43527556bfb7f9233bb820dea4a6a72b80d2.tar.gz",
-            .hash = "1220d3ea68ae16ade5fab9ef5cdd245eb334e3d140fd07075abeef346ff0bd1ef002",
-        },
+        .mach = .{ .path = "../mach" },
+        // .mach = .{
+        //     .url = "https://pkg.machengine.org/mach/279290bbf2f1adab0af00323280a07d6bfff47a5.tar.gz",
+        //     .hash = "1220ba5472217ef81455b19d540967049bbfaf768b30d04534865707e907ee1c4aec",
+        // },
     },
 
     // Specifies the set of files and directories that are included in this package.

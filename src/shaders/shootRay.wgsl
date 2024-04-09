@@ -21,7 +21,8 @@ fn getCameraRay() -> Ray {
     let focus_dist: f32 = length(cam_origin - look_at);
     let defocus_angle: f32 = uniforms.defocus_angle;
     // vertical fov
-    const theta: f32 = radians(40);
+    // const theta = radians(40);
+    const theta = PI / 180.0 * 40; 
     const h = tan(theta / 2);
     let viewport_height = 2.0 * h * focus_dist;
     let viewport_width = viewport_height * f32(uniforms.screen_dims.x) / f32(uniforms.screen_dims.y);

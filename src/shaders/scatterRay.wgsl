@@ -8,7 +8,7 @@ fn materialScatter(ray_in: Ray) -> Ray {
 
         do_specular = select(0.0, 1.0, rand2D() < hit_rec.material.specular_strength);
 
-        var specular_dir = reflect(ray_in.direction, hit_rec.normal);
+        var specular_dir = sys_reflect(ray_in.direction, hit_rec.normal);
         specular_dir = normalize(mix(specular_dir, diffuse_dir, hit_rec.material.roughness));
 
         scattered = Ray(hit_rec.p, normalize(mix(diffuse_dir, specular_dir, do_specular)));
@@ -28,14 +28,14 @@ fn materialScatter(ray_in: Ray) -> Ray {
         }
 
         let unit_direction = normalize(ray_in.direction);
-        let cos_theta = min(dot(-unit_direction, hit_rec.normal), 1.0);
+        let cos_theta = min(dot(-1 * unit_direction, hit_rec.normal), 1.0);
         let sin_theta = sqrt(1 - cos_theta * cos_theta);
 
         var direction = vec3<f32>(0);
         if(ir * sin_theta > 1.0 || reflectance(cos_theta, ir) > rand2D()) {
-            direction = reflect(unit_direction, hit_rec.normal);
+            direction = sys_reflect(unit_direction, hit_rec.normal);
         } else {
-            direction = refract(unit_direction, hit_rec.normal, ir);
+            direction = sys_refract(unit_direction, hit_rec.normal, ir);
         }
 
         if(near_zero(direction)) {
@@ -54,7 +54,7 @@ fn materialScatter(ray_in: Ray) -> Ray {
 		let sin_hg = sqrt(1 - cos_hg * cos_hg);
 		let phi = 2 * PI * rand2D();
 
-		let hg_dir = vec3f(sin_hg * cos(phi), sin_hg * sin(phi), cos_hg);
+		let hg_dir = vec3<f32>(sin_hg * cos(phi), sin_hg * sin(phi), cos_hg);
 
 		let uvw = onbBuildFromW(ray_in.direction);
 		scattered = Ray(hit_rec.p, normalize(onbGetLocal(hg_dir)));

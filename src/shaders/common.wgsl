@@ -1,3 +1,23 @@
+// TEMP sysgpu functions
+
+fn sys_cross(a: vec3<f32>, b: vec3<f32>) -> vec3<f32> {
+    return vec3<f32>(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+fn sys_reflect(v: vec3<f32>, n: vec3<f32>) -> vec3<f32> {
+    return v - 2 * dot(v, n) * n;
+}
+
+fn sys_refract(v: vec3<f32>, n: vec3<f32>, eta: f32) -> vec3<f32> {
+    let cos_theta = dot(v, n);
+    let sin_theta = sqrt(1 - cos_theta * cos_theta);
+    let sin_theta_eta = eta * sin_theta;
+    let cos_theta_eta = eta * cos_theta;
+    return v * (cos_theta * (1 - eta) + sin_theta_eta) - n * sin_theta_eta;
+}
+
+// END TMP
+
 fn at(ray: Ray, t: f32) -> vec3<f32> {
     return ray.origin + t * ray.direction;
 }

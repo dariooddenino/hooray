@@ -213,12 +213,18 @@ pub const Renderer = struct {
         var entries = &self.bind_group_layouts;
 
         // We always have these
-        try entries.append(gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, 0));
-        try entries.append(gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, 0));
-        try entries.append(gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
+        try entries.append(gpu.BindGroupLayout.Entry.buffer(0, .{ .fragment = true, .compute = true }, .storage, false, @sizeOf(zm.Vec)));
+        try entries.append(gpu.BindGroupLayout.Entry.buffer(1, .{ .vertex = true, .fragment = true, .compute = true }, .uniform, true, @sizeOf(Uniforms)));
+        try entries.append(gpu.BindGroupLayout.Entry.buffer(3, .{ .fragment = true, .compute = true }, .read_only_storage, false, @sizeOf(Aabb_GPU)));
 
         inline for (optional_resources) |op_res| {
-            try entries.append(gpu.BindGroupLayout.Entry.buffer(op_res.position, .{ .fragment = true, .compute = true }, .read_only_storage, false, 0));
+            try entries.append(gpu.BindGroupLayout.Entry.buffer(
+                op_res.position,
+                .{ .fragment = true, .compute = true },
+                .read_only_storage,
+                false,
+                @sizeOf(op_res.res_type.GpuType()),
+            ));
         }
 
         const bgl = core.device.createBindGroupLayout(
@@ -333,20 +339,21 @@ pub const Renderer = struct {
         const layout = self.resources.getBindGroupLayout("layout");
 
         const frame_buffer = self.resources.getBuffer("frame");
-        try entries.append(gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size * @sizeOf(f32)));
+        try entries.append(gpu.BindGroup.Entry.buffer(0, frame_buffer, 0, screen_size, @sizeOf(f32)));
 
         const uniforms_buffer = self.resources.getBuffer("uniforms");
-        try entries.append(gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1 * @sizeOf(Uniforms)));
+        try entries.append(gpu.BindGroup.Entry.buffer(1, uniforms_buffer, 0, 1, @sizeOf(Uniforms)));
 
         const bvh_buffer = self.resources.getBuffer("bvh");
-        try entries.append(gpu.BindGroup.Entry.buffer(3, bvh_buffer, 0, scene.bvh_array.items.len * @sizeOf(Aabb_GPU)));
+        try entries.append(gpu.BindGroup.Entry.buffer(3, bvh_buffer, 0, scene.bvh_array.items.len, @sizeOf(Aabb_GPU)));
 
         inline for (optional_resources) |op_res| {
             const objs = @field(scene, op_res.label);
             const n_items = @max(1, objs.items.len);
-            const size = n_items * @sizeOf(op_res.res_type.GpuType());
+            // const size = n_items * @sizeOf(op_res.res_type.GpuType());
             const buffer = self.resources.getBuffer(op_res.label);
-            try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, size));
+            // try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, size));
+            try entries.append(gpu.BindGroup.Entry.buffer(op_res.position, buffer, 0, n_items, @sizeOf(op_res.res_type.GpuType())));
         }
 
         const bind_group = core.device.createBindGroup(
@@ -378,6 +385,7 @@ pub const Renderer = struct {
         const pipeline_layout = self.resources.getPipelineLayout("layout");
         // const spheres = scene.spheres;
         const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+            .label = "render",
             .fragment = &fragment,
             .layout = pipeline_layout,
             .vertex = gpu.VertexState.init(.{
@@ -389,7 +397,12 @@ pub const Renderer = struct {
                 .cull_mode = .back,
             },
         };
-        var render_pipelines: [1]GPUResources.RenderPipelineAdd = .{.{ .name = "render", .render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor) }};
+        var render_pipelines: [1]GPUResources.RenderPipelineAdd = .{
+            .{
+                .name = "render",
+                .render_pipeline = core.device.createRenderPipeline(&pipeline_descriptor),
+            },
+        };
         try self.resources.addRenderPipelines(&render_pipelines);
 
         const compute_pipeline = core.device.createComputePipeline(&gpu.ComputePipeline.Descriptor{ .layout = pipeline_layout, .compute = gpu.ProgrammableStageDescriptor{

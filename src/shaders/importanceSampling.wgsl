@@ -37,7 +37,7 @@ fn randomOnHemisphere(normal: vec3<f32>) -> vec3<f32> {
     if dot(on_unit_sphere, normal) > 0.0 {
         return on_unit_sphere;
     } else {
-        return -on_unit_sphere;
+        return -1 * on_unit_sphere;
     }
 }
 
@@ -56,7 +56,7 @@ fn defocusDiskSample(center: vec3<f32>, defocus_disk_u: vec3<f32>, defocus_disk_
 fn uniformSamplingHemisphere() -> vec3<f32> {
     let on_unit_sphere = uniformRandomInUnitSphere();
     let sign_dot = select(1.0, 0.0, dot(on_unit_sphere, hit_rec.normal) > 0.0);
-    return normalize(mix(on_unit_sphere, -on_unit_sphere, sign_dot));
+    return normalize(mix(on_unit_sphere, -1 * on_unit_sphere, sign_dot));
 }
 
 fn cosineSamplingWrtZ() -> vec3<f32> {
@@ -76,8 +76,8 @@ fn cosineSamplingWrtZ() -> vec3<f32> {
 fn onbBuildFromW(w: vec3<f32>) -> mat3x3<f32> {
     unit_w = normalize(w);
     let a = select(vec3<f32>(1, 0, 0), vec3<f32>(0, 1, 0), abs(unit_w.x) > 0.9);
-    v = normalize(cross(unit_w, a));
-    u = cross(unit_w, v);
+    v = normalize(sys_cross(unit_w, a));
+    u = sys_cross(unit_w, v);
     return mat3x3<f32>(u, v, unit_w);
 }
 

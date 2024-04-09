@@ -30,7 +30,9 @@ fn hitScene(ray: Ray) -> bool {
 
         if hitAabb(node, ray_tmin, closest_so_far, ray, inv_dir) {
             if (node.n_primitives > 0) {
-                hit_rec.hit_bboxes++;
+                // TODO: temp for sysgpu
+                // was giving a null error
+                // hit_rec.hit_bboxes++;
                 for (var i = 0; i < i32(node.n_primitives); i++) {
                     var hit = false;
                     let object = objects[node.primitive_offset + i];
@@ -250,8 +252,8 @@ fn hitQuadInner(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
 	let intersection = at(ray, t);
 
 	let planar_hitpt_vector = intersection - quad.Q.xyz;
-	let alpha = dot(quad.w.xyz, cross(planar_hitpt_vector, quad.v.xyz));
-	let beta = dot(quad.w.xyz, cross(quad.u.xyz, planar_hitpt_vector));
+	let alpha = dot(quad.w.xyz, sys_cross(planar_hitpt_vector, quad.v.xyz));
+	let beta = dot(quad.w.xyz, sys_cross(quad.u.xyz, planar_hitpt_vector));
 
 	if(alpha < 0 || 1 < alpha || beta < 0 || 1 < beta) {
 		return false;
@@ -261,9 +263,10 @@ fn hitQuadInner(quad: Quad, tmin: f32, tmax: f32, ray: Ray) -> bool {
 	hit_rec.p = intersection;
 	hit_rec.normal = normalize(normal);
 	hit_rec.front_face = dot(ray.direction, hit_rec.normal) < 0;
-	if(hit_rec.front_face == false)
+	if(!hit_rec.front_face)
 	{
-		hit_rec.normal = -hit_rec.normal;
+		// hit_rec.normal = -hit_rec.normal;
+        hit_rec.normal = -1 * hit_rec.normal;
 	}
 
 	hit_rec.material = materials[i32(quad.material_id)];
